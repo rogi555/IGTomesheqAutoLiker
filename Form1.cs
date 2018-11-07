@@ -15,5 +15,18 @@ namespace IGTomesheqAutoLiker
         {
             InitializeComponent();
         }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            // button dalej na screen1
+            this.panel1.Hide();
+            this.panel2.Show();
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            // button dalej na screenie z domyslnymi komentarzami
+            this.panel2.Hide();
+        }
     }
 }
