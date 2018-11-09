@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace IGTomesheqAutoLiker.Properties {
+namespace IGTomesheq.Properties {
     using System;
     
     
@@ -39,7 +39,7 @@ namespace IGTomesheqAutoLiker.Properties {
         internal static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("IGTomesheqAutoLiker.Properties.Resources", typeof(Resources).Assembly);
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("IGTomesheq.Properties.Resources", typeof(Resources).Assembly);
                     resourceMan = temp;
                 }
                 return resourceMan;
@@ -63,9 +63,9 @@ namespace IGTomesheqAutoLiker.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap Seal_Pup_seals_40692293_1024_768 {
+        internal static System.Drawing.Bitmap seal {
             get {
-                object obj = ResourceManager.GetObject("Seal-Pup-seals-40692293-1024-768", resourceCulture);
+                object obj = ResourceManager.GetObject("seal", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
