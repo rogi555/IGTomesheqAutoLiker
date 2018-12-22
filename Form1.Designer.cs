@@ -52,6 +52,17 @@
             this.label5 = new System.Windows.Forms.Label();
             this.button2 = new System.Windows.Forms.Button();
             this.panel_telegram_login = new System.Windows.Forms.Panel();
+            this.button15 = new System.Windows.Forms.Button();
+            this.label30 = new System.Windows.Forms.Label();
+            this.textBox4 = new System.Windows.Forms.TextBox();
+            this.label29 = new System.Windows.Forms.Label();
+            this.label28 = new System.Windows.Forms.Label();
+            this.button14 = new System.Windows.Forms.Button();
+            this.textBox3 = new System.Windows.Forms.TextBox();
+            this.textBox2 = new System.Windows.Forms.TextBox();
+            this.label27 = new System.Windows.Forms.Label();
+            this.label26 = new System.Windows.Forms.Label();
+            this.label25 = new System.Windows.Forms.Label();
             this.label17 = new System.Windows.Forms.Label();
             this.label16 = new System.Windows.Forms.Label();
             this.button6 = new System.Windows.Forms.Button();
@@ -69,24 +80,45 @@
             this.label19 = new System.Windows.Forms.Label();
             this.listView2 = new System.Windows.Forms.ListView();
             this.label18 = new System.Windows.Forms.Label();
-            this.panel1 = new System.Windows.Forms.Panel();
-            this.label22 = new System.Windows.Forms.Label();
+            this.panel_liker_commenter = new System.Windows.Forms.Panel();
+            this.label40 = new System.Windows.Forms.Label();
+            this.checkBox3 = new System.Windows.Forms.CheckBox();
+            this.label39 = new System.Windows.Forms.Label();
+            this.label38 = new System.Windows.Forms.Label();
+            this.button17 = new System.Windows.Forms.Button();
+            this.label37 = new System.Windows.Forms.Label();
+            this.dateTimePicker1 = new System.Windows.Forms.DateTimePicker();
+            this.button16 = new System.Windows.Forms.Button();
+            this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.label36 = new System.Windows.Forms.Label();
+            this.label35 = new System.Windows.Forms.Label();
+            this.label34 = new System.Windows.Forms.Label();
             this.button10 = new System.Windows.Forms.Button();
-            this.listBox1 = new System.Windows.Forms.ListBox();
-            this.label23 = new System.Windows.Forms.Label();
-            this.label24 = new System.Windows.Forms.Label();
-            this.pictureBox2 = new System.Windows.Forms.PictureBox();
-            this.richTextBox2 = new System.Windows.Forms.RichTextBox();
-            this.button11 = new System.Windows.Forms.Button();
+            this.checkBox2 = new System.Windows.Forms.CheckBox();
+            this.label33 = new System.Windows.Forms.Label();
+            this.label32 = new System.Windows.Forms.Label();
+            this.comboBox1 = new System.Windows.Forms.ComboBox();
+            this.label31 = new System.Windows.Forms.Label();
             this.button12 = new System.Windows.Forms.Button();
-            this.button13 = new System.Windows.Forms.Button();
+            this.button11 = new System.Windows.Forms.Button();
+            this.richTextBox2 = new System.Windows.Forms.RichTextBox();
+            this.pictureBox2 = new System.Windows.Forms.PictureBox();
+            this.label24 = new System.Windows.Forms.Label();
+            this.label23 = new System.Windows.Forms.Label();
+            this.listBox1 = new System.Windows.Forms.ListBox();
+            this.statusStrip1 = new System.Windows.Forms.StatusStrip();
+            this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolStripProgressBar1 = new System.Windows.Forms.ToolStripProgressBar();
+            this.label22 = new System.Windows.Forms.Label();
             this.panel_hello.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.panel_comments.SuspendLayout();
             this.panel_telegram_login.SuspendLayout();
             this.panel_telegram_chats.SuspendLayout();
-            this.panel1.SuspendLayout();
+            this.panel_liker_commenter.SuspendLayout();
+            this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
+            this.statusStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
             // panel_hello
@@ -98,10 +130,10 @@
             this.panel_hello.Controls.Add(this.label2);
             this.panel_hello.Controls.Add(this.label1);
             this.panel_hello.Controls.Add(this.pictureBox1);
-            this.panel_hello.Location = new System.Drawing.Point(15, 15);
+            this.panel_hello.Location = new System.Drawing.Point(1155, 15);
             this.panel_hello.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.panel_hello.Name = "panel_hello";
-            this.panel_hello.Size = new System.Drawing.Size(1060, 577);
+            this.panel_hello.Size = new System.Drawing.Size(1154, 577);
             this.panel_hello.TabIndex = 0;
             // 
             // label8
@@ -194,10 +226,10 @@
             this.panel_comments.Controls.Add(this.label6);
             this.panel_comments.Controls.Add(this.label5);
             this.panel_comments.Controls.Add(this.button2);
-            this.panel_comments.Location = new System.Drawing.Point(15, 15);
+            this.panel_comments.Location = new System.Drawing.Point(1155, 15);
             this.panel_comments.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.panel_comments.Name = "panel_comments";
-            this.panel_comments.Size = new System.Drawing.Size(1060, 577);
+            this.panel_comments.Size = new System.Drawing.Size(1154, 577);
             this.panel_comments.TabIndex = 6;
             // 
             // button4
@@ -297,6 +329,7 @@
             this.richTextBox1.Size = new System.Drawing.Size(372, 135);
             this.richTextBox1.TabIndex = 9;
             this.richTextBox1.Text = "";
+            this.richTextBox1.KeyDown += new System.Windows.Forms.KeyEventHandler(this.richTextBox1_KeyDown);
             // 
             // label7
             // 
@@ -344,6 +377,17 @@
             // 
             // panel_telegram_login
             // 
+            this.panel_telegram_login.Controls.Add(this.button15);
+            this.panel_telegram_login.Controls.Add(this.label30);
+            this.panel_telegram_login.Controls.Add(this.textBox4);
+            this.panel_telegram_login.Controls.Add(this.label29);
+            this.panel_telegram_login.Controls.Add(this.label28);
+            this.panel_telegram_login.Controls.Add(this.button14);
+            this.panel_telegram_login.Controls.Add(this.textBox3);
+            this.panel_telegram_login.Controls.Add(this.textBox2);
+            this.panel_telegram_login.Controls.Add(this.label27);
+            this.panel_telegram_login.Controls.Add(this.label26);
+            this.panel_telegram_login.Controls.Add(this.label25);
             this.panel_telegram_login.Controls.Add(this.label17);
             this.panel_telegram_login.Controls.Add(this.label16);
             this.panel_telegram_login.Controls.Add(this.button6);
@@ -351,18 +395,132 @@
             this.panel_telegram_login.Controls.Add(this.label15);
             this.panel_telegram_login.Controls.Add(this.label14);
             this.panel_telegram_login.Controls.Add(this.button5);
-            this.panel_telegram_login.Location = new System.Drawing.Point(15, 15);
+            this.panel_telegram_login.Location = new System.Drawing.Point(1155, 15);
             this.panel_telegram_login.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.panel_telegram_login.Name = "panel_telegram_login";
-            this.panel_telegram_login.Size = new System.Drawing.Size(1060, 577);
+            this.panel_telegram_login.Size = new System.Drawing.Size(1154, 577);
             this.panel_telegram_login.TabIndex = 7;
             this.panel_telegram_login.Visible = false;
+            // 
+            // button15
+            // 
+            this.button15.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.button15.Location = new System.Drawing.Point(656, 80);
+            this.button15.Name = "button15";
+            this.button15.Size = new System.Drawing.Size(158, 27);
+            this.button15.TabIndex = 23;
+            this.button15.Text = "Zapisz i wyślij kod";
+            this.button15.UseVisualStyleBackColor = true;
+            this.button15.Click += new System.EventHandler(this.button15_Click);
+            // 
+            // label30
+            // 
+            this.label30.AutoSize = true;
+            this.label30.Font = new System.Drawing.Font("Segoe UI", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label30.Location = new System.Drawing.Point(350, 84);
+            this.label30.Name = "label30";
+            this.label30.Size = new System.Drawing.Size(116, 20);
+            this.label30.TabIndex = 22;
+            this.label30.Text = "Numer telefonu:";
+            // 
+            // textBox4
+            // 
+            this.textBox4.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.textBox4.Location = new System.Drawing.Point(472, 82);
+            this.textBox4.Name = "textBox4";
+            this.textBox4.Size = new System.Drawing.Size(178, 25);
+            this.textBox4.TabIndex = 21;
+            this.textBox4.KeyDown += new System.Windows.Forms.KeyEventHandler(this.textBox4_KeyDown);
+            // 
+            // label29
+            // 
+            this.label29.AutoSize = true;
+            this.label29.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label29.ForeColor = System.Drawing.Color.Red;
+            this.label29.Location = new System.Drawing.Point(428, 288);
+            this.label29.Name = "label29";
+            this.label29.Size = new System.Drawing.Size(250, 21);
+            this.label29.TabIndex = 20;
+            this.label29.Text = "Nieprawidłowy login lub hasło!";
+            this.label29.Visible = false;
+            // 
+            // label28
+            // 
+            this.label28.AutoSize = true;
+            this.label28.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label28.ForeColor = System.Drawing.Color.DarkOliveGreen;
+            this.label28.Location = new System.Drawing.Point(376, 280);
+            this.label28.Name = "label28";
+            this.label28.Size = new System.Drawing.Size(307, 21);
+            this.label28.TabIndex = 19;
+            this.label28.Text = "Pomyślnie zalogowano do Instagrama!";
+            this.label28.Visible = false;
+            // 
+            // button14
+            // 
+            this.button14.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.button14.Location = new System.Drawing.Point(666, 302);
+            this.button14.Name = "button14";
+            this.button14.Size = new System.Drawing.Size(75, 27);
+            this.button14.TabIndex = 18;
+            this.button14.Text = "Zaloguj";
+            this.button14.UseVisualStyleBackColor = true;
+            this.button14.Click += new System.EventHandler(this.button14_Click);
+            // 
+            // textBox3
+            // 
+            this.textBox3.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.textBox3.Location = new System.Drawing.Point(472, 302);
+            this.textBox3.Name = "textBox3";
+            this.textBox3.PasswordChar = '*';
+            this.textBox3.Size = new System.Drawing.Size(178, 25);
+            this.textBox3.TabIndex = 17;
+            this.textBox3.KeyDown += new System.Windows.Forms.KeyEventHandler(this.textBox3_KeyDown);
+            // 
+            // textBox2
+            // 
+            this.textBox2.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.textBox2.Location = new System.Drawing.Point(472, 266);
+            this.textBox2.Name = "textBox2";
+            this.textBox2.Size = new System.Drawing.Size(178, 25);
+            this.textBox2.TabIndex = 16;
+            this.textBox2.KeyDown += new System.Windows.Forms.KeyEventHandler(this.textBox2_KeyDown);
+            // 
+            // label27
+            // 
+            this.label27.AutoSize = true;
+            this.label27.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.label27.Location = new System.Drawing.Point(420, 305);
+            this.label27.Name = "label27";
+            this.label27.Size = new System.Drawing.Size(47, 19);
+            this.label27.TabIndex = 15;
+            this.label27.Text = "Hasło:";
+            // 
+            // label26
+            // 
+            this.label26.AutoSize = true;
+            this.label26.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.label26.Location = new System.Drawing.Point(420, 269);
+            this.label26.Name = "label26";
+            this.label26.Size = new System.Drawing.Size(46, 19);
+            this.label26.TabIndex = 14;
+            this.label26.Text = "Login:";
+            // 
+            // label25
+            // 
+            this.label25.AutoSize = true;
+            this.label25.Font = new System.Drawing.Font("Segoe UI", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label25.Location = new System.Drawing.Point(374, 200);
+            this.label25.Name = "label25";
+            this.label25.Size = new System.Drawing.Size(312, 32);
+            this.label25.TabIndex = 13;
+            this.label25.Text = "Logowanie do Instagrama";
             // 
             // label17
             // 
             this.label17.AutoSize = true;
             this.label17.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label17.Location = new System.Drawing.Point(269, 280);
+            this.label17.Location = new System.Drawing.Point(278, 423);
             this.label17.Name = "label17";
             this.label17.Size = new System.Drawing.Size(500, 17);
             this.label17.TabIndex = 12;
@@ -375,7 +533,7 @@
             this.label16.AutoSize = true;
             this.label16.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label16.ForeColor = System.Drawing.Color.DarkOliveGreen;
-            this.label16.Location = new System.Drawing.Point(376, 250);
+            this.label16.Location = new System.Drawing.Point(385, 96);
             this.label16.Name = "label16";
             this.label16.Size = new System.Drawing.Size(301, 21);
             this.label16.TabIndex = 11;
@@ -385,31 +543,35 @@
             // button6
             // 
             this.button6.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.button6.Location = new System.Drawing.Point(660, 215);
+            this.button6.Location = new System.Drawing.Point(656, 113);
             this.button6.Name = "button6";
             this.button6.Size = new System.Drawing.Size(75, 27);
             this.button6.TabIndex = 10;
             this.button6.Text = "Zapisz";
             this.button6.UseVisualStyleBackColor = true;
+            this.button6.Visible = false;
             this.button6.Click += new System.EventHandler(this.button6_Click);
             // 
             // textBox1
             // 
             this.textBox1.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textBox1.Location = new System.Drawing.Point(474, 217);
+            this.textBox1.Location = new System.Drawing.Point(472, 113);
             this.textBox1.Name = "textBox1";
             this.textBox1.Size = new System.Drawing.Size(178, 25);
             this.textBox1.TabIndex = 9;
+            this.textBox1.Visible = false;
+            this.textBox1.KeyDown += new System.Windows.Forms.KeyEventHandler(this.textBox1_KeyDown);
             // 
             // label15
             // 
             this.label15.AutoSize = true;
             this.label15.Font = new System.Drawing.Font("Segoe UI", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label15.Location = new System.Drawing.Point(268, 219);
+            this.label15.Location = new System.Drawing.Point(266, 115);
             this.label15.Name = "label15";
             this.label15.Size = new System.Drawing.Size(200, 20);
             this.label15.TabIndex = 8;
             this.label15.Text = "Kod wysłany przez Telegram:";
+            this.label15.Visible = false;
             // 
             // label14
             // 
@@ -444,7 +606,7 @@
             this.panel_telegram_chats.Controls.Add(this.label19);
             this.panel_telegram_chats.Controls.Add(this.listView2);
             this.panel_telegram_chats.Controls.Add(this.label18);
-            this.panel_telegram_chats.Location = new System.Drawing.Point(15, 14);
+            this.panel_telegram_chats.Location = new System.Drawing.Point(1154, 15);
             this.panel_telegram_chats.Name = "panel_telegram_chats";
             this.panel_telegram_chats.Size = new System.Drawing.Size(1060, 577);
             this.panel_telegram_chats.TabIndex = 8;
@@ -512,6 +674,7 @@
             this.listView3.TabIndex = 3;
             this.listView3.UseCompatibleStateImageBehavior = false;
             this.listView3.View = System.Windows.Forms.View.List;
+            this.listView3.KeyDown += new System.Windows.Forms.KeyEventHandler(this.listView3_KeyDown);
             // 
             // label19
             // 
@@ -531,6 +694,7 @@
             this.listView2.TabIndex = 1;
             this.listView2.UseCompatibleStateImageBehavior = false;
             this.listView2.View = System.Windows.Forms.View.List;
+            this.listView2.KeyDown += new System.Windows.Forms.KeyEventHandler(this.listView2_KeyDown);
             // 
             // label18
             // 
@@ -542,138 +706,349 @@
             this.label18.TabIndex = 0;
             this.label18.Text = "Grupy wsparcia";
             // 
-            // panel1
+            // panel_liker_commenter
             // 
-            this.panel1.Controls.Add(this.button13);
-            this.panel1.Controls.Add(this.button12);
-            this.panel1.Controls.Add(this.button11);
-            this.panel1.Controls.Add(this.richTextBox2);
-            this.panel1.Controls.Add(this.pictureBox2);
-            this.panel1.Controls.Add(this.label24);
-            this.panel1.Controls.Add(this.label23);
-            this.panel1.Controls.Add(this.listBox1);
-            this.panel1.Controls.Add(this.label22);
-            this.panel1.Controls.Add(this.button10);
-            this.panel1.Location = new System.Drawing.Point(15, 15);
-            this.panel1.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(1060, 577);
-            this.panel1.TabIndex = 9;
-            this.panel1.Visible = false;
+            this.panel_liker_commenter.Controls.Add(this.label40);
+            this.panel_liker_commenter.Controls.Add(this.checkBox3);
+            this.panel_liker_commenter.Controls.Add(this.label39);
+            this.panel_liker_commenter.Controls.Add(this.label38);
+            this.panel_liker_commenter.Controls.Add(this.button17);
+            this.panel_liker_commenter.Controls.Add(this.label37);
+            this.panel_liker_commenter.Controls.Add(this.dateTimePicker1);
+            this.panel_liker_commenter.Controls.Add(this.button16);
+            this.panel_liker_commenter.Controls.Add(this.groupBox1);
+            this.panel_liker_commenter.Controls.Add(this.label33);
+            this.panel_liker_commenter.Controls.Add(this.label32);
+            this.panel_liker_commenter.Controls.Add(this.comboBox1);
+            this.panel_liker_commenter.Controls.Add(this.label31);
+            this.panel_liker_commenter.Controls.Add(this.button12);
+            this.panel_liker_commenter.Controls.Add(this.button11);
+            this.panel_liker_commenter.Controls.Add(this.richTextBox2);
+            this.panel_liker_commenter.Controls.Add(this.pictureBox2);
+            this.panel_liker_commenter.Controls.Add(this.label24);
+            this.panel_liker_commenter.Controls.Add(this.label23);
+            this.panel_liker_commenter.Controls.Add(this.listBox1);
+            this.panel_liker_commenter.Controls.Add(this.label22);
+            this.panel_liker_commenter.Location = new System.Drawing.Point(15, 15);
+            this.panel_liker_commenter.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.panel_liker_commenter.Name = "panel_liker_commenter";
+            this.panel_liker_commenter.Size = new System.Drawing.Size(1154, 577);
+            this.panel_liker_commenter.TabIndex = 9;
+            this.panel_liker_commenter.Visible = false;
             // 
-            // label22
+            // label40
             // 
-            this.label22.AutoSize = true;
-            this.label22.Font = new System.Drawing.Font("Segoe UI", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label22.Location = new System.Drawing.Point(350, 27);
-            this.label22.Name = "label22";
-            this.label22.Size = new System.Drawing.Size(352, 30);
-            this.label22.TabIndex = 6;
-            this.label22.Text = "Wybierz grupę i skomentuj zdjęcia";
+            this.label40.Font = new System.Drawing.Font("Segoe UI", 8F);
+            this.label40.Location = new System.Drawing.Point(251, 478);
+            this.label40.Name = "label40";
+            this.label40.Size = new System.Drawing.Size(783, 79);
+            this.label40.TabIndex = 29;
+            this.label40.Text = "Opis postu...";
+            this.label40.Click += new System.EventHandler(this.Label40_Click);
+            // 
+            // checkBox3
+            // 
+            this.checkBox3.AutoSize = true;
+            this.checkBox3.Location = new System.Drawing.Point(852, 403);
+            this.checkBox3.Name = "checkBox3";
+            this.checkBox3.Size = new System.Drawing.Size(128, 17);
+            this.checkBox3.TabIndex = 28;
+            this.checkBox3.Text = "To grupa \"tylko like\"";
+            this.checkBox3.UseVisualStyleBackColor = true;
+            this.checkBox3.CheckedChanged += new System.EventHandler(this.checkBox3_CheckedChanged);
+            // 
+            // label39
+            // 
+            this.label39.AutoSize = true;
+            this.label39.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.label39.Location = new System.Drawing.Point(438, 73);
+            this.label39.Name = "label39";
+            this.label39.Size = new System.Drawing.Size(136, 19);
+            this.label39.TabIndex = 27;
+            this.label39.Text = "Post 0/0 w tej grupie";
+            // 
+            // label38
+            // 
+            this.label38.Font = new System.Drawing.Font("Segoe UI Semibold", 12F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Italic))), System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label38.ForeColor = System.Drawing.Color.DarkBlue;
+            this.label38.Location = new System.Drawing.Point(393, 48);
+            this.label38.Name = "label38";
+            this.label38.Size = new System.Drawing.Size(216, 21);
+            this.label38.TabIndex = 26;
+            this.label38.Text = "InstaLogin";
+            this.label38.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // button17
+            // 
+            this.button17.Enabled = false;
+            this.button17.Location = new System.Drawing.Point(220, 41);
+            this.button17.Name = "button17";
+            this.button17.Size = new System.Drawing.Size(75, 22);
+            this.button17.TabIndex = 25;
+            this.button17.Text = "Szukaj";
+            this.button17.UseVisualStyleBackColor = true;
+            this.button17.Click += new System.EventHandler(this.button17_Click);
+            // 
+            // label37
+            // 
+            this.label37.AutoSize = true;
+            this.label37.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.label37.Location = new System.Drawing.Point(11, 20);
+            this.label37.Name = "label37";
+            this.label37.Size = new System.Drawing.Size(183, 19);
+            this.label37.TabIndex = 24;
+            this.label37.Text = "Szukaj postów dodanych po:";
+            // 
+            // dateTimePicker1
+            // 
+            this.dateTimePicker1.CustomFormat = "dd/MM/yyyy HH:mm:ss";
+            this.dateTimePicker1.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
+            this.dateTimePicker1.Location = new System.Drawing.Point(15, 41);
+            this.dateTimePicker1.Name = "dateTimePicker1";
+            this.dateTimePicker1.Size = new System.Drawing.Size(200, 22);
+            this.dateTimePicker1.TabIndex = 23;
+            this.dateTimePicker1.ValueChanged += new System.EventHandler(this.dateTimePicker1_ValueChanged);
+            this.dateTimePicker1.KeyDown += new System.Windows.Forms.KeyEventHandler(this.dateTimePicker1_KeyDown);
+            // 
+            // button16
+            // 
+            this.button16.Location = new System.Drawing.Point(947, 372);
+            this.button16.Name = "button16";
+            this.button16.Size = new System.Drawing.Size(75, 23);
+            this.button16.TabIndex = 22;
+            this.button16.Text = "Pomiń";
+            this.button16.UseVisualStyleBackColor = true;
+            this.button16.Click += new System.EventHandler(this.button16_Click);
+            // 
+            // groupBox1
+            // 
+            this.groupBox1.Controls.Add(this.label36);
+            this.groupBox1.Controls.Add(this.label35);
+            this.groupBox1.Controls.Add(this.label34);
+            this.groupBox1.Controls.Add(this.button10);
+            this.groupBox1.Controls.Add(this.checkBox2);
+            this.groupBox1.Location = new System.Drawing.Point(833, 432);
+            this.groupBox1.Name = "groupBox1";
+            this.groupBox1.Size = new System.Drawing.Size(300, 121);
+            this.groupBox1.TabIndex = 21;
+            this.groupBox1.TabStop = false;
+            this.groupBox1.Text = "Automatycznie";
+            // 
+            // label36
+            // 
+            this.label36.AutoSize = true;
+            this.label36.Location = new System.Drawing.Point(67, 91);
+            this.label36.Name = "label36";
+            this.label36.Size = new System.Drawing.Size(159, 13);
+            this.label36.TabIndex = 23;
+            this.label36.Text = "kto dostanie jaki komentarz...";
+            // 
+            // label35
+            // 
+            this.label35.AutoSize = true;
+            this.label35.Location = new System.Drawing.Point(67, 76);
+            this.label35.Name = "label35";
+            this.label35.Size = new System.Drawing.Size(220, 13);
+            this.label35.TabIndex = 22;
+            this.label35.Text = "To najszybsza metoda, ale nigdy nie wiesz";
+            // 
+            // label34
+            // 
+            this.label34.AutoSize = true;
+            this.label34.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label34.Location = new System.Drawing.Point(9, 82);
+            this.label34.Name = "label34";
+            this.label34.Size = new System.Drawing.Size(54, 13);
+            this.label34.TabIndex = 21;
+            this.label34.Text = "UWAGA!";
             // 
             // button10
             // 
             this.button10.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.button10.Location = new System.Drawing.Point(962, 531);
+            this.button10.Location = new System.Drawing.Point(121, 40);
             this.button10.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.button10.Name = "button10";
             this.button10.Size = new System.Drawing.Size(86, 33);
             this.button10.TabIndex = 5;
-            this.button10.Text = "Dalej";
+            this.button10.Text = "Zrób to!";
             this.button10.UseVisualStyleBackColor = true;
             this.button10.Click += new System.EventHandler(this.button10_Click);
             // 
-            // listBox1
+            // checkBox2
             // 
-            this.listBox1.FormattingEnabled = true;
-            this.listBox1.Location = new System.Drawing.Point(31, 93);
-            this.listBox1.Name = "listBox1";
-            this.listBox1.Size = new System.Drawing.Size(232, 472);
-            this.listBox1.TabIndex = 7;
-            this.listBox1.SelectedIndexChanged += new System.EventHandler(this.listBox1_SelectedIndexChanged);
+            this.checkBox2.AutoSize = true;
+            this.checkBox2.Location = new System.Drawing.Point(6, 19);
+            this.checkBox2.Name = "checkBox2";
+            this.checkBox2.Size = new System.Drawing.Size(292, 17);
+            this.checkBox2.TabIndex = 20;
+            this.checkBox2.Text = "Wystaw domyślne komentarze wszystkim z tej grupy";
+            this.checkBox2.UseVisualStyleBackColor = true;
             // 
-            // label23
+            // label33
             // 
-            this.label23.AutoSize = true;
-            this.label23.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.label23.Location = new System.Drawing.Point(392, 91);
-            this.label23.Name = "label23";
-            this.label23.Size = new System.Drawing.Size(195, 19);
-            this.label23.TabIndex = 8;
-            this.label23.Text = "Pozostało do skomentowania: ";
+            this.label33.AutoSize = true;
+            this.label33.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.label33.Location = new System.Drawing.Point(841, 180);
+            this.label33.Name = "label33";
+            this.label33.Size = new System.Drawing.Size(120, 19);
+            this.label33.TabIndex = 18;
+            this.label33.Text = "Lub napisz własny";
+            // 
+            // label32
+            // 
+            this.label32.AutoSize = true;
+            this.label32.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.label32.Location = new System.Drawing.Point(841, 128);
+            this.label32.Name = "label32";
+            this.label32.Size = new System.Drawing.Size(165, 19);
+            this.label32.TabIndex = 17;
+            this.label32.Text = "Wybierz komentarz z listy";
+            // 
+            // comboBox1
+            // 
+            this.comboBox1.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.comboBox1.FormattingEnabled = true;
+            this.comboBox1.Location = new System.Drawing.Point(841, 150);
+            this.comboBox1.Name = "comboBox1";
+            this.comboBox1.Size = new System.Drawing.Size(270, 25);
+            this.comboBox1.TabIndex = 16;
+            this.comboBox1.SelectedIndexChanged += new System.EventHandler(this.comboBox1_SelectedIndexChanged);
+            this.comboBox1.KeyDown += new System.Windows.Forms.KeyEventHandler(this.comboBox1_KeyDown);
+            // 
+            // label31
+            // 
+            this.label31.AutoSize = true;
+            this.label31.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label31.Location = new System.Drawing.Point(439, 30);
+            this.label31.Name = "label31";
+            this.label31.Size = new System.Drawing.Size(129, 17);
+            this.label31.TabIndex = 15;
+            this.label31.Text = "Nazwa użytkownika";
+            // 
+            // button12
+            // 
+            this.button12.BackColor = System.Drawing.Color.DarkBlue;
+            this.button12.ForeColor = System.Drawing.Color.White;
+            this.button12.Location = new System.Drawing.Point(1028, 363);
+            this.button12.Name = "button12";
+            this.button12.Size = new System.Drawing.Size(93, 36);
+            this.button12.TabIndex = 13;
+            this.button12.Text = "Dodaj komentarz";
+            this.button12.UseVisualStyleBackColor = false;
+            this.button12.Click += new System.EventHandler(this.button12_Click);
+            // 
+            // button11
+            // 
+            this.button11.BackColor = System.Drawing.Color.DarkBlue;
+            this.button11.ForeColor = System.Drawing.Color.White;
+            this.button11.Location = new System.Drawing.Point(848, 363);
+            this.button11.Name = "button11";
+            this.button11.Size = new System.Drawing.Size(93, 36);
+            this.button11.TabIndex = 12;
+            this.button11.Text = "Like";
+            this.button11.UseVisualStyleBackColor = false;
+            this.button11.Click += new System.EventHandler(this.button11_Click);
+            // 
+            // richTextBox2
+            // 
+            this.richTextBox2.Location = new System.Drawing.Point(841, 203);
+            this.richTextBox2.Name = "richTextBox2";
+            this.richTextBox2.Size = new System.Drawing.Size(282, 156);
+            this.richTextBox2.TabIndex = 11;
+            this.richTextBox2.Text = "";
+            this.richTextBox2.KeyDown += new System.Windows.Forms.KeyEventHandler(this.richTextBox2_KeyDown);
+            // 
+            // pictureBox2
+            // 
+            this.pictureBox2.Location = new System.Drawing.Point(334, 98);
+            this.pictureBox2.Name = "pictureBox2";
+            this.pictureBox2.Size = new System.Drawing.Size(376, 376);
+            this.pictureBox2.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.pictureBox2.TabIndex = 10;
+            this.pictureBox2.TabStop = false;
+            this.pictureBox2.Click += new System.EventHandler(this.pictureBox2_Click);
             // 
             // label24
             // 
             this.label24.AutoSize = true;
             this.label24.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.label24.Location = new System.Drawing.Point(584, 91);
+            this.label24.Location = new System.Drawing.Point(211, 71);
             this.label24.Name = "label24";
             this.label24.Size = new System.Drawing.Size(17, 19);
             this.label24.TabIndex = 9;
             this.label24.Text = "0";
             // 
-            // pictureBox2
+            // label23
             // 
-            this.pictureBox2.Location = new System.Drawing.Point(281, 117);
-            this.pictureBox2.Name = "pictureBox2";
-            this.pictureBox2.Size = new System.Drawing.Size(448, 448);
-            this.pictureBox2.TabIndex = 10;
-            this.pictureBox2.TabStop = false;
+            this.label23.AutoSize = true;
+            this.label23.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.label23.Location = new System.Drawing.Point(9, 70);
+            this.label23.Name = "label23";
+            this.label23.Size = new System.Drawing.Size(195, 19);
+            this.label23.TabIndex = 8;
+            this.label23.Text = "Pozostało do skomentowania: ";
             // 
-            // richTextBox2
+            // listBox1
             // 
-            this.richTextBox2.Location = new System.Drawing.Point(747, 175);
-            this.richTextBox2.Name = "richTextBox2";
-            this.richTextBox2.Size = new System.Drawing.Size(282, 156);
-            this.richTextBox2.TabIndex = 11;
-            this.richTextBox2.Text = "";
+            this.listBox1.FormattingEnabled = true;
+            this.listBox1.Location = new System.Drawing.Point(13, 92);
+            this.listBox1.Name = "listBox1";
+            this.listBox1.Size = new System.Drawing.Size(232, 472);
+            this.listBox1.TabIndex = 7;
+            this.listBox1.SelectedIndexChanged += new System.EventHandler(this.listBox1_SelectedIndexChanged);
             // 
-            // button11
+            // statusStrip1
             // 
-            this.button11.Location = new System.Drawing.Point(747, 337);
-            this.button11.Name = "button11";
-            this.button11.Size = new System.Drawing.Size(93, 36);
-            this.button11.TabIndex = 12;
-            this.button11.Text = "Like";
-            this.button11.UseVisualStyleBackColor = true;
-            this.button11.Click += new System.EventHandler(this.button11_Click);
+            this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStripStatusLabel1,
+            this.toolStripProgressBar1});
+            this.statusStrip1.Location = new System.Drawing.Point(0, 589);
+            this.statusStrip1.Name = "statusStrip1";
+            this.statusStrip1.Size = new System.Drawing.Size(1184, 22);
+            this.statusStrip1.TabIndex = 10;
+            this.statusStrip1.Text = "statusStrip1";
             // 
-            // button12
+            // toolStripStatusLabel1
             // 
-            this.button12.Location = new System.Drawing.Point(936, 337);
-            this.button12.Name = "button12";
-            this.button12.Size = new System.Drawing.Size(93, 36);
-            this.button12.TabIndex = 13;
-            this.button12.Text = "Dodaj komentarz";
-            this.button12.UseVisualStyleBackColor = true;
-            this.button12.Click += new System.EventHandler(this.button12_Click);
+            this.toolStripStatusLabel1.Name = "toolStripStatusLabel1";
+            this.toolStripStatusLabel1.Size = new System.Drawing.Size(146, 17);
+            this.toolStripStatusLabel1.Text = "Uruchamianie programu...";
             // 
-            // button13
+            // toolStripProgressBar1
             // 
-            this.button13.Location = new System.Drawing.Point(636, 83);
-            this.button13.Name = "button13";
-            this.button13.Size = new System.Drawing.Size(93, 28);
-            this.button13.TabIndex = 14;
-            this.button13.Text = ">>";
-            this.button13.UseVisualStyleBackColor = true;
-            this.button13.Click += new System.EventHandler(this.button13_Click);
+            this.toolStripProgressBar1.Name = "toolStripProgressBar1";
+            this.toolStripProgressBar1.Size = new System.Drawing.Size(100, 16);
+            this.toolStripProgressBar1.Visible = false;
+            // 
+            // label22
+            // 
+            this.label22.AutoSize = true;
+            this.label22.Font = new System.Drawing.Font("Segoe UI", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label22.Location = new System.Drawing.Point(343, 0);
+            this.label22.Name = "label22";
+            this.label22.Size = new System.Drawing.Size(352, 30);
+            this.label22.TabIndex = 6;
+            this.label22.Text = "Wybierz grupę i skomentuj zdjęcia";
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1084, 611);
+            this.ClientSize = new System.Drawing.Size(1184, 611);
+            this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.panel_hello);
             this.Controls.Add(this.panel_comments);
             this.Controls.Add(this.panel_telegram_login);
             this.Controls.Add(this.panel_telegram_chats);
-            this.Controls.Add(this.panel1);
+            this.Controls.Add(this.panel_liker_commenter);
             this.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Location = new System.Drawing.Point(10, 10);
             this.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.Name = "Form1";
             this.Text = "Tomesheq Instagram Auto Liker&Commenter";
+            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.Form1_FormClosed);
             this.panel_hello.ResumeLayout(false);
             this.panel_hello.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
@@ -683,10 +1058,15 @@
             this.panel_telegram_login.PerformLayout();
             this.panel_telegram_chats.ResumeLayout(false);
             this.panel_telegram_chats.PerformLayout();
-            this.panel1.ResumeLayout(false);
-            this.panel1.PerformLayout();
+            this.panel_liker_commenter.ResumeLayout(false);
+            this.panel_liker_commenter.PerformLayout();
+            this.groupBox1.ResumeLayout(false);
+            this.groupBox1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).EndInit();
+            this.statusStrip1.ResumeLayout(false);
+            this.statusStrip1.PerformLayout();
             this.ResumeLayout(false);
+            this.PerformLayout();
 
         }
 
@@ -732,9 +1112,8 @@
         private System.Windows.Forms.Button button7;
         private System.Windows.Forms.Button button9;
         private System.Windows.Forms.Button button8;
-        private System.Windows.Forms.Panel panel1;
+        private System.Windows.Forms.Panel panel_liker_commenter;
         private System.Windows.Forms.Button button10;
-        private System.Windows.Forms.Label label22;
         private System.Windows.Forms.Button button12;
         private System.Windows.Forms.Button button11;
         private System.Windows.Forms.RichTextBox richTextBox2;
@@ -742,7 +1121,38 @@
         private System.Windows.Forms.Label label24;
         private System.Windows.Forms.Label label23;
         private System.Windows.Forms.ListBox listBox1;
-        private System.Windows.Forms.Button button13;
+        private System.Windows.Forms.Label label29;
+        private System.Windows.Forms.Label label28;
+        private System.Windows.Forms.Button button14;
+        private System.Windows.Forms.TextBox textBox3;
+        private System.Windows.Forms.TextBox textBox2;
+        private System.Windows.Forms.Label label27;
+        private System.Windows.Forms.Label label26;
+        private System.Windows.Forms.Label label25;
+        private System.Windows.Forms.Button button15;
+        private System.Windows.Forms.Label label30;
+        private System.Windows.Forms.TextBox textBox4;
+        private System.Windows.Forms.Label label33;
+        private System.Windows.Forms.Label label32;
+        private System.Windows.Forms.ComboBox comboBox1;
+        private System.Windows.Forms.Label label31;
+        private System.Windows.Forms.CheckBox checkBox2;
+        private System.Windows.Forms.GroupBox groupBox1;
+        private System.Windows.Forms.Label label36;
+        private System.Windows.Forms.Label label35;
+        private System.Windows.Forms.Label label34;
+        private System.Windows.Forms.Button button16;
+        private System.Windows.Forms.Label label37;
+        private System.Windows.Forms.DateTimePicker dateTimePicker1;
+        private System.Windows.Forms.Label label38;
+        private System.Windows.Forms.Button button17;
+        private System.Windows.Forms.Label label39;
+        private System.Windows.Forms.CheckBox checkBox3;
+        private System.Windows.Forms.Label label40;
+        private System.Windows.Forms.StatusStrip statusStrip1;
+        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel1;
+        private System.Windows.Forms.ToolStripProgressBar toolStripProgressBar1;
+        private System.Windows.Forms.Label label22;
     }
 }
 
