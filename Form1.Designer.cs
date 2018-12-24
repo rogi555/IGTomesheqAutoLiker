@@ -81,13 +81,13 @@
             this.listView2 = new System.Windows.Forms.ListView();
             this.label18 = new System.Windows.Forms.Label();
             this.panel_liker_commenter = new System.Windows.Forms.Panel();
+            this.groupBox3 = new System.Windows.Forms.GroupBox();
             this.label40 = new System.Windows.Forms.Label();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.label22 = new System.Windows.Forms.Label();
             this.checkBox3 = new System.Windows.Forms.CheckBox();
             this.label39 = new System.Windows.Forms.Label();
             this.label38 = new System.Windows.Forms.Label();
-            this.button17 = new System.Windows.Forms.Button();
-            this.label37 = new System.Windows.Forms.Label();
-            this.dateTimePicker1 = new System.Windows.Forms.DateTimePicker();
             this.button16 = new System.Windows.Forms.Button();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.label36 = new System.Windows.Forms.Label();
@@ -98,7 +98,6 @@
             this.label33 = new System.Windows.Forms.Label();
             this.label32 = new System.Windows.Forms.Label();
             this.comboBox1 = new System.Windows.Forms.ComboBox();
-            this.label31 = new System.Windows.Forms.Label();
             this.button12 = new System.Windows.Forms.Button();
             this.button11 = new System.Windows.Forms.Button();
             this.richTextBox2 = new System.Windows.Forms.RichTextBox();
@@ -109,16 +108,30 @@
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripProgressBar1 = new System.Windows.Forms.ToolStripProgressBar();
-            this.label22 = new System.Windows.Forms.Label();
+            this.panel_choose_msg_starting_date = new System.Windows.Forms.Panel();
+            this.label31 = new System.Windows.Forms.Label();
+            this.button13 = new System.Windows.Forms.Button();
+            this.button17 = new System.Windows.Forms.Button();
+            this.label37 = new System.Windows.Forms.Label();
+            this.dateTimePicker1 = new System.Windows.Forms.DateTimePicker();
+            this.groupBox4 = new System.Windows.Forms.GroupBox();
+            this.groupBox5 = new System.Windows.Forms.GroupBox();
+            this.label41 = new System.Windows.Forms.Label();
+            this.label42 = new System.Windows.Forms.Label();
             this.panel_hello.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.panel_comments.SuspendLayout();
             this.panel_telegram_login.SuspendLayout();
             this.panel_telegram_chats.SuspendLayout();
             this.panel_liker_commenter.SuspendLayout();
+            this.groupBox3.SuspendLayout();
+            this.groupBox2.SuspendLayout();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
             this.statusStrip1.SuspendLayout();
+            this.panel_choose_msg_starting_date.SuspendLayout();
+            this.groupBox4.SuspendLayout();
+            this.groupBox5.SuspendLayout();
             this.SuspendLayout();
             // 
             // panel_hello
@@ -130,7 +143,7 @@
             this.panel_hello.Controls.Add(this.label2);
             this.panel_hello.Controls.Add(this.label1);
             this.panel_hello.Controls.Add(this.pictureBox1);
-            this.panel_hello.Location = new System.Drawing.Point(1155, 15);
+            this.panel_hello.Location = new System.Drawing.Point(15, 6);
             this.panel_hello.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.panel_hello.Name = "panel_hello";
             this.panel_hello.Size = new System.Drawing.Size(1154, 577);
@@ -140,7 +153,7 @@
             // 
             this.label8.AutoSize = true;
             this.label8.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label8.Location = new System.Drawing.Point(376, 331);
+            this.label8.Location = new System.Drawing.Point(426, 331);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(303, 21);
             this.label8.TabIndex = 6;
@@ -149,7 +162,7 @@
             // button1
             // 
             this.button1.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.button1.Location = new System.Drawing.Point(962, 531);
+            this.button1.Location = new System.Drawing.Point(1012, 531);
             this.button1.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(86, 33);
@@ -162,7 +175,7 @@
             // 
             this.label4.AutoSize = true;
             this.label4.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label4.Location = new System.Drawing.Point(328, 436);
+            this.label4.Location = new System.Drawing.Point(378, 436);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(432, 21);
             this.label4.TabIndex = 4;
@@ -172,7 +185,7 @@
             // 
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label3.Location = new System.Drawing.Point(178, 310);
+            this.label3.Location = new System.Drawing.Point(228, 310);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(708, 21);
             this.label3.TabIndex = 3;
@@ -183,7 +196,7 @@
             // 
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label2.Location = new System.Drawing.Point(158, 290);
+            this.label2.Location = new System.Drawing.Point(208, 290);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(755, 21);
             this.label2.TabIndex = 2;
@@ -194,7 +207,7 @@
             // 
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Corbel", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.Location = new System.Drawing.Point(451, 246);
+            this.label1.Location = new System.Drawing.Point(500, 246);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(150, 24);
             this.label1.TabIndex = 1;
@@ -203,7 +216,7 @@
             // pictureBox1
             // 
             this.pictureBox1.Image = global::IGTomesheq.Properties.Resources.seal;
-            this.pictureBox1.Location = new System.Drawing.Point(405, 25);
+            this.pictureBox1.Location = new System.Drawing.Point(455, 25);
             this.pictureBox1.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.pictureBox1.Name = "pictureBox1";
             this.pictureBox1.Size = new System.Drawing.Size(256, 191);
@@ -226,7 +239,7 @@
             this.panel_comments.Controls.Add(this.label6);
             this.panel_comments.Controls.Add(this.label5);
             this.panel_comments.Controls.Add(this.button2);
-            this.panel_comments.Location = new System.Drawing.Point(1155, 15);
+            this.panel_comments.Location = new System.Drawing.Point(15, 6);
             this.panel_comments.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.panel_comments.Name = "panel_comments";
             this.panel_comments.Size = new System.Drawing.Size(1154, 577);
@@ -235,7 +248,7 @@
             // button4
             // 
             this.button4.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.button4.Location = new System.Drawing.Point(415, 509);
+            this.button4.Location = new System.Drawing.Point(465, 509);
             this.button4.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.button4.Name = "button4";
             this.button4.Size = new System.Drawing.Size(100, 56);
@@ -248,7 +261,7 @@
             // 
             this.label13.AutoSize = true;
             this.label13.Font = new System.Drawing.Font("Segoe UI", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label13.Location = new System.Drawing.Point(137, 299);
+            this.label13.Location = new System.Drawing.Point(187, 299);
             this.label13.Name = "label13";
             this.label13.Size = new System.Drawing.Size(179, 20);
             this.label13.TabIndex = 16;
@@ -258,7 +271,7 @@
             // 
             this.label12.AutoSize = true;
             this.label12.Font = new System.Drawing.Font("Segoe UI", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label12.Location = new System.Drawing.Point(572, 299);
+            this.label12.Location = new System.Drawing.Point(622, 299);
             this.label12.Name = "label12";
             this.label12.Size = new System.Drawing.Size(157, 20);
             this.label12.TabIndex = 15;
@@ -267,7 +280,7 @@
             // listView1
             // 
             this.listView1.Font = new System.Drawing.Font("Segoe UI", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.listView1.Location = new System.Drawing.Point(51, 321);
+            this.listView1.Location = new System.Drawing.Point(101, 321);
             this.listView1.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.listView1.MultiSelect = false;
             this.listView1.Name = "listView1";
@@ -279,7 +292,7 @@
             // button3
             // 
             this.button3.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.button3.Location = new System.Drawing.Point(840, 402);
+            this.button3.Location = new System.Drawing.Point(890, 402);
             this.button3.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.button3.Name = "button3";
             this.button3.Size = new System.Drawing.Size(100, 56);
@@ -292,7 +305,7 @@
             // 
             this.label11.AutoSize = true;
             this.label11.Font = new System.Drawing.Font("Segoe UI", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label11.Location = new System.Drawing.Point(422, 240);
+            this.label11.Location = new System.Drawing.Point(472, 240);
             this.label11.Name = "label11";
             this.label11.Size = new System.Drawing.Size(204, 20);
             this.label11.TabIndex = 12;
@@ -302,7 +315,7 @@
             // 
             this.label10.AutoSize = true;
             this.label10.Font = new System.Drawing.Font("Segoe UI", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label10.Location = new System.Drawing.Point(18, 220);
+            this.label10.Location = new System.Drawing.Point(68, 220);
             this.label10.Name = "label10";
             this.label10.Size = new System.Drawing.Size(922, 20);
             this.label10.TabIndex = 11;
@@ -313,7 +326,7 @@
             // 
             this.label9.AutoSize = true;
             this.label9.Font = new System.Drawing.Font("Segoe UI", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label9.Location = new System.Drawing.Point(350, 173);
+            this.label9.Location = new System.Drawing.Point(400, 173);
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(363, 25);
             this.label9.TabIndex = 10;
@@ -323,7 +336,7 @@
             // 
             this.richTextBox1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.richTextBox1.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.richTextBox1.Location = new System.Drawing.Point(462, 321);
+            this.richTextBox1.Location = new System.Drawing.Point(512, 321);
             this.richTextBox1.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.richTextBox1.Name = "richTextBox1";
             this.richTextBox1.Size = new System.Drawing.Size(372, 135);
@@ -335,7 +348,7 @@
             // 
             this.label7.AutoSize = true;
             this.label7.Font = new System.Drawing.Font("Segoe UI", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label7.Location = new System.Drawing.Point(34, 147);
+            this.label7.Location = new System.Drawing.Point(84, 147);
             this.label7.Name = "label7";
             this.label7.Size = new System.Drawing.Size(985, 25);
             this.label7.TabIndex = 8;
@@ -346,7 +359,7 @@
             // 
             this.label6.AutoSize = true;
             this.label6.Font = new System.Drawing.Font("Segoe UI", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label6.Location = new System.Drawing.Point(26, 122);
+            this.label6.Location = new System.Drawing.Point(76, 122);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(1003, 25);
             this.label6.TabIndex = 7;
@@ -357,7 +370,7 @@
             // 
             this.label5.AutoSize = true;
             this.label5.Font = new System.Drawing.Font("Segoe UI", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label5.Location = new System.Drawing.Point(390, 48);
+            this.label5.Location = new System.Drawing.Point(440, 48);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(271, 32);
             this.label5.TabIndex = 6;
@@ -366,7 +379,7 @@
             // button2
             // 
             this.button2.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.button2.Location = new System.Drawing.Point(962, 531);
+            this.button2.Location = new System.Drawing.Point(1012, 531);
             this.button2.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(86, 33);
@@ -395,7 +408,7 @@
             this.panel_telegram_login.Controls.Add(this.label15);
             this.panel_telegram_login.Controls.Add(this.label14);
             this.panel_telegram_login.Controls.Add(this.button5);
-            this.panel_telegram_login.Location = new System.Drawing.Point(1155, 15);
+            this.panel_telegram_login.Location = new System.Drawing.Point(15, 6);
             this.panel_telegram_login.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.panel_telegram_login.Name = "panel_telegram_login";
             this.panel_telegram_login.Size = new System.Drawing.Size(1154, 577);
@@ -405,7 +418,7 @@
             // button15
             // 
             this.button15.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.button15.Location = new System.Drawing.Point(656, 80);
+            this.button15.Location = new System.Drawing.Point(706, 80);
             this.button15.Name = "button15";
             this.button15.Size = new System.Drawing.Size(158, 27);
             this.button15.TabIndex = 23;
@@ -417,7 +430,7 @@
             // 
             this.label30.AutoSize = true;
             this.label30.Font = new System.Drawing.Font("Segoe UI", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label30.Location = new System.Drawing.Point(350, 84);
+            this.label30.Location = new System.Drawing.Point(400, 84);
             this.label30.Name = "label30";
             this.label30.Size = new System.Drawing.Size(116, 20);
             this.label30.TabIndex = 22;
@@ -426,7 +439,7 @@
             // textBox4
             // 
             this.textBox4.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textBox4.Location = new System.Drawing.Point(472, 82);
+            this.textBox4.Location = new System.Drawing.Point(522, 82);
             this.textBox4.Name = "textBox4";
             this.textBox4.Size = new System.Drawing.Size(178, 25);
             this.textBox4.TabIndex = 21;
@@ -437,7 +450,7 @@
             this.label29.AutoSize = true;
             this.label29.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label29.ForeColor = System.Drawing.Color.Red;
-            this.label29.Location = new System.Drawing.Point(428, 288);
+            this.label29.Location = new System.Drawing.Point(478, 288);
             this.label29.Name = "label29";
             this.label29.Size = new System.Drawing.Size(250, 21);
             this.label29.TabIndex = 20;
@@ -449,7 +462,7 @@
             this.label28.AutoSize = true;
             this.label28.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label28.ForeColor = System.Drawing.Color.DarkOliveGreen;
-            this.label28.Location = new System.Drawing.Point(376, 280);
+            this.label28.Location = new System.Drawing.Point(426, 280);
             this.label28.Name = "label28";
             this.label28.Size = new System.Drawing.Size(307, 21);
             this.label28.TabIndex = 19;
@@ -459,7 +472,7 @@
             // button14
             // 
             this.button14.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.button14.Location = new System.Drawing.Point(666, 302);
+            this.button14.Location = new System.Drawing.Point(716, 302);
             this.button14.Name = "button14";
             this.button14.Size = new System.Drawing.Size(75, 27);
             this.button14.TabIndex = 18;
@@ -470,7 +483,7 @@
             // textBox3
             // 
             this.textBox3.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textBox3.Location = new System.Drawing.Point(472, 302);
+            this.textBox3.Location = new System.Drawing.Point(522, 302);
             this.textBox3.Name = "textBox3";
             this.textBox3.PasswordChar = '*';
             this.textBox3.Size = new System.Drawing.Size(178, 25);
@@ -480,7 +493,7 @@
             // textBox2
             // 
             this.textBox2.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textBox2.Location = new System.Drawing.Point(472, 266);
+            this.textBox2.Location = new System.Drawing.Point(522, 266);
             this.textBox2.Name = "textBox2";
             this.textBox2.Size = new System.Drawing.Size(178, 25);
             this.textBox2.TabIndex = 16;
@@ -490,7 +503,7 @@
             // 
             this.label27.AutoSize = true;
             this.label27.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.label27.Location = new System.Drawing.Point(420, 305);
+            this.label27.Location = new System.Drawing.Point(470, 305);
             this.label27.Name = "label27";
             this.label27.Size = new System.Drawing.Size(47, 19);
             this.label27.TabIndex = 15;
@@ -500,7 +513,7 @@
             // 
             this.label26.AutoSize = true;
             this.label26.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.label26.Location = new System.Drawing.Point(420, 269);
+            this.label26.Location = new System.Drawing.Point(470, 269);
             this.label26.Name = "label26";
             this.label26.Size = new System.Drawing.Size(46, 19);
             this.label26.TabIndex = 14;
@@ -510,7 +523,7 @@
             // 
             this.label25.AutoSize = true;
             this.label25.Font = new System.Drawing.Font("Segoe UI", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label25.Location = new System.Drawing.Point(374, 200);
+            this.label25.Location = new System.Drawing.Point(424, 200);
             this.label25.Name = "label25";
             this.label25.Size = new System.Drawing.Size(312, 32);
             this.label25.TabIndex = 13;
@@ -520,7 +533,7 @@
             // 
             this.label17.AutoSize = true;
             this.label17.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label17.Location = new System.Drawing.Point(278, 423);
+            this.label17.Location = new System.Drawing.Point(328, 423);
             this.label17.Name = "label17";
             this.label17.Size = new System.Drawing.Size(500, 17);
             this.label17.TabIndex = 12;
@@ -533,7 +546,7 @@
             this.label16.AutoSize = true;
             this.label16.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label16.ForeColor = System.Drawing.Color.DarkOliveGreen;
-            this.label16.Location = new System.Drawing.Point(385, 96);
+            this.label16.Location = new System.Drawing.Point(435, 96);
             this.label16.Name = "label16";
             this.label16.Size = new System.Drawing.Size(301, 21);
             this.label16.TabIndex = 11;
@@ -543,7 +556,7 @@
             // button6
             // 
             this.button6.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.button6.Location = new System.Drawing.Point(656, 113);
+            this.button6.Location = new System.Drawing.Point(706, 113);
             this.button6.Name = "button6";
             this.button6.Size = new System.Drawing.Size(75, 27);
             this.button6.TabIndex = 10;
@@ -555,7 +568,7 @@
             // textBox1
             // 
             this.textBox1.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textBox1.Location = new System.Drawing.Point(472, 113);
+            this.textBox1.Location = new System.Drawing.Point(522, 113);
             this.textBox1.Name = "textBox1";
             this.textBox1.Size = new System.Drawing.Size(178, 25);
             this.textBox1.TabIndex = 9;
@@ -566,7 +579,7 @@
             // 
             this.label15.AutoSize = true;
             this.label15.Font = new System.Drawing.Font("Segoe UI", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label15.Location = new System.Drawing.Point(266, 115);
+            this.label15.Location = new System.Drawing.Point(316, 115);
             this.label15.Name = "label15";
             this.label15.Size = new System.Drawing.Size(200, 20);
             this.label15.TabIndex = 8;
@@ -577,7 +590,7 @@
             // 
             this.label14.AutoSize = true;
             this.label14.Font = new System.Drawing.Font("Segoe UI", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label14.Location = new System.Drawing.Point(374, 25);
+            this.label14.Location = new System.Drawing.Point(424, 25);
             this.label14.Name = "label14";
             this.label14.Size = new System.Drawing.Size(301, 32);
             this.label14.TabIndex = 7;
@@ -586,7 +599,7 @@
             // button5
             // 
             this.button5.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.button5.Location = new System.Drawing.Point(962, 531);
+            this.button5.Location = new System.Drawing.Point(1012, 531);
             this.button5.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.button5.Name = "button5";
             this.button5.Size = new System.Drawing.Size(86, 33);
@@ -606,15 +619,15 @@
             this.panel_telegram_chats.Controls.Add(this.label19);
             this.panel_telegram_chats.Controls.Add(this.listView2);
             this.panel_telegram_chats.Controls.Add(this.label18);
-            this.panel_telegram_chats.Location = new System.Drawing.Point(1154, 15);
+            this.panel_telegram_chats.Location = new System.Drawing.Point(14, 15);
             this.panel_telegram_chats.Name = "panel_telegram_chats";
-            this.panel_telegram_chats.Size = new System.Drawing.Size(1060, 577);
+            this.panel_telegram_chats.Size = new System.Drawing.Size(1160, 577);
             this.panel_telegram_chats.TabIndex = 8;
             this.panel_telegram_chats.Visible = false;
             // 
             // button9
             // 
-            this.button9.Location = new System.Drawing.Point(484, 363);
+            this.button9.Location = new System.Drawing.Point(534, 363);
             this.button9.Name = "button9";
             this.button9.Size = new System.Drawing.Size(75, 23);
             this.button9.TabIndex = 8;
@@ -624,7 +637,7 @@
             // 
             // button8
             // 
-            this.button8.Location = new System.Drawing.Point(484, 334);
+            this.button8.Location = new System.Drawing.Point(534, 334);
             this.button8.Name = "button8";
             this.button8.Size = new System.Drawing.Size(75, 23);
             this.button8.TabIndex = 7;
@@ -635,7 +648,7 @@
             // button7
             // 
             this.button7.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.button7.Location = new System.Drawing.Point(962, 531);
+            this.button7.Location = new System.Drawing.Point(1012, 531);
             this.button7.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.button7.Name = "button7";
             this.button7.Size = new System.Drawing.Size(86, 33);
@@ -648,7 +661,7 @@
             // 
             this.label21.AutoSize = true;
             this.label21.Font = new System.Drawing.Font("Segoe UI", 9.5F);
-            this.label21.Location = new System.Drawing.Point(28, 122);
+            this.label21.Location = new System.Drawing.Point(78, 122);
             this.label21.Name = "label21";
             this.label21.Size = new System.Drawing.Size(983, 17);
             this.label21.TabIndex = 5;
@@ -659,7 +672,7 @@
             // label20
             // 
             this.label20.AutoSize = true;
-            this.label20.Location = new System.Drawing.Point(684, 182);
+            this.label20.Location = new System.Drawing.Point(734, 182);
             this.label20.Name = "label20";
             this.label20.Size = new System.Drawing.Size(117, 13);
             this.label20.TabIndex = 4;
@@ -667,7 +680,7 @@
             // 
             // listView3
             // 
-            this.listView3.Location = new System.Drawing.Point(576, 201);
+            this.listView3.Location = new System.Drawing.Point(626, 201);
             this.listView3.MultiSelect = false;
             this.listView3.Name = "listView3";
             this.listView3.Size = new System.Drawing.Size(326, 352);
@@ -679,7 +692,7 @@
             // label19
             // 
             this.label19.AutoSize = true;
-            this.label19.Location = new System.Drawing.Point(250, 182);
+            this.label19.Location = new System.Drawing.Point(300, 182);
             this.label19.Name = "label19";
             this.label19.Size = new System.Drawing.Size(115, 13);
             this.label19.TabIndex = 2;
@@ -687,7 +700,7 @@
             // 
             // listView2
             // 
-            this.listView2.Location = new System.Drawing.Point(141, 201);
+            this.listView2.Location = new System.Drawing.Point(191, 201);
             this.listView2.MultiSelect = false;
             this.listView2.Name = "listView2";
             this.listView2.Size = new System.Drawing.Size(326, 352);
@@ -700,7 +713,7 @@
             // 
             this.label18.AutoSize = true;
             this.label18.Font = new System.Drawing.Font("Segoe UI", 16F, System.Drawing.FontStyle.Bold);
-            this.label18.Location = new System.Drawing.Point(426, 56);
+            this.label18.Location = new System.Drawing.Point(476, 56);
             this.label18.Name = "label18";
             this.label18.Size = new System.Drawing.Size(175, 30);
             this.label18.TabIndex = 0;
@@ -708,19 +721,16 @@
             // 
             // panel_liker_commenter
             // 
-            this.panel_liker_commenter.Controls.Add(this.label40);
+            this.panel_liker_commenter.Controls.Add(this.groupBox3);
+            this.panel_liker_commenter.Controls.Add(this.groupBox2);
             this.panel_liker_commenter.Controls.Add(this.checkBox3);
             this.panel_liker_commenter.Controls.Add(this.label39);
             this.panel_liker_commenter.Controls.Add(this.label38);
-            this.panel_liker_commenter.Controls.Add(this.button17);
-            this.panel_liker_commenter.Controls.Add(this.label37);
-            this.panel_liker_commenter.Controls.Add(this.dateTimePicker1);
             this.panel_liker_commenter.Controls.Add(this.button16);
             this.panel_liker_commenter.Controls.Add(this.groupBox1);
             this.panel_liker_commenter.Controls.Add(this.label33);
             this.panel_liker_commenter.Controls.Add(this.label32);
             this.panel_liker_commenter.Controls.Add(this.comboBox1);
-            this.panel_liker_commenter.Controls.Add(this.label31);
             this.panel_liker_commenter.Controls.Add(this.button12);
             this.panel_liker_commenter.Controls.Add(this.button11);
             this.panel_liker_commenter.Controls.Add(this.richTextBox2);
@@ -728,28 +738,59 @@
             this.panel_liker_commenter.Controls.Add(this.label24);
             this.panel_liker_commenter.Controls.Add(this.label23);
             this.panel_liker_commenter.Controls.Add(this.listBox1);
-            this.panel_liker_commenter.Controls.Add(this.label22);
             this.panel_liker_commenter.Location = new System.Drawing.Point(15, 15);
             this.panel_liker_commenter.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.panel_liker_commenter.Name = "panel_liker_commenter";
-            this.panel_liker_commenter.Size = new System.Drawing.Size(1154, 577);
+            this.panel_liker_commenter.Size = new System.Drawing.Size(1154, 581);
             this.panel_liker_commenter.TabIndex = 9;
             this.panel_liker_commenter.Visible = false;
+            // 
+            // groupBox3
+            // 
+            this.groupBox3.Controls.Add(this.label40);
+            this.groupBox3.Font = new System.Drawing.Font("Segoe UI Semibold", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.groupBox3.Location = new System.Drawing.Point(254, 472);
+            this.groupBox3.Name = "groupBox3";
+            this.groupBox3.Size = new System.Drawing.Size(573, 108);
+            this.groupBox3.TabIndex = 31;
+            this.groupBox3.TabStop = false;
+            this.groupBox3.Text = "Opis postu na Insta";
             // 
             // label40
             // 
             this.label40.Font = new System.Drawing.Font("Segoe UI", 8F);
-            this.label40.Location = new System.Drawing.Point(251, 478);
+            this.label40.Location = new System.Drawing.Point(6, 15);
             this.label40.Name = "label40";
-            this.label40.Size = new System.Drawing.Size(783, 79);
+            this.label40.Size = new System.Drawing.Size(561, 90);
             this.label40.TabIndex = 29;
-            this.label40.Text = "Opis postu...";
+            this.label40.Text = "Pobieram opis...";
             this.label40.Click += new System.EventHandler(this.Label40_Click);
+            // 
+            // groupBox2
+            // 
+            this.groupBox2.Controls.Add(this.label22);
+            this.groupBox2.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.groupBox2.Location = new System.Drawing.Point(254, 417);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(573, 53);
+            this.groupBox2.TabIndex = 30;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = "Wiadomość Telegram";
+            // 
+            // label22
+            // 
+            this.label22.Font = new System.Drawing.Font("Segoe UI", 8F);
+            this.label22.Location = new System.Drawing.Point(6, 15);
+            this.label22.Name = "label22";
+            this.label22.Size = new System.Drawing.Size(561, 32);
+            this.label22.TabIndex = 30;
+            this.label22.Text = "Pobieram wiadomość...";
+            this.label22.Click += new System.EventHandler(this.label22_Click);
             // 
             // checkBox3
             // 
             this.checkBox3.AutoSize = true;
-            this.checkBox3.Location = new System.Drawing.Point(852, 403);
+            this.checkBox3.Location = new System.Drawing.Point(805, 57);
             this.checkBox3.Name = "checkBox3";
             this.checkBox3.Size = new System.Drawing.Size(128, 17);
             this.checkBox3.TabIndex = 28;
@@ -761,7 +802,7 @@
             // 
             this.label39.AutoSize = true;
             this.label39.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.label39.Location = new System.Drawing.Point(438, 73);
+            this.label39.Location = new System.Drawing.Point(801, 34);
             this.label39.Name = "label39";
             this.label39.Size = new System.Drawing.Size(136, 19);
             this.label39.TabIndex = 27;
@@ -771,48 +812,16 @@
             // 
             this.label38.Font = new System.Drawing.Font("Segoe UI Semibold", 12F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Italic))), System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label38.ForeColor = System.Drawing.Color.DarkBlue;
-            this.label38.Location = new System.Drawing.Point(393, 48);
+            this.label38.Location = new System.Drawing.Point(409, 9);
             this.label38.Name = "label38";
             this.label38.Size = new System.Drawing.Size(216, 21);
             this.label38.TabIndex = 26;
             this.label38.Text = "InstaLogin";
             this.label38.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
-            // button17
-            // 
-            this.button17.Enabled = false;
-            this.button17.Location = new System.Drawing.Point(220, 41);
-            this.button17.Name = "button17";
-            this.button17.Size = new System.Drawing.Size(75, 22);
-            this.button17.TabIndex = 25;
-            this.button17.Text = "Szukaj";
-            this.button17.UseVisualStyleBackColor = true;
-            this.button17.Click += new System.EventHandler(this.button17_Click);
-            // 
-            // label37
-            // 
-            this.label37.AutoSize = true;
-            this.label37.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.label37.Location = new System.Drawing.Point(11, 20);
-            this.label37.Name = "label37";
-            this.label37.Size = new System.Drawing.Size(183, 19);
-            this.label37.TabIndex = 24;
-            this.label37.Text = "Szukaj postów dodanych po:";
-            // 
-            // dateTimePicker1
-            // 
-            this.dateTimePicker1.CustomFormat = "dd/MM/yyyy HH:mm:ss";
-            this.dateTimePicker1.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.dateTimePicker1.Location = new System.Drawing.Point(15, 41);
-            this.dateTimePicker1.Name = "dateTimePicker1";
-            this.dateTimePicker1.Size = new System.Drawing.Size(200, 22);
-            this.dateTimePicker1.TabIndex = 23;
-            this.dateTimePicker1.ValueChanged += new System.EventHandler(this.dateTimePicker1_ValueChanged);
-            this.dateTimePicker1.KeyDown += new System.Windows.Forms.KeyEventHandler(this.dateTimePicker1_KeyDown);
-            // 
             // button16
             // 
-            this.button16.Location = new System.Drawing.Point(947, 372);
+            this.button16.Location = new System.Drawing.Point(907, 341);
             this.button16.Name = "button16";
             this.button16.Size = new System.Drawing.Size(75, 23);
             this.button16.TabIndex = 22;
@@ -827,7 +836,7 @@
             this.groupBox1.Controls.Add(this.label34);
             this.groupBox1.Controls.Add(this.button10);
             this.groupBox1.Controls.Add(this.checkBox2);
-            this.groupBox1.Location = new System.Drawing.Point(833, 432);
+            this.groupBox1.Location = new System.Drawing.Point(833, 417);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Size = new System.Drawing.Size(300, 121);
             this.groupBox1.TabIndex = 21;
@@ -888,7 +897,7 @@
             // 
             this.label33.AutoSize = true;
             this.label33.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.label33.Location = new System.Drawing.Point(841, 180);
+            this.label33.Location = new System.Drawing.Point(801, 149);
             this.label33.Name = "label33";
             this.label33.Size = new System.Drawing.Size(120, 19);
             this.label33.TabIndex = 18;
@@ -898,7 +907,7 @@
             // 
             this.label32.AutoSize = true;
             this.label32.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.label32.Location = new System.Drawing.Point(841, 128);
+            this.label32.Location = new System.Drawing.Point(801, 97);
             this.label32.Name = "label32";
             this.label32.Size = new System.Drawing.Size(165, 19);
             this.label32.TabIndex = 17;
@@ -908,28 +917,18 @@
             // 
             this.comboBox1.Font = new System.Drawing.Font("Segoe UI", 10F);
             this.comboBox1.FormattingEnabled = true;
-            this.comboBox1.Location = new System.Drawing.Point(841, 150);
+            this.comboBox1.Location = new System.Drawing.Point(801, 119);
             this.comboBox1.Name = "comboBox1";
             this.comboBox1.Size = new System.Drawing.Size(270, 25);
             this.comboBox1.TabIndex = 16;
             this.comboBox1.SelectedIndexChanged += new System.EventHandler(this.comboBox1_SelectedIndexChanged);
             this.comboBox1.KeyDown += new System.Windows.Forms.KeyEventHandler(this.comboBox1_KeyDown);
             // 
-            // label31
-            // 
-            this.label31.AutoSize = true;
-            this.label31.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label31.Location = new System.Drawing.Point(439, 30);
-            this.label31.Name = "label31";
-            this.label31.Size = new System.Drawing.Size(129, 17);
-            this.label31.TabIndex = 15;
-            this.label31.Text = "Nazwa użytkownika";
-            // 
             // button12
             // 
             this.button12.BackColor = System.Drawing.Color.DarkBlue;
             this.button12.ForeColor = System.Drawing.Color.White;
-            this.button12.Location = new System.Drawing.Point(1028, 363);
+            this.button12.Location = new System.Drawing.Point(988, 332);
             this.button12.Name = "button12";
             this.button12.Size = new System.Drawing.Size(93, 36);
             this.button12.TabIndex = 13;
@@ -941,7 +940,7 @@
             // 
             this.button11.BackColor = System.Drawing.Color.DarkBlue;
             this.button11.ForeColor = System.Drawing.Color.White;
-            this.button11.Location = new System.Drawing.Point(848, 363);
+            this.button11.Location = new System.Drawing.Point(808, 332);
             this.button11.Name = "button11";
             this.button11.Size = new System.Drawing.Size(93, 36);
             this.button11.TabIndex = 12;
@@ -951,7 +950,7 @@
             // 
             // richTextBox2
             // 
-            this.richTextBox2.Location = new System.Drawing.Point(841, 203);
+            this.richTextBox2.Location = new System.Drawing.Point(801, 172);
             this.richTextBox2.Name = "richTextBox2";
             this.richTextBox2.Size = new System.Drawing.Size(282, 156);
             this.richTextBox2.TabIndex = 11;
@@ -960,7 +959,7 @@
             // 
             // pictureBox2
             // 
-            this.pictureBox2.Location = new System.Drawing.Point(334, 98);
+            this.pictureBox2.Location = new System.Drawing.Point(332, 33);
             this.pictureBox2.Name = "pictureBox2";
             this.pictureBox2.Size = new System.Drawing.Size(376, 376);
             this.pictureBox2.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
@@ -993,7 +992,7 @@
             this.listBox1.FormattingEnabled = true;
             this.listBox1.Location = new System.Drawing.Point(13, 92);
             this.listBox1.Name = "listBox1";
-            this.listBox1.Size = new System.Drawing.Size(232, 472);
+            this.listBox1.Size = new System.Drawing.Size(232, 316);
             this.listBox1.TabIndex = 7;
             this.listBox1.SelectedIndexChanged += new System.EventHandler(this.listBox1_SelectedIndexChanged);
             // 
@@ -1020,21 +1019,117 @@
             this.toolStripProgressBar1.Size = new System.Drawing.Size(100, 16);
             this.toolStripProgressBar1.Visible = false;
             // 
-            // label22
+            // panel_choose_msg_starting_date
             // 
-            this.label22.AutoSize = true;
-            this.label22.Font = new System.Drawing.Font("Segoe UI", 15.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label22.Location = new System.Drawing.Point(343, 0);
-            this.label22.Name = "label22";
-            this.label22.Size = new System.Drawing.Size(352, 30);
-            this.label22.TabIndex = 6;
-            this.label22.Text = "Wybierz grupę i skomentuj zdjęcia";
+            this.panel_choose_msg_starting_date.Controls.Add(this.groupBox5);
+            this.panel_choose_msg_starting_date.Controls.Add(this.groupBox4);
+            this.panel_choose_msg_starting_date.Controls.Add(this.button13);
+            this.panel_choose_msg_starting_date.Controls.Add(this.label31);
+            this.panel_choose_msg_starting_date.Location = new System.Drawing.Point(15, 8);
+            this.panel_choose_msg_starting_date.Name = "panel_choose_msg_starting_date";
+            this.panel_choose_msg_starting_date.Size = new System.Drawing.Size(1154, 581);
+            this.panel_choose_msg_starting_date.TabIndex = 11;
+            this.panel_choose_msg_starting_date.Visible = false;
+            // 
+            // label31
+            // 
+            this.label31.AutoSize = true;
+            this.label31.Font = new System.Drawing.Font("Segoe UI", 14F);
+            this.label31.Location = new System.Drawing.Point(419, 34);
+            this.label31.Name = "label31";
+            this.label31.Size = new System.Drawing.Size(318, 25);
+            this.label31.TabIndex = 0;
+            this.label31.Text = "Wybierz od kiedy mam pobrać posty";
+            // 
+            // button13
+            // 
+            this.button13.Font = new System.Drawing.Font("Segoe UI", 12F);
+            this.button13.Location = new System.Drawing.Point(1012, 531);
+            this.button13.Name = "button13";
+            this.button13.Size = new System.Drawing.Size(86, 33);
+            this.button13.TabIndex = 1;
+            this.button13.Text = "Dalej";
+            this.button13.UseVisualStyleBackColor = true;
+            this.button13.Click += new System.EventHandler(this.button13_Click);
+            // 
+            // button17
+            // 
+            this.button17.Enabled = false;
+            this.button17.Location = new System.Drawing.Point(228, 63);
+            this.button17.Name = "button17";
+            this.button17.Size = new System.Drawing.Size(75, 22);
+            this.button17.TabIndex = 28;
+            this.button17.Text = "Szukaj";
+            this.button17.UseVisualStyleBackColor = true;
+            // 
+            // label37
+            // 
+            this.label37.AutoSize = true;
+            this.label37.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.label37.Location = new System.Drawing.Point(19, 42);
+            this.label37.Name = "label37";
+            this.label37.Size = new System.Drawing.Size(183, 19);
+            this.label37.TabIndex = 27;
+            this.label37.Text = "Szukaj postów dodanych po:";
+            // 
+            // dateTimePicker1
+            // 
+            this.dateTimePicker1.CustomFormat = "dd/MM/yyyy HH:mm:ss";
+            this.dateTimePicker1.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
+            this.dateTimePicker1.Location = new System.Drawing.Point(23, 63);
+            this.dateTimePicker1.Name = "dateTimePicker1";
+            this.dateTimePicker1.Size = new System.Drawing.Size(200, 22);
+            this.dateTimePicker1.TabIndex = 26;
+            // 
+            // groupBox4
+            // 
+            this.groupBox4.Controls.Add(this.dateTimePicker1);
+            this.groupBox4.Controls.Add(this.button17);
+            this.groupBox4.Controls.Add(this.label37);
+            this.groupBox4.Location = new System.Drawing.Point(155, 120);
+            this.groupBox4.Name = "groupBox4";
+            this.groupBox4.Size = new System.Drawing.Size(326, 120);
+            this.groupBox4.TabIndex = 29;
+            this.groupBox4.TabStop = false;
+            this.groupBox4.Text = "Wprowadź datę samemu";
+            // 
+            // groupBox5
+            // 
+            this.groupBox5.Controls.Add(this.label42);
+            this.groupBox5.Controls.Add(this.label41);
+            this.groupBox5.Location = new System.Drawing.Point(618, 120);
+            this.groupBox5.Name = "groupBox5";
+            this.groupBox5.Size = new System.Drawing.Size(406, 383);
+            this.groupBox5.TabIndex = 30;
+            this.groupBox5.TabStop = false;
+            this.groupBox5.Text = "Po ostatnio skomentowanym poście";
+            // 
+            // label41
+            // 
+            this.label41.AutoSize = true;
+            this.label41.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label41.Location = new System.Drawing.Point(25, 30);
+            this.label41.Name = "label41";
+            this.label41.Size = new System.Drawing.Size(124, 13);
+            this.label41.TabIndex = 0;
+            this.label41.Text = "Nazwa grupy wsparcia";
+            // 
+            // label42
+            // 
+            this.label42.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label42.Location = new System.Drawing.Point(250, 19);
+            this.label42.Name = "label42";
+            this.label42.Size = new System.Drawing.Size(148, 42);
+            this.label42.TabIndex = 1;
+            this.label42.Text = "Data ostatnio skomentowanego postu";
+            this.label42.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1184, 611);
+            this.Controls.Add(this.panel_choose_msg_starting_date);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.panel_hello);
             this.Controls.Add(this.panel_comments);
@@ -1060,11 +1155,19 @@
             this.panel_telegram_chats.PerformLayout();
             this.panel_liker_commenter.ResumeLayout(false);
             this.panel_liker_commenter.PerformLayout();
+            this.groupBox3.ResumeLayout(false);
+            this.groupBox2.ResumeLayout(false);
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).EndInit();
             this.statusStrip1.ResumeLayout(false);
             this.statusStrip1.PerformLayout();
+            this.panel_choose_msg_starting_date.ResumeLayout(false);
+            this.panel_choose_msg_starting_date.PerformLayout();
+            this.groupBox4.ResumeLayout(false);
+            this.groupBox4.PerformLayout();
+            this.groupBox5.ResumeLayout(false);
+            this.groupBox5.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -1135,24 +1238,32 @@
         private System.Windows.Forms.Label label33;
         private System.Windows.Forms.Label label32;
         private System.Windows.Forms.ComboBox comboBox1;
-        private System.Windows.Forms.Label label31;
         private System.Windows.Forms.CheckBox checkBox2;
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.Label label36;
         private System.Windows.Forms.Label label35;
         private System.Windows.Forms.Label label34;
         private System.Windows.Forms.Button button16;
-        private System.Windows.Forms.Label label37;
-        private System.Windows.Forms.DateTimePicker dateTimePicker1;
         private System.Windows.Forms.Label label38;
-        private System.Windows.Forms.Button button17;
         private System.Windows.Forms.Label label39;
         private System.Windows.Forms.CheckBox checkBox3;
         private System.Windows.Forms.Label label40;
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel1;
         private System.Windows.Forms.ToolStripProgressBar toolStripProgressBar1;
+        private System.Windows.Forms.GroupBox groupBox3;
+        private System.Windows.Forms.GroupBox groupBox2;
         private System.Windows.Forms.Label label22;
+        private System.Windows.Forms.Panel panel_choose_msg_starting_date;
+        private System.Windows.Forms.Button button13;
+        private System.Windows.Forms.Label label31;
+        private System.Windows.Forms.GroupBox groupBox5;
+        private System.Windows.Forms.GroupBox groupBox4;
+        private System.Windows.Forms.DateTimePicker dateTimePicker1;
+        private System.Windows.Forms.Button button17;
+        private System.Windows.Forms.Label label37;
+        private System.Windows.Forms.Label label42;
+        private System.Windows.Forms.Label label41;
     }
 }
 

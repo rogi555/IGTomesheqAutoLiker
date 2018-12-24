@@ -54,6 +54,9 @@ namespace IGTomesheqAutoLiker
 
         List<SupportGroup> support_groups;
 
+        private List<Label> date_support_groups;
+        private List<Label> date_support_groups_last_post_dates;
+
         private static IInstaApi _instaApi;
 
         public Form1()
@@ -599,10 +602,13 @@ namespace IGTomesheqAutoLiker
                         channel_index++;
                     }
 
-                    // usuwanie nieuzywanych channeli z pamieci [LIFO]
-                    foreach (int index in indicies_to_be_deleted)
+                    if (!init_filtering)
                     {
-                        channels.RemoveAt(index);
+                        // usuwanie nieuzywanych channeli z pamieci [LIFO]
+                        foreach (int index in indicies_to_be_deleted)
+                        {
+                            channels.RemoveAt(index);
+                        } 
                     }
                 }
                 catch (Exception ex)
@@ -734,9 +740,11 @@ namespace IGTomesheqAutoLiker
             if (has_nulls)
             {
                 // inicjalizacja kolejnego ekranu
-                InitLikeCommenterPanel(true);
+                InitChooseDate();
+                panel_choose_msg_starting_date.Show();
 
-                panel_liker_commenter.Show();
+                //InitLikeCommenterPanel(/*true*/);
+                //panel_liker_commenter.Show();
 
                 MessageBox.Show("Przynajmniej jedna z grup wsparcia nie została jeszcze ani razu skomentowana - nad listą grup wsparcia pojawił się kalendarzyk z przyciskiem szukaj. Wybierz datę i godzinę od której mają zostać pobrane posty i kliknij szukaj.");
                 this.listBox1.Enabled = false;
@@ -760,6 +768,11 @@ namespace IGTomesheqAutoLiker
             DownloadPhotosFromTelegramDialogs();
             this.toolStripStatusLabel1.Text = "Wszystkie InstaPosty zostały pobrane! Możesz teraz komentować!";
             this.Refresh();
+
+            // ukrywa wyszukiwanie po dacie
+            //label37.Hide();
+            //dateTimePicker1.Hide();
+            //button17.Hide();
         }
 
         /* Po tej metodzie w support_gourps[i].GroupMessages są już tylko wiadomości zawierające linki do zdjęć */
@@ -1176,8 +1189,10 @@ namespace IGTomesheqAutoLiker
         {
             if (listView2.SelectedIndices.Count > 0)
             {
+                // wyswietl na liscie grup wsparcia
                 listView3.Items.Add(listView2.SelectedItems[0].Text);
 
+                // dodaj do bazy danych
                 using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
                 {
                     m_dbConnection.Open();
@@ -1187,6 +1202,10 @@ namespace IGTomesheqAutoLiker
                     m_dbConnection.Close(); 
                 }
 
+                // dodaj do listy grup wsparcia w logice programu
+                support_groups.Add(new SupportGroup(listView2.SelectedItems[0].Text));
+
+                // usun ze starej listy
                 listView2.SelectedItems[0].Remove();
             }
         }
@@ -1214,9 +1233,88 @@ namespace IGTomesheqAutoLiker
 
         /* --- |SCREEN Z GRUPAMI WSPARCIA TELEGRAMA| --- */
 
+        /* --- SCREEN WYBORU DATY --- */
+        
+        // button dalej na ekranie z wyborem daty granicznej postu
+        private void button13_Click(object sender, EventArgs e)
+        {
+            // schowaj biezacy panel
+            panel_choose_msg_starting_date.Hide();
+
+            // zainicjuj kolejny screen
+            InitLikeCommenterPanel();
+
+            // pokaz kolejny screen
+            panel_liker_commenter.Show();
+        }
+
+        private void InitChooseDate()
+        {
+            // zainicjuj labele
+            date_support_groups = new List<Label>();
+            date_support_groups_last_post_dates = new List<Label>();
+
+            // pobierz liste grup wsparcia
+            using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
+            {
+                m_dbConnection.Open();
+                string sql = "SELECT * FROM support_group_names";
+                SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+                SQLiteDataReader reader = command.ExecuteReader();
+                int i = 0;
+                while (reader.Read())
+                {
+                    CreateDateLabels(i, reader.GetString(1), reader.GetInt32(3));
+                    i++;
+                }
+                m_dbConnection.Close();
+            }
+        }
+
+        private void CreateDateLabels(int row_nr, string support_group, int last_commented_post)
+        {
+            /*
+             *  private List<Label> date_support_groups;
+             *  private List<Label> date_support_groups_last_post_dates;
+             */
+
+            // labele z nazwami grup
+            Label tmp_group_name = new Label();
+            //tmp_group_name.Font = new System.Drawing.Font("Microsoft Sans Serif", 16F);
+            tmp_group_name.Location = new System.Drawing.Point(25, 70 + (row_nr * 20));
+            tmp_group_name.Name = "label_support_group_" + row_nr.ToString();
+            //tmp_group_name.Size = new System.Drawing.Size(25, 25);
+            tmp_group_name.TabIndex = 0;
+            tmp_group_name.Text = support_group;
+            //tmp_group_name.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            date_support_groups.Add(tmp_group_name);
+
+            // labele z nazwami grup
+            Label tmp_group_date = new Label();
+            //tmp_group_name.Font = new System.Drawing.Font("Microsoft Sans Serif", 16F);
+            tmp_group_date.Location = new System.Drawing.Point(276, 70 + (row_nr * 20));
+            tmp_group_date.Name = "label_support_group_date_" + row_nr.ToString();
+            //tmp_group_name.Size = new System.Drawing.Size(25, 25);
+            tmp_group_date.TabIndex = 0;
+            if(last_commented_post > 0)
+            {
+                tmp_group_date.Text = UnixTimeStampToDateTime(last_commented_post).ToString("dd-MM-yyyy HH:mm");
+            }
+            else
+            {
+                tmp_group_date.Text = "Jeszcze nigdy";
+            }
+            //tmp_group_name.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            date_support_groups_last_post_dates.Add(tmp_group_date);
+
+            groupBox5.Controls.Add(date_support_groups.Last());
+            groupBox5.Controls.Add(date_support_groups_last_post_dates.Last());
+        }
+        /* --- |SCREEN WYBORU DATY| --- */
+
         /* --- SCREEN LAJKOWANIA ZDJEC --- */
 
-        private void InitLikeCommenterPanel(bool show_calendar)
+        private void InitLikeCommenterPanel(/*bool show_calendar*/)
         {
             // pokaz ile zdjec wymaga skomentowania
             label24.Text = media_to_comment_counter.ToString();
@@ -1243,7 +1341,7 @@ namespace IGTomesheqAutoLiker
             }
 
             // jesli jest taka potrzeba - pokaz kalendarzyk
-            if (show_calendar)
+            /*if (show_calendar)
             {
                 dateTimePicker1.Show();
                 button17.Show();
@@ -1252,7 +1350,7 @@ namespace IGTomesheqAutoLiker
             {
                 dateTimePicker1.Hide();
                 button17.Hide();
-            }
+            }*/
 
             // pobierz wszystkie zdjecia do skomentowania
 
@@ -1522,6 +1620,11 @@ namespace IGTomesheqAutoLiker
 
             // wybierz pierwszy wpis na liście
             listBox1.SelectedIndex = 0;
+
+            // ukrywa wyszukiwanie po dacie
+            label37.Hide();
+            dateTimePicker1.Hide();
+            button17.Hide();
         }
 
         // button "zrob to" na ekranie lajkowania zdjec
@@ -1648,6 +1751,7 @@ namespace IGTomesheqAutoLiker
                         label39.Text = support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).Single().GetPostsToDoCounter();
                         label38.Text = support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).Single().InstagramPosts[support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().LastDonePostIndex].Owner;
                         label40.Text = support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).Single().InstagramPosts[support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().LastDonePostIndex].Description;
+                        label22.Text = support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).Single().InstagramPosts[support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().LastDonePostIndex].TelegramMessage;
                         // wyswietl pierwsze zdjecie w pictureboxie
                         //string pic_path_jpg = support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().InstagramPosts.Where(x => (!x.IsLiked || !x.IsCommented)).FirstOrDefault().PicturePathJpg;
 
@@ -1754,15 +1858,7 @@ namespace IGTomesheqAutoLiker
         // kliknieto na zdjecie
         private void pictureBox2_Click(object sender, EventArgs e)
         {
-            if(pictureBox2.Image != null)
-            {
-                // wyswietl okienko z wiadomoscia ne telegramie
-                // i podpisem zdjecia na insta
-                int index = support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().LastDonePostIndex;
-                PhotoInfo info_window = new PhotoInfo(true, support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().InstagramPosts[index].TelegramMessage);
-                //string message = support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().GroupMessages.GetFilteredMessages().Where(x => x.)
-                info_window.Show();
-            }
+            // nothing...
         }
 
         // zaznaczono, ze grupa typu tylko like
@@ -1925,6 +2021,20 @@ namespace IGTomesheqAutoLiker
             if (e.KeyCode == Keys.Enter)
             {
                 button9.PerformClick();
+            }
+        }
+
+        // po kliknieciu na label z wiadomoscia instagrama
+        private void label22_Click(object sender, EventArgs e)
+        {
+            if (pictureBox2.Image != null)
+            {
+                // wyswietl okienko z wiadomoscia ne telegramie
+                // i podpisem zdjecia na insta
+                int index = support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().LastDonePostIndex;
+                PhotoInfo info_window = new PhotoInfo(true, support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().InstagramPosts[index].TelegramMessage);
+                //string message = support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().GroupMessages.GetFilteredMessages().Where(x => x.)
+                info_window.Show();
             }
         }
     }
