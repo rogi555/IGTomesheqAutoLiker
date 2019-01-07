@@ -45,6 +45,8 @@ namespace IGTomesheqAutoLiker
         List<TLChat> chats;
         List<GroupMessages> dialogs_messages;
         InstagramProcessor insta;
+        List<SingleEmoji> complete_emojis;
+        List<Label> emoji_labels;
 
         // ogolne
         int media_to_comment_counter;
@@ -88,6 +90,10 @@ namespace IGTomesheqAutoLiker
 
             support_groups = new List<SupportGroup>();
 
+            // utworzenie obiektu z klasami emoji
+            complete_emojis = new List<SingleEmoji>();
+            emoji_labels = new List<Label>();
+
             this.toolStripStatusLabel1.Text = "Program gotowy do działania! Kliknij dalej...";
 
             // umiejscowienie okna
@@ -96,6 +102,9 @@ namespace IGTomesheqAutoLiker
             //GetPostInfo("Bq6swtTFSah");
 
             //PythonIron ii = new PythonIron();
+
+            //EmojisWindow ee = new EmojisWindow();
+            //ee.ShowDialog();
         }
 
         /* --- SCREEN POWITALNY --- */
@@ -716,63 +725,16 @@ namespace IGTomesheqAutoLiker
             FilterTelegramChannels(false/*it is NOT initial filtering*/);
             FilterTelegramChats(false/*it is NOT initial filtering*/);
 
-            bool has_nulls = false;
-            using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
-            {
-                m_dbConnection.Open();
-                string sql = $"SELECT * FROM support_group_names";
-                SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
-                SQLiteDataReader reader = command.ExecuteReader();
-                while (reader.Read())
-                {
-                    if ((reader["last_done_msg"] as int?) == null)
-                    {
-                        has_nulls = true;
-                    }
-                    else if ((reader["last_done_msg"] as int?).Value == 0)
-                    {
-                        has_nulls = true;
-                    }
-                }
-                m_dbConnection.Close(); 
-            }
+            // inicjalizacja kolejnego ekranu
+            InitChooseDate();
+            panel_choose_msg_starting_date.Show();
 
-            if (has_nulls)
-            {
-                // inicjalizacja kolejnego ekranu
-                InitChooseDate();
-                panel_choose_msg_starting_date.Show();
+            //InitLikeCommenterPanel(/*true*/);
+            //panel_liker_commenter.Show();
 
-                //InitLikeCommenterPanel(/*true*/);
-                //panel_liker_commenter.Show();
-
-                MessageBox.Show("Przynajmniej jedna z grup wsparcia nie została jeszcze ani razu skomentowana - nad listą grup wsparcia pojawił się kalendarzyk z przyciskiem szukaj. Wybierz datę i godzinę od której mają zostać pobrane posty i kliknij szukaj.");
-                this.listBox1.Enabled = false;
-                this.toolStripStatusLabel1.Text = "Gotowe! Wybierz datę, od której chcesz przeszukać grupy wsparcia - zostaną znalezione linki dodane po tej dacie...";
-                this.Refresh();
-                return;
-            }
-
-            // pobranie wiadomosci ze wszystkich kanalow
-            this.toolStripStatusLabel1.Text = "Zaczynam szukanie linków w Telegramie!";
+            //MessageBox.Show("Przynajmniej jedna z grup wsparcia nie została jeszcze ani razu skomentowana - nad listą grup wsparcia pojawił się kalendarzyk z przyciskiem szukaj. Wybierz datę i godzinę od której mają zostać pobrane posty i kliknij szukaj.");
+            this.toolStripStatusLabel1.Text = "Gotowe! Wybierz datę, od której chcesz przeszukać grupy wsparcia - zostaną znalezione linki dodane po tej dacie...";
             this.Refresh();
-            await GetTelegramChannelsMessages(0);
-
-            // pobranie wiadomosci ze wszystkich chatow
-            await GetTelegramChatsMessages(0);
-            this.toolStripStatusLabel1.Text = "Zakończono szukanie linków w Telegramie!";
-            this.Refresh();
-
-            this.toolStripStatusLabel1.Text = "Zaczynam pobieranie postów z Instagrama!";
-            this.Refresh();
-            DownloadPhotosFromTelegramDialogs();
-            this.toolStripStatusLabel1.Text = "Wszystkie InstaPosty zostały pobrane! Możesz teraz komentować!";
-            this.Refresh();
-
-            // ukrywa wyszukiwanie po dacie
-            //label37.Hide();
-            //dateTimePicker1.Hide();
-            //button17.Hide();
         }
 
         /* Po tej metodzie w support_gourps[i].GroupMessages są już tylko wiadomości zawierające linki do zdjęć */
@@ -817,6 +779,7 @@ namespace IGTomesheqAutoLiker
                                         // sprawdzenie czy ta wiadomość już była
                                         if (m.Date <= last_done_msg_timestamp)
                                         {
+                                            System.Diagnostics.Debug.Write("\n||| " + channel.Title + ": " + TLmessages.Count.ToString() + " wiadomosci pobrano!|||\n");
                                             break;
                                         }
                                         TLmessages.Add(m);
@@ -845,6 +808,7 @@ namespace IGTomesheqAutoLiker
                                             if(m.Date <= last_done_msg_timestamp)
                                             {
                                                 done = true;
+                                                System.Diagnostics.Debug.Write("\n||| " + channel.Title + ": " + TLmessages.Count.ToString() + " wiadomosci pobrano!|||\n");
                                                 break;
                                             }
                                             ++total;
@@ -856,7 +820,10 @@ namespace IGTomesheqAutoLiker
                                             ++total;
                                             done = mess.Action is TLMessageActionChatCreate;
                                             if (done)
+                                            {
+                                                System.Diagnostics.Debug.Write("\n||| " + channel.Title + ": " + TLmessages.Count.ToString() + " wiadomosci pobrano!|||\n");
                                                 break;
+                                            }
                                             else
                                                 continue;
                                         }
@@ -954,6 +921,7 @@ namespace IGTomesheqAutoLiker
                                     // sprawdzenie czy ta wiadomość już była
                                     if (m.Date <= last_done_msg_timestamp)
                                     {
+                                        System.Diagnostics.Debug.Write("\n||| " + chat.Title + ": " + TLmessages.Count.ToString() + " wiadomosci pobrano!|||\n");
                                         break;
                                     }
                                     TLmessages.Add(m);
@@ -981,6 +949,7 @@ namespace IGTomesheqAutoLiker
                                         if (m.Date <= last_done_msg_timestamp)
                                         {
                                             done = true;
+                                            System.Diagnostics.Debug.Write("\n||| " + chat.Title + ": " + TLmessages.Count.ToString() + " wiadomosci pobrano!|||\n");
                                             break;
                                         }
                                         ++total;
@@ -992,7 +961,10 @@ namespace IGTomesheqAutoLiker
                                         ++total;
                                         done = mess.Action is TLMessageActionChatCreate;
                                         if (done)
+                                        {
+                                            System.Diagnostics.Debug.Write("\n||| " + chat.Title + ": " + TLmessages.Count.ToString() + " wiadomosci pobrano!|||\n");
                                             break;
+                                        }
                                         else
                                             continue;
                                     }
@@ -1236,13 +1208,44 @@ namespace IGTomesheqAutoLiker
         /* --- SCREEN WYBORU DATY --- */
         
         // button dalej na ekranie z wyborem daty granicznej postu
-        private void button13_Click(object sender, EventArgs e)
+        private async void button13_Click(object sender, EventArgs e)
         {
             // schowaj biezacy panel
             panel_choose_msg_starting_date.Hide();
 
             // zainicjuj kolejny screen
             InitLikeCommenterPanel();
+
+            // sprawdzenie daty z kalendarzyka
+            posts_newer_than_timestamp = ToUnixTimestamp(dateTimePicker1.Value.ToUniversalTime());
+            //MessageBox.Show(posts_newer_than_timestamp.ToString());
+
+            // pobranie wiadomosci ze wszystkich kanalow
+            this.toolStripStatusLabel1.Text = "Zaczynam szukanie linków w Telegramie!";
+            this.Refresh();
+            await GetTelegramChannelsMessages(posts_newer_than_timestamp);
+
+            // pobranie wiadomosci ze wszystkich chatow
+            await GetTelegramChatsMessages(posts_newer_than_timestamp);
+            this.toolStripStatusLabel1.Text = "Zakończono szukanie linków w Telegramie!";
+            this.Refresh();
+
+            this.toolStripStatusLabel1.Text = "Zaczynam pobieranie postów z Instagrama!";
+            this.Refresh();
+            DownloadPhotosFromTelegramDialogs();
+            this.toolStripStatusLabel1.Text = "Gotowe! Wszystkie Posty zostały pobrane - możesz teraz komentować!";
+            this.Refresh();
+
+            // odblokowanie listBoxa
+            this.listBox1.Enabled = true;
+
+            // wybierz pierwszy wpis na liście
+            listBox1.SelectedIndex = 0;
+
+            // ukrywa wyszukiwanie po dacie
+            label37.Hide();
+            dateTimePicker1.Hide();
+            button17.Hide();
 
             // pokaz kolejny screen
             panel_liker_commenter.Show();
@@ -1262,11 +1265,20 @@ namespace IGTomesheqAutoLiker
                 SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
                 SQLiteDataReader reader = command.ExecuteReader();
                 int i = 0;
+                bool has_nulls = false;
                 while (reader.Read())
                 {
                     CreateDateLabels(i, reader.GetString(1), reader.GetInt32(3));
+
+                    if(reader.GetInt32(3) == 0)
+                    {
+                        has_nulls = true;
+                    }
+
                     i++;
                 }
+
+                MessageBox.Show("Przynajmniej jedna z grup wsparcia nie została jeszcze ani razu skomentowana - w panelu po lewej jest kalendarzyk. Wybierz datę i godzinę od której mają zostać pobrane posty i kliknij dalej.");
                 m_dbConnection.Close();
             }
         }
@@ -1310,6 +1322,31 @@ namespace IGTomesheqAutoLiker
             groupBox5.Controls.Add(date_support_groups.Last());
             groupBox5.Controls.Add(date_support_groups_last_post_dates.Last());
         }
+
+        // kliknieto na groupBoxa4 od wybory daty recznie
+        private void GroupBox4_Click(object sender, System.EventArgs e)
+        {
+            // odblokuj wszystkie kontrolsy na groupboxie4
+            EnableGroupBoxControls(this.groupBox4);
+
+            // zablokuj wszystkie kontrolsy na groupboxie5
+            DisableGroupBoxControls(this.groupBox5);
+
+
+        }
+
+        // kliknieto na groupBoxa5 od pokazania kiedy skomentowano ostatnie posty dla danych grup
+        private void GroupBox5_Click(object sender, System.EventArgs e)
+        {
+            // odblokuj wszystkie kontrolsy na groupboxie4
+            EnableGroupBoxControls(this.groupBox5);
+
+            // zablokuj wszystkie kontrolsy na groupboxie5
+            DisableGroupBoxControls(this.groupBox4);
+
+
+        }
+
         /* --- |SCREEN WYBORU DATY| --- */
 
         /* --- SCREEN LAJKOWANIA ZDJEC --- */
@@ -1340,6 +1377,25 @@ namespace IGTomesheqAutoLiker
                 m_dbConnection.Close(); 
             }
 
+            // pokaz najczesciej uzywane emotki oraz przycisk wiecej
+            // pokazuje emojis w labelach
+            using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
+            {
+                m_dbConnection.Open();
+                string sql = $"SELECT * FROM emojis ORDER BY times_used DESC, id ASC";
+                SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+                SQLiteDataReader reader = command.ExecuteReader();
+                if (reader.HasRows)
+                {
+                    int j = 0;
+                    while (reader.Read())
+                    {
+                        CreateEmojiLabel(j, reader.GetString(reader.GetOrdinal("emoji")));
+                        j++;
+                    }
+                }
+            }
+
             // jesli jest taka potrzeba - pokaz kalendarzyk
             /*if (show_calendar)
             {
@@ -1354,6 +1410,62 @@ namespace IGTomesheqAutoLiker
 
             // pobierz wszystkie zdjecia do skomentowania
 
+        }
+
+        private void CreateEmojiLabel(int label_nr, string emoji)
+        {
+            int column = label_nr % 9;
+
+            Label tmp_label = new Label();
+            tmp_label.Font = new System.Drawing.Font("Microsoft Sans Serif", 16F);
+            tmp_label.Location = new System.Drawing.Point(800 + (column * 25), 330);
+            tmp_label.Name = "label" + label_nr.ToString();
+            tmp_label.Size = new System.Drawing.Size(25, 25);
+            tmp_label.TabIndex = 0;
+            tmp_label.Text = emoji;
+            tmp_label.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            tmp_label.Click += new System.EventHandler(this.label_Click);
+
+            complete_emojis.Add(new SingleEmoji(emoji, label_nr));
+
+            emoji_labels.Add(tmp_label);
+            this.panel_liker_commenter.Controls.Add(emoji_labels.Last());
+        }
+
+        private void label_Click(object sender, EventArgs e)
+        {
+            Label tmp = (Label)sender;
+            UpdateEmojiUsed(complete_emojis.Where(x => x.label_name == tmp.Name).FirstOrDefault().emoticon);
+            var selectionIndex = richTextBox2.SelectionStart;
+            richTextBox2.Text = richTextBox2.Text.Insert(selectionIndex, complete_emojis.Where(x => x.label_name == tmp.Name).FirstOrDefault().emoticon);
+            textBox1.SelectionStart = selectionIndex + complete_emojis.Where(x => x.label_name == tmp.Name).FirstOrDefault().emoticon.Length;
+            MessageBox.Show("Kliknieto " + complete_emojis.Where(x => x.label_name == tmp.Name).FirstOrDefault().emoticon);
+        }
+
+        private void UpdateEmojiUsed(string emoji)
+        {
+            using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
+            {
+                m_dbConnection.Open();
+                string sql = $"SELECT * FROM emojis WHERE emoji = '{emoji}'";
+                SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+                SQLiteDataReader reader = command.ExecuteReader();
+                if (reader.HasRows)
+                {
+                    int times_used = -1;
+                    while (reader.Read())
+                    {
+                        times_used = reader.GetInt32(reader.GetOrdinal("times_used"));
+                    }
+                    if (times_used != -1)
+                    {
+                        sql = $"UPDATE emojis SET times_used = {++times_used} WHERE emoji = '{emoji}'";
+                        command = new SQLiteCommand(sql, m_dbConnection);
+                        command.ExecuteNonQuery(); // nic nie zwraca 
+                    }
+                }
+                m_dbConnection.Close();
+            }
         }
 
         private InstagramPostInfo GetPostInfoByUrl(string url)
@@ -1586,7 +1698,7 @@ namespace IGTomesheqAutoLiker
         // zmieniono date od kiedy sprawdzac komentarze
         private void dateTimePicker1_ValueChanged(object sender, EventArgs e)
         {
-            button17.Enabled = true;
+            //button17.Enabled = true;
         }
 
         // label38 -> nazwa uzytkownika, ktorego zdj jest wyswietlane
@@ -1595,36 +1707,7 @@ namespace IGTomesheqAutoLiker
         // button pobrania zdjec dla okreslonej daty
         private async void button17_Click(object sender, EventArgs e)
         {
-            // sprawdzenie daty z kalendarzyka
-            posts_newer_than_timestamp = ToUnixTimestamp(dateTimePicker1.Value.ToUniversalTime());
-            //MessageBox.Show(posts_newer_than_timestamp.ToString());
-
-            // pobranie wiadomosci ze wszystkich kanalow
-            this.toolStripStatusLabel1.Text = "Zaczynam szukanie linków w Telegramie!";
-            this.Refresh();
-            await GetTelegramChannelsMessages(posts_newer_than_timestamp);
-
-            // pobranie wiadomosci ze wszystkich chatow
-            await GetTelegramChatsMessages(posts_newer_than_timestamp);
-            this.toolStripStatusLabel1.Text = "Zakończono szukanie linków w Telegramie!";
-            this.Refresh();
-
-            this.toolStripStatusLabel1.Text = "Zaczynam pobieranie postów z Instagrama!";
-            this.Refresh();
-            DownloadPhotosFromTelegramDialogs();
-            this.toolStripStatusLabel1.Text = "Gotowe! Wszystkie Posty zostały pobrane - możesz teraz komentować!";
-            this.Refresh();
-
-            // odblokowanie listBoxa
-            this.listBox1.Enabled = true;
-
-            // wybierz pierwszy wpis na liście
-            listBox1.SelectedIndex = 0;
-
-            // ukrywa wyszukiwanie po dacie
-            label37.Hide();
-            dateTimePicker1.Hide();
-            button17.Hide();
+            // nothing now...
         }
 
         // button "zrob to" na ekranie lajkowania zdjec
@@ -2036,6 +2119,11 @@ namespace IGTomesheqAutoLiker
                 //string message = support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().GroupMessages.GetFilteredMessages().Where(x => x.)
                 info_window.Show();
             }
+        }
+
+        private void dateTimePicker1_MouseDown(object sender, MouseEventArgs e)
+        {
+            //MessageBox.Show("Clicked!");
         }
     }
 }

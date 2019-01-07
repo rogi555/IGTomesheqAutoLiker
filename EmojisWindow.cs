@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Data.SQLite;
 using System.Drawing;
 using System.Linq;
 using System.Reflection;
@@ -15,10 +16,14 @@ namespace IGTomesheq
     {
         List<SingleEmoji> complete_emojis;
         List<Label> emoji_labels;
+        private string connectionString;
 
         public EmojisWindow()
         {
             InitializeComponent();
+
+            // DB
+            connectionString = "Data Source=tomesheq_db.db;Version=3;";
 
             // utworzenie obiektu z klasami emoji
             complete_emojis = new List<SingleEmoji>();
@@ -33,14 +38,34 @@ namespace IGTomesheq
 
             // 
             int i = 0;
+
+            // tworzy emojis w DB jesli jest taka potrzeba
             foreach (var field in fields)
             {
                 var ss = field.GetValue(emojis);
-                CreateEmojiLabel(i, ss.ToString());
+                CreateEmojiDBRecord(ss.ToString());
                 i++;
 
                 if (i >= 480)
                     break;
+            }
+
+            // pokazuje emojis w labelach
+            using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
+            {
+                m_dbConnection.Open();
+                string sql = $"SELECT * FROM emojis ORDER BY times_used DESC, id ASC";
+                SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+                SQLiteDataReader reader = command.ExecuteReader();
+                if (reader.HasRows)
+                {
+                    int j = 0;
+                    while (reader.Read())
+                    {
+                        CreateEmojiLabel(j, reader.GetString(reader.GetOrdinal("emoji")));
+                        j++;
+                    }
+                }
             }
         }
 
@@ -65,9 +90,54 @@ namespace IGTomesheq
             this.Controls.Add(emoji_labels.Last());
         }
 
+        private void CreateEmojiDBRecord(string emoji)
+        {
+            using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
+            {
+                m_dbConnection.Open();
+                string sql = $"SELECT * FROM emojis WHERE emoji = '{emoji}'";
+                SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+                SQLiteDataReader reader = command.ExecuteReader();
+                if (!reader.HasRows)
+                {
+                    sql = $"INSERT INTO emojis (id, emoji, times_used) VALUES (NULL, '{emoji}', 0)";
+                    command = new SQLiteCommand(sql, m_dbConnection);
+                    command.ExecuteNonQuery(); // nic nie zwraca
+                }
+                m_dbConnection.Close();
+            }
+        }
+
+        private void UpdateEmojiUsed(string emoji)
+        {
+            using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
+            {
+                m_dbConnection.Open();
+                string sql = $"SELECT * FROM emojis WHERE emoji = '{emoji}'";
+                SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+                SQLiteDataReader reader = command.ExecuteReader();
+                if (reader.HasRows)
+                {
+                    int times_used = -1;
+                    while (reader.Read())
+                    {
+                        times_used = reader.GetInt32(reader.GetOrdinal("times_used")); 
+                    }
+                    if (times_used != -1)
+                    {
+                        sql = $"UPDATE emojis SET times_used = {++times_used} WHERE emoji = '{emoji}'";
+                        command = new SQLiteCommand(sql, m_dbConnection);
+                        command.ExecuteNonQuery(); // nic nie zwraca 
+                    }
+                }
+                m_dbConnection.Close();
+            }
+        }
+
         private void label_Click(object sender, EventArgs e)
         {
             Label tmp = (Label)sender;
+            UpdateEmojiUsed(complete_emojis.Where(x => x.label_name == tmp.Name).FirstOrDefault().emoticon);
             MessageBox.Show("Kliknieto " + complete_emojis.Where(x => x.label_name == tmp.Name).FirstOrDefault().emoticon);
         }
 

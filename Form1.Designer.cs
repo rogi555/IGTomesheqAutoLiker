@@ -1,4 +1,6 @@
-﻿namespace IGTomesheqAutoLiker
+﻿using System.Windows.Forms;
+
+namespace IGTomesheqAutoLiker
 {
     partial class Form1
     {
@@ -109,15 +111,15 @@
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripProgressBar1 = new System.Windows.Forms.ToolStripProgressBar();
             this.panel_choose_msg_starting_date = new System.Windows.Forms.Panel();
-            this.label31 = new System.Windows.Forms.Label();
-            this.button13 = new System.Windows.Forms.Button();
+            this.groupBox5 = new System.Windows.Forms.GroupBox();
+            this.label42 = new System.Windows.Forms.Label();
+            this.label41 = new System.Windows.Forms.Label();
+            this.groupBox4 = new System.Windows.Forms.GroupBox();
+            this.dateTimePicker1 = new System.Windows.Forms.DateTimePicker();
             this.button17 = new System.Windows.Forms.Button();
             this.label37 = new System.Windows.Forms.Label();
-            this.dateTimePicker1 = new System.Windows.Forms.DateTimePicker();
-            this.groupBox4 = new System.Windows.Forms.GroupBox();
-            this.groupBox5 = new System.Windows.Forms.GroupBox();
-            this.label41 = new System.Windows.Forms.Label();
-            this.label42 = new System.Windows.Forms.Label();
+            this.button13 = new System.Windows.Forms.Button();
+            this.label31 = new System.Windows.Forms.Label();
             this.panel_hello.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.panel_comments.SuspendLayout();
@@ -130,8 +132,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
             this.statusStrip1.SuspendLayout();
             this.panel_choose_msg_starting_date.SuspendLayout();
-            this.groupBox4.SuspendLayout();
             this.groupBox5.SuspendLayout();
+            this.groupBox4.SuspendLayout();
             this.SuspendLayout();
             // 
             // panel_hello
@@ -821,7 +823,7 @@
             // 
             // button16
             // 
-            this.button16.Location = new System.Drawing.Point(907, 341);
+            this.button16.Location = new System.Drawing.Point(907, 375);
             this.button16.Name = "button16";
             this.button16.Size = new System.Drawing.Size(75, 23);
             this.button16.TabIndex = 22;
@@ -928,7 +930,7 @@
             // 
             this.button12.BackColor = System.Drawing.Color.DarkBlue;
             this.button12.ForeColor = System.Drawing.Color.White;
-            this.button12.Location = new System.Drawing.Point(988, 332);
+            this.button12.Location = new System.Drawing.Point(988, 366);
             this.button12.Name = "button12";
             this.button12.Size = new System.Drawing.Size(93, 36);
             this.button12.TabIndex = 13;
@@ -940,7 +942,7 @@
             // 
             this.button11.BackColor = System.Drawing.Color.DarkBlue;
             this.button11.ForeColor = System.Drawing.Color.White;
-            this.button11.Location = new System.Drawing.Point(808, 332);
+            this.button11.Location = new System.Drawing.Point(808, 366);
             this.button11.Name = "button11";
             this.button11.Size = new System.Drawing.Size(93, 36);
             this.button11.TabIndex = 12;
@@ -1031,15 +1033,79 @@
             this.panel_choose_msg_starting_date.TabIndex = 11;
             this.panel_choose_msg_starting_date.Visible = false;
             // 
-            // label31
+            // groupBox5
             // 
-            this.label31.AutoSize = true;
-            this.label31.Font = new System.Drawing.Font("Segoe UI", 14F);
-            this.label31.Location = new System.Drawing.Point(419, 34);
-            this.label31.Name = "label31";
-            this.label31.Size = new System.Drawing.Size(318, 25);
-            this.label31.TabIndex = 0;
-            this.label31.Text = "Wybierz od kiedy mam pobrać posty";
+            this.groupBox5.Controls.Add(this.label42);
+            this.groupBox5.Controls.Add(this.label41);
+            this.groupBox5.Location = new System.Drawing.Point(618, 120);
+            this.groupBox5.Name = "groupBox5";
+            this.groupBox5.Size = new System.Drawing.Size(406, 383);
+            this.groupBox5.TabIndex = 30;
+            this.groupBox5.TabStop = false;
+            this.groupBox5.Text = "Po ostatnio skomentowanym poście";
+            // 
+            // label42
+            // 
+            this.label42.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label42.Location = new System.Drawing.Point(250, 19);
+            this.label42.Name = "label42";
+            this.label42.Size = new System.Drawing.Size(148, 42);
+            this.label42.TabIndex = 1;
+            this.label42.Text = "Data ostatnio skomentowanego postu";
+            this.label42.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // label41
+            // 
+            this.label41.AutoSize = true;
+            this.label41.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label41.Location = new System.Drawing.Point(25, 30);
+            this.label41.Name = "label41";
+            this.label41.Size = new System.Drawing.Size(124, 13);
+            this.label41.TabIndex = 0;
+            this.label41.Text = "Nazwa grupy wsparcia";
+            // 
+            // groupBox4
+            // 
+            this.groupBox4.Controls.Add(this.dateTimePicker1);
+            this.groupBox4.Controls.Add(this.button17);
+            this.groupBox4.Controls.Add(this.label37);
+            this.groupBox4.Location = new System.Drawing.Point(183, 120);
+            this.groupBox4.Name = "groupBox4";
+            this.groupBox4.Size = new System.Drawing.Size(259, 120);
+            this.groupBox4.TabIndex = 29;
+            this.groupBox4.TabStop = false;
+            this.groupBox4.Text = "Wprowadź datę samemu";
+            // 
+            // dateTimePicker1
+            // 
+            this.dateTimePicker1.CustomFormat = "dd/MM/yyyy HH:mm:ss";
+            this.dateTimePicker1.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
+            this.dateTimePicker1.Location = new System.Drawing.Point(23, 63);
+            this.dateTimePicker1.Name = "dateTimePicker1";
+            this.dateTimePicker1.Size = new System.Drawing.Size(200, 22);
+            this.dateTimePicker1.TabIndex = 26;
+            this.dateTimePicker1.MouseDown += new System.Windows.Forms.MouseEventHandler(this.dateTimePicker1_MouseDown);
+            // 
+            // button17
+            // 
+            this.button17.Enabled = false;
+            this.button17.Location = new System.Drawing.Point(228, 63);
+            this.button17.Name = "button17";
+            this.button17.Size = new System.Drawing.Size(75, 22);
+            this.button17.TabIndex = 28;
+            this.button17.Text = "Szukaj";
+            this.button17.UseVisualStyleBackColor = true;
+            this.button17.Visible = false;
+            // 
+            // label37
+            // 
+            this.label37.AutoSize = true;
+            this.label37.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.label37.Location = new System.Drawing.Point(19, 42);
+            this.label37.Name = "label37";
+            this.label37.Size = new System.Drawing.Size(183, 19);
+            this.label37.TabIndex = 27;
+            this.label37.Text = "Szukaj postów dodanych po:";
             // 
             // button13
             // 
@@ -1052,90 +1118,28 @@
             this.button13.UseVisualStyleBackColor = true;
             this.button13.Click += new System.EventHandler(this.button13_Click);
             // 
-            // button17
+            // label31
             // 
-            this.button17.Enabled = false;
-            this.button17.Location = new System.Drawing.Point(228, 63);
-            this.button17.Name = "button17";
-            this.button17.Size = new System.Drawing.Size(75, 22);
-            this.button17.TabIndex = 28;
-            this.button17.Text = "Szukaj";
-            this.button17.UseVisualStyleBackColor = true;
-            // 
-            // label37
-            // 
-            this.label37.AutoSize = true;
-            this.label37.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.label37.Location = new System.Drawing.Point(19, 42);
-            this.label37.Name = "label37";
-            this.label37.Size = new System.Drawing.Size(183, 19);
-            this.label37.TabIndex = 27;
-            this.label37.Text = "Szukaj postów dodanych po:";
-            // 
-            // dateTimePicker1
-            // 
-            this.dateTimePicker1.CustomFormat = "dd/MM/yyyy HH:mm:ss";
-            this.dateTimePicker1.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.dateTimePicker1.Location = new System.Drawing.Point(23, 63);
-            this.dateTimePicker1.Name = "dateTimePicker1";
-            this.dateTimePicker1.Size = new System.Drawing.Size(200, 22);
-            this.dateTimePicker1.TabIndex = 26;
-            // 
-            // groupBox4
-            // 
-            this.groupBox4.Controls.Add(this.dateTimePicker1);
-            this.groupBox4.Controls.Add(this.button17);
-            this.groupBox4.Controls.Add(this.label37);
-            this.groupBox4.Location = new System.Drawing.Point(155, 120);
-            this.groupBox4.Name = "groupBox4";
-            this.groupBox4.Size = new System.Drawing.Size(326, 120);
-            this.groupBox4.TabIndex = 29;
-            this.groupBox4.TabStop = false;
-            this.groupBox4.Text = "Wprowadź datę samemu";
-            // 
-            // groupBox5
-            // 
-            this.groupBox5.Controls.Add(this.label42);
-            this.groupBox5.Controls.Add(this.label41);
-            this.groupBox5.Location = new System.Drawing.Point(618, 120);
-            this.groupBox5.Name = "groupBox5";
-            this.groupBox5.Size = new System.Drawing.Size(406, 383);
-            this.groupBox5.TabIndex = 30;
-            this.groupBox5.TabStop = false;
-            this.groupBox5.Text = "Po ostatnio skomentowanym poście";
-            // 
-            // label41
-            // 
-            this.label41.AutoSize = true;
-            this.label41.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label41.Location = new System.Drawing.Point(25, 30);
-            this.label41.Name = "label41";
-            this.label41.Size = new System.Drawing.Size(124, 13);
-            this.label41.TabIndex = 0;
-            this.label41.Text = "Nazwa grupy wsparcia";
-            // 
-            // label42
-            // 
-            this.label42.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label42.Location = new System.Drawing.Point(250, 19);
-            this.label42.Name = "label42";
-            this.label42.Size = new System.Drawing.Size(148, 42);
-            this.label42.TabIndex = 1;
-            this.label42.Text = "Data ostatnio skomentowanego postu";
-            this.label42.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.label31.AutoSize = true;
+            this.label31.Font = new System.Drawing.Font("Segoe UI", 14F);
+            this.label31.Location = new System.Drawing.Point(419, 34);
+            this.label31.Name = "label31";
+            this.label31.Size = new System.Drawing.Size(318, 25);
+            this.label31.TabIndex = 0;
+            this.label31.Text = "Wybierz od kiedy mam pobrać posty";
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1184, 611);
+            this.Controls.Add(this.panel_liker_commenter);
             this.Controls.Add(this.panel_choose_msg_starting_date);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.panel_hello);
             this.Controls.Add(this.panel_comments);
             this.Controls.Add(this.panel_telegram_login);
             this.Controls.Add(this.panel_telegram_chats);
-            this.Controls.Add(this.panel_liker_commenter);
             this.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
@@ -1164,13 +1168,29 @@
             this.statusStrip1.PerformLayout();
             this.panel_choose_msg_starting_date.ResumeLayout(false);
             this.panel_choose_msg_starting_date.PerformLayout();
-            this.groupBox4.ResumeLayout(false);
-            this.groupBox4.PerformLayout();
             this.groupBox5.ResumeLayout(false);
             this.groupBox5.PerformLayout();
+            this.groupBox4.ResumeLayout(false);
+            this.groupBox4.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
+        }
+
+        private void DisableGroupBoxControls(GroupBox groupbox)
+        {
+            foreach(System.Windows.Forms.Control ctr in groupbox.Controls)
+            {
+                ctr.Enabled = false;
+            }
+        }
+
+        private void EnableGroupBoxControls(GroupBox groupbox)
+        {
+            foreach (System.Windows.Forms.Control ctr in groupbox.Controls)
+            {
+                ctr.Enabled = true;
+            }
         }
 
         #endregion
