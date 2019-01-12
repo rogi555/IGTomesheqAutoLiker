@@ -1,4 +1,5 @@
-﻿using System;
+﻿using IGTomesheqAutoLiker;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -16,14 +17,45 @@ namespace IGTomesheq
     {
         List<SingleEmoji> complete_emojis;
         List<Label> emoji_labels;
+        Panel panel_left;
+        Panel panel_right;
+        Label next_screen_label;
+        Label previous_screen_label;
+
         private string connectionString;
 
-        public EmojisWindow()
+        Form1 parent_form;
+
+        public EmojisWindow(Form1 parent)
         {
             InitializeComponent();
 
             // DB
             connectionString = "Data Source=tomesheq_db.db;Version=3;";
+
+            // utworzenie paneli do przechowywania emojis
+            panel_left = new Panel();
+            panel_left.Size = new Size(770,420);
+            panel_left.Location = new Point(0,0);
+            panel_left.Margin = new Padding(0, 0, 0, 0);
+
+            panel_right = new Panel();
+            panel_right.Size = new Size(770, 420);
+            panel_right.Location = new Point(15, 0);
+            panel_right.Margin = new Padding(0, 0, 0, 0);
+
+            panel_left.Visible = true;
+            panel_right.Visible = false;
+
+            this.Controls.Add(panel_left);
+            this.Controls.Add(panel_right);
+
+            // parent
+            parent_form = parent;
+
+            // utworzenie przyciskow przewijania emojis
+            next_screen_label = new Label();
+            previous_screen_label = new Label();
 
             // utworzenie obiektu z klasami emoji
             complete_emojis = new List<SingleEmoji>();
@@ -46,8 +78,8 @@ namespace IGTomesheq
                 CreateEmojiDBRecord(ss.ToString());
                 i++;
 
-                if (i >= 480)
-                    break;
+                //if (i >= 480)
+                //    break;
             }
 
             // pokazuje emojis w labelach
@@ -62,17 +94,73 @@ namespace IGTomesheq
                     int j = 0;
                     while (reader.Read())
                     {
-                        CreateEmojiLabel(j, reader.GetString(reader.GetOrdinal("emoji")));
+                        if (j < 480)
+                        {
+                            CreateEmojiLabel(0, j, reader.GetString(reader.GetOrdinal("emoji"))); 
+                        }
+                        else
+                        {
+                            CreateEmojiLabel(1, j, reader.GetString(reader.GetOrdinal("emoji")));
+                        }
                         j++;
                     }
                 }
             }
+ 
+            next_screen_label.Text = ">";
+            next_screen_label.AutoSize = false;
+            next_screen_label.Font = new System.Drawing.Font("Microsoft Sans Serif", 16F);
+            next_screen_label.Location = new System.Drawing.Point(770, 0);
+            next_screen_label.Size = new System.Drawing.Size(20, 420);
+            next_screen_label.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            next_screen_label.Click += Next_screen_label_Click;
+            next_screen_label.Visible = true;
+
+            previous_screen_label.Text = "<";
+            previous_screen_label.AutoSize = false;
+            previous_screen_label.Font = new System.Drawing.Font("Microsoft Sans Serif", 16F);
+            previous_screen_label.Location = new System.Drawing.Point(0, 0);
+            previous_screen_label.Margin = new Padding(0,0,0,0);
+            previous_screen_label.Size = new System.Drawing.Size(20, 420);
+            previous_screen_label.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            previous_screen_label.Click += Previous_screen_label_Click;
+            previous_screen_label.Visible = false;
+
+            this.Controls.Add(next_screen_label);
+            this.Controls.Add(previous_screen_label);
         }
 
-        private void CreateEmojiLabel(int label_nr, string emoji)
+        private void Previous_screen_label_Click(object sender, EventArgs e)
         {
-            int column = label_nr % 30;
-            int row = (int)(label_nr / 30);
+            panel_left.Show();
+            panel_right.Hide();
+            previous_screen_label.Hide();
+            next_screen_label.Show();
+        }
+
+        private void Next_screen_label_Click(object sender, EventArgs e)
+        {
+            panel_left.Hide();
+            panel_right.Show();
+            next_screen_label.Hide();
+            previous_screen_label.Show();
+            
+            //MessageBox.Show("Next screen...");
+        }
+
+        private void CreateEmojiLabel(int side /* 0 - left; 1 - right */, int label_nr, string emoji)
+        {
+            int column, row;
+            if (label_nr >= 480)
+            {
+                column = (label_nr - 480) % 30;
+                row = (int)((label_nr - 480) / 30);
+            }
+            else
+            {
+                column = label_nr % 30;
+                row = (int)(label_nr / 30);
+            }
 
             Label tmp_label = new Label();
             tmp_label.Font = new System.Drawing.Font("Microsoft Sans Serif", 16F);
@@ -87,7 +175,19 @@ namespace IGTomesheq
             complete_emojis.Add(new SingleEmoji(emoji, label_nr));
 
             emoji_labels.Add(tmp_label);
-            this.Controls.Add(emoji_labels.Last());
+
+            if (side == 0)
+            {
+                panel_left.Controls.Add(emoji_labels.Last()); 
+            }
+            else if(side == 1)
+            {
+                panel_right.Controls.Add(emoji_labels.Last());
+            }
+            else
+            {
+                MessageBox.Show("Nie umiem wybrać odpowiedniej strony... :(");
+            }
         }
 
         private void CreateEmojiDBRecord(string emoji)
@@ -138,7 +238,9 @@ namespace IGTomesheq
         {
             Label tmp = (Label)sender;
             UpdateEmojiUsed(complete_emojis.Where(x => x.label_name == tmp.Name).FirstOrDefault().emoticon);
-            MessageBox.Show("Kliknieto " + complete_emojis.Where(x => x.label_name == tmp.Name).FirstOrDefault().emoticon);
+            parent_form.InsertEmojiIntoRichTextBox(complete_emojis.Where(x => x.label_name == tmp.Name).FirstOrDefault().emoticon);
+            this.Close();
+            //MessageBox.Show("Kliknieto " + complete_emojis.Where(x => x.label_name == tmp.Name).FirstOrDefault().emoticon);
         }
 
         private void EmojisWindow_KeyDown(object sender, KeyEventArgs e)

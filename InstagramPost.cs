@@ -79,6 +79,13 @@ namespace IGTomesheq
             set { this.description = value; }
         }
 
+        private bool successfully_created;
+        public bool SuccessfullyCreated
+        {
+            get { return this.successfully_created; }
+            set { this.successfully_created = value; }
+        }
+
         // DB
         //private SQLiteConnection m_dbConnection;
         private string connectionString;
@@ -93,6 +100,7 @@ namespace IGTomesheq
             date_commented = new DateTime();
             date_liked = new DateTime();
             comment_text = "";
+            successfully_created = true;
             //picture_path_jpg = "";
 
             /*try
@@ -118,6 +126,7 @@ namespace IGTomesheq
                 System.Diagnostics.Debug.Write("Krok 4.5.1: Przed wpisem do DB\n");
                 this.CreateDBRecord();
                 System.Diagnostics.Debug.Write("Krok 4.5.2: Po wpisie do DB\n");
+                successfully_created = true;
                 return true;
             }
             catch (Exception ex)
@@ -168,6 +177,7 @@ namespace IGTomesheq
                 System.Diagnostics.Debug.Write("Krok 4.5.1.5: Po zapisaniu do DB (1)\n");
                 m_dbConnection.Close(); 
             }
+            successfully_created = true;
         }
 
         public bool UpdateLiked(long timestamp)
@@ -182,6 +192,8 @@ namespace IGTomesheq
                 SQLiteDataReader reader = command.ExecuteReader();
                 m_dbConnection.Close(); 
             }
+
+            successfully_created = true;
 
             if (commented)
             {
@@ -205,6 +217,8 @@ namespace IGTomesheq
                 m_dbConnection.Close(); 
             }
 
+            successfully_created = true;
+
             if (liked)
             {
                 return true;
@@ -225,6 +239,8 @@ namespace IGTomesheq
                 m_dbConnection.Close(); 
             }
 
+            successfully_created = true;
+
             if (liked)
             {
                 return true;
@@ -238,6 +254,11 @@ namespace IGTomesheq
             System.DateTime dtDateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc);
             dtDateTime = dtDateTime.AddSeconds(unixTimeStamp).ToLocalTime();
             return dtDateTime;
+        }
+
+        public void SetPostBroken()
+        {
+            successfully_created = false;
         }
     }
 
@@ -267,14 +288,22 @@ namespace IGTomesheq
             get { return this.post_id; }
             set { this.post_id = value; }
         }
+        private bool is_empty;
+        public bool IsEmpty
+        {
+            get { return this.is_empty; }
+            set { this.is_empty = value; }
+        }
 
         public InstagramPostInfo()
         {
+            is_empty = true;
             // empty
         }
 
         public InstagramPostInfo(string pic_url, int pic_width, int pic_height, string _post_id)
         {
+            is_empty = false;
             PictureURL = pic_url;
             PictureWidth = pic_width;
             PictureHeight = pic_height;

@@ -64,6 +64,13 @@ namespace IGTomesheq
             set { this.already_got_messages = value; }
         }
 
+        private int current_index;
+        public int CurrentIndex
+        {
+            get { return this.current_index; }
+            set { this.current_index = value; }
+        }
+
         public GroupMessages GroupMessages;
         public List<InstagramPost> InstagramPosts;
 
@@ -81,6 +88,7 @@ namespace IGTomesheq
             last_done_post_index = 0;
             GroupMessages = new GroupMessages(this.id, group_name, dialog_type);
             connectionString = "Data Source=tomesheq_db.db;Version=3;";
+            current_index = 0;
             //System.Diagnostics.Debug.Write(group_images_folder + "\n");
             //CreateMediaFolder();
 
