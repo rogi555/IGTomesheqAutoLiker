@@ -239,7 +239,7 @@ namespace IGTomesheq
             Label tmp = (Label)sender;
             UpdateEmojiUsed(complete_emojis.Where(x => x.label_name == tmp.Name).FirstOrDefault().emoticon);
             parent_form.InsertEmojiIntoRichTextBox(complete_emojis.Where(x => x.label_name == tmp.Name).FirstOrDefault().emoticon);
-            // ekskjuzmi
+            
             this.Close();
             //MessageBox.Show("Kliknieto " + complete_emojis.Where(x => x.label_name == tmp.Name).FirstOrDefault().emoticon);
         }

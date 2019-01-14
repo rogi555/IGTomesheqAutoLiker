@@ -35,21 +35,11 @@ namespace IGTomesheq
             get { return this.commented; }
             set { this.commented = value; }
         }
-        private DateTime date_commented;
-        private DateTime date_liked;
-        private string comment_text;
         private string picture_path_jpg;
         public string PicturePathJpg
         {
             get { return this.picture_path_jpg; }
             set { this.picture_path_jpg = value; }
-        }
-
-        private string picture_path_png;
-        public string PicturePathPng
-        {
-            get { return this.picture_path_png; }
-            set { this.picture_path_png = value; }
         }
         private string insta_media_id;
         public string InstaMediaID
@@ -57,28 +47,24 @@ namespace IGTomesheq
             get { return this.insta_media_id; }
             set { this.insta_media_id = value; }
         }
-
         private string insta_media_shortcode;
         public string InstaMediaShortcode
         {
             get { return this.insta_media_shortcode; }
             set { this.insta_media_shortcode = value; }
         }
-
         private string owner;
         public string Owner
         {
             get { return this.owner; }
             set { this.owner = value; }
         }
-
         private string description;
         public string Description
         {
             get { return this.description; }
             set { this.description = value; }
         }
-
         private bool successfully_created;
         public bool SuccessfullyCreated
         {
@@ -86,8 +72,11 @@ namespace IGTomesheq
             set { this.successfully_created = value; }
         }
 
+        private DateTime date_commented;
+        private DateTime date_liked;
+        private string comment_text;
+
         // DB
-        //private SQLiteConnection m_dbConnection;
         private string connectionString;
 
         public InstagramPost()
@@ -101,17 +90,7 @@ namespace IGTomesheq
             date_liked = new DateTime();
             comment_text = "";
             successfully_created = true;
-            //picture_path_jpg = "";
-
-            /*try
-            {
-                //m_dbConnection = new SQLiteConnection("Data Source=tomesheq_db.db;Version=3;");
-                //m_dbConnection.Open();
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.Write(ex.Message.ToString());
-            }*/
+            picture_path_jpg = "";
         }
 
         public bool SetTelegramInfo(string url, string telegram_msg, long msg_timestamp)
@@ -119,13 +98,9 @@ namespace IGTomesheq
             try
             {
                 this.URL = url;
-                //this.picture_path_jpg = pic_path + GetMediaShortcodeFromURL() + ".jpg";
-                //this.picture_path_png = pic_path + GetMediaShortcodeFromURL() + ".png";
                 this.telegram_message = telegram_msg;
                 this.TelegramMessageTimestamp = msg_timestamp;
-                System.Diagnostics.Debug.Write("Krok 4.5.1: Przed wpisem do DB\n");
                 this.CreateDBRecord();
-                System.Diagnostics.Debug.Write("Krok 4.5.2: Po wpisie do DB\n");
                 successfully_created = true;
                 return true;
             }
@@ -164,17 +139,12 @@ namespace IGTomesheq
         private void CreateDBRecord()
         {
             this.InstaMediaShortcode = this.GetMediaShortcodeFromURL();
-            System.Diagnostics.Debug.Write("Krok 4.5.1.1: Przed open DB\n");
             using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
             {
                 m_dbConnection.Open();
-                System.Diagnostics.Debug.Write("Krok 4.5.1.2: Po open DB\n");
                 string sql = $"INSERT INTO instagram_posts (id_post, insta_media_shortcode, insta_media_id, commented, comment_text, date_commented, liked, date_liked) VALUES (NULL, '{this.InstaMediaShortcode}', '', 0, '', 0, 0, 0)";
-                System.Diagnostics.Debug.Write("Krok 4.5.1.3: Przed zapisaniem do DB\n");
                 SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
-                System.Diagnostics.Debug.Write("Krok 4.5.1.4: Po zapisaniu do DB (1)\n");
                 command.ExecuteNonQuery();
-                System.Diagnostics.Debug.Write("Krok 4.5.1.5: Po zapisaniu do DB (1)\n");
                 m_dbConnection.Close(); 
             }
             successfully_created = true;
@@ -260,6 +230,19 @@ namespace IGTomesheq
         {
             successfully_created = false;
         }
+
+        public string ShortcodeToID(string shortcode)
+        {
+            char character;
+            long id = 0;
+            var alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+            for (var i = 0; i < shortcode.Length; i++)
+            {
+                character = shortcode[i];
+                id = (id * 64) + alphabet.IndexOf(character);
+            }
+            return id.ToString();
+        }
     }
 
     class InstagramPostInfo
@@ -295,19 +278,20 @@ namespace IGTomesheq
             set { this.is_empty = value; }
         }
 
+        // konstruktor używany, gdy nie udało się pobrać postu (404, 502 itd.) - wówczas post jest pomijany i nie jest wyswietlany
         public InstagramPostInfo()
         {
             is_empty = true;
-            // empty
         }
 
+        // konstruktor używany, gdy udało się pobrać wszystkie dane dot. postu i ma być on wyświetlony
         public InstagramPostInfo(string pic_url, int pic_width, int pic_height, string _post_id)
         {
-            is_empty = false;
             PictureURL = pic_url;
             PictureWidth = pic_width;
             PictureHeight = pic_height;
             PostID = _post_id;
+            IsEmpty = false;
         }
     }
 }

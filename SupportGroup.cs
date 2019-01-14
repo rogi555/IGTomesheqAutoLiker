@@ -49,7 +49,6 @@ namespace IGTomesheq
             set { this.last_done_post_index = value; }
         }
 
-        private string group_images_folder;
         private long last_done_msg_timestamp;
         public long LastDoneMsgTimestamp
         {
@@ -64,13 +63,6 @@ namespace IGTomesheq
             set { this.already_got_messages = value; }
         }
 
-        private int current_index;
-        public int CurrentIndex
-        {
-            get { return this.current_index; }
-            set { this.current_index = value; }
-        }
-
         public GroupMessages GroupMessages;
         public List<InstagramPost> InstagramPosts;
 
@@ -82,36 +74,13 @@ namespace IGTomesheq
         {
             InstagramPosts = new List<InstagramPost>();
             group_name = name;
-            //group_images_folder = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, group_name);
             posts_to_do = 0;
             only_likes = false;
-            last_done_post_index = 0;
+            last_done_post_index = -1;
             GroupMessages = new GroupMessages(this.id, group_name, dialog_type);
             connectionString = "Data Source=tomesheq_db.db;Version=3;";
-            current_index = 0;
-            //System.Diagnostics.Debug.Write(group_images_folder + "\n");
-            //CreateMediaFolder();
-
-            /*try
-            {
-                m_dbConnection = new SQLiteConnection("Data Source=tomesheq_db.db;Version=3;");
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.Write(ex.Message.ToString());
-            }*/
+            //current_index = 0;
         }
-
-        /*private void CreateMediaFolder()
-        {
-            // utworz folder dla mediow
-            System.IO.Directory.CreateDirectory(group_images_folder);
-        }*/
-
-        /*public string GetMediaFolderPath()
-        {
-            return (this.group_images_folder + "\\");
-        }*/
 
         public string GetPostsToDoCounter()
         {

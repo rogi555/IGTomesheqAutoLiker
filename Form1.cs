@@ -54,6 +54,8 @@ namespace IGTomesheqAutoLiker
         const int MAX_PHOTO_WIDTH = 376;
         const int MAX_PHOTO_HEIGHT = 376;
 
+        int current_support_group;
+
         List<SupportGroup> support_groups;
 
         private List<Label> date_support_groups;
@@ -87,6 +89,7 @@ namespace IGTomesheqAutoLiker
             // ogolne
             media_to_comment_counter = 0;
             posts_newer_than_timestamp = 0;
+            current_support_group = -1;
 
             support_groups = new List<SupportGroup>();
 
@@ -97,14 +100,7 @@ namespace IGTomesheqAutoLiker
             this.toolStripStatusLabel1.Text = "Program gotowy do działania! Kliknij dalej...";
 
             // umiejscowienie okna
-            this.Location = new Point((Screen.PrimaryScreen.Bounds.Width - this.Width) / 2, (Screen.PrimaryScreen.Bounds.Height - this.Height) / 2);
-
-            //GetPostInfo("Bq6swtTFSah");
-
-            //PythonIron ii = new PythonIron();
-
-            //EmojisWindow ee = new EmojisWindow();
-            //ee.ShowDialog();
+            this.CenterToScreen();
         }
 
         /* --- SCREEN POWITALNY --- */
@@ -1078,7 +1074,7 @@ namespace IGTomesheqAutoLiker
             }
         }
 
-        private void DownloadFirstPhotoFromTelegramDialogs()
+        private async Task DownloadFirstPhotoFromTelegramDialogs()
         {
             // zamraża interfejs użytkownika
             foreach (Control ctr in this.Controls)
@@ -1086,21 +1082,85 @@ namespace IGTomesheqAutoLiker
                 ctr.Enabled = false;
             }
 
-            if(support_groups != null)
+            try
             {
-                if(!support_groups[0].GroupMessages.isEmpty())
+                if (support_groups != null)
                 {
+                    if (!support_groups[0].GroupMessages.isEmpty())
+                    {
+                        if (support_groups[0].GroupMessages.filtered_messages[0].Media != null)
+                        {
+                            var media_msg = support_groups[0].GroupMessages.filtered_messages[0].Media;
+                            if (media_msg.GetType().ToString() == "TeleSharp.TL.TLMessageMediaWebPage")
+                            {
+                                TeleSharp.TL.TLMessageMediaWebPage web_page_msg = (TeleSharp.TL.TLMessageMediaWebPage)media_msg;
+                                if (web_page_msg.Webpage != null)
+                                {
+                                    TeleSharp.TL.TLWebPage web_page = (TeleSharp.TL.TLWebPage)web_page_msg.Webpage;
+                                    if (web_page.Photo != null)
+                                    {
+                                        try
+                                        {
+                                            TeleSharp.TL.TLPhoto photo = (TeleSharp.TL.TLPhoto)web_page.Photo;
+                                            List<TLPhotoSize> photo_sizes = new List<TLPhotoSize>();
+                                            foreach (var size in photo.Sizes.ToList())
+                                            {
+                                                photo_sizes.Add((TLPhotoSize)size);
+                                            }
+                                            TLFileLocation file_location = (TLFileLocation)photo_sizes.Last().Location;
+                                            TeleSharp.TL.Upload.TLFile resFile = new TeleSharp.TL.Upload.TLFile();
+                                            try
+                                            {
+                                                resFile = await client.GetFile(new TLInputFileLocation
+                                                {
+                                                    LocalId = file_location.LocalId,
+                                                    Secret = file_location.Secret,
+                                                    VolumeId = file_location.VolumeId
+                                                }, (int)Math.Pow(2, Math.Ceiling(Math.Log(photo_sizes.Last().Size, 2))));
+                                            }
+                                            catch (Exception ex2)
+                                            {
+                                                MessageBox.Show("BŁĄD2!\n" + ex2.Message.ToString());
+                                            }
 
+                                            using (var ms = new MemoryStream(resFile.Bytes))
+                                            {
+                                                byte[] byteArr = ms.ToArray();
+                                                string base64image = Convert.ToBase64String(byteArr);
+                                                MessageBox.Show("Caption = " + web_page.Description);
+                                                pictureBox2.Image = Image.FromStream(ms);
+                                                //Log.Info(Tag, "Base64 Image = " + base64image);
+                                                //await AddNewMessageToDatabase(channelName, ch_id, tLMessageMediaPhoto.caption, base64image, message.from_id.GetValueOrDefault(), message.id);
+                                            }
+                                        }
+                                        catch (Exception ex1)
+                                        {
+                                            MessageBox.Show("BŁĄD1!\n" + ex1.Message.ToString());
+                                        }
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                MessageBox.Show("Ta wiadomość Telegrama nie jest stroną internetową!");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // w tej grupie nie ma postow do zrobienia w tym okresie czasu!
+                        MessageBox.Show("W tej grupie nie ma postow do zrobienia w tym okresie czasu");
+                    }
                 }
                 else
                 {
-                    // w tej grupie nie ma postow do zrobienia w tym okresie czasu!
+                    MessageBox.Show("Aplikacja nie znalazła grup wsparcia! Zamykam program...");
+                    Application.Exit();
                 }
             }
-            else
+            catch (Exception ex)
             {
-                MessageBox.Show("Aplikacja nie znalazła grup wsparcia! Zamykam program...");
-                Application.Exit();
+                MessageBox.Show("BŁĄD!\n" + ex.Message.ToString());
             }
 
             // rozmraża interfejs użytkownika
@@ -1112,27 +1172,22 @@ namespace IGTomesheqAutoLiker
 
         private void DownloadPhotosFromTelegramDialogs()
         {
-            System.Diagnostics.Debug.Write("Krok 1: DownloadPhotosFromTelegramDialogs początek\n");
             foreach(Control ctr in this.Controls)
             {
                 ctr.Enabled = false;
             }
-            System.Diagnostics.Debug.Write("Krok 2: Zablokowano interfejs\n");
 
             //PythonInstance python = new PythonInstance();
             foreach (SupportGroup support_group in support_groups)
             {
-                System.Diagnostics.Debug.Write("Krok 3: Obrabiam grupe " + support_group.GroupName + "\n");
                 if (!support_group.GroupMessages.isEmpty())
                 {
-                    System.Diagnostics.Debug.Write("Krok 4: Istnieja wiadomosci dla tej grupy\n");
                     //MessageBox.Show("Channel " + support_group.GroupName + ", liczba postow: " + support_group.GroupMessages.GetFilteredMessages()/*.Where(x => (x.Date > timeSpan)).Count().ToString()*/);
 
                     // przerabia wiadomosci telegrama na posty instagrama
                     support_group.InstagramPosts = support_group.GroupMessages.CreatePostsFromMessages();
                     this.toolStripStatusLabel1.Text = $"Pobieram posty z grupy {support_group.GroupName}... (0/{support_group.InstagramPosts.Count.ToString()})";
                     this.Refresh();
-                    System.Diagnostics.Debug.Write("Krok 5: Utworzono posty (" + support_group.InstagramPosts.Count.ToString() + ")\n");
 
                     int i = 0;
                     foreach (var dialog_msg in support_group.GroupMessages.GetFilteredMessages()/*.Where(x => (x.Date > timeSpan))*/)
@@ -1140,11 +1195,9 @@ namespace IGTomesheqAutoLiker
                         //MessageBox.Show("Grupa: " + support_group.GroupName + "\nLiczba wiadomosci: " + support_group.GroupMessages.GetFilteredMessages().Count.ToString());
                         this.toolStripStatusLabel1.Text = $"Pobieram posty z grupy {support_group.GroupName}... ({i}/{support_group.InstagramPosts.Count.ToString()})";
                         this.Refresh();
-                        System.Diagnostics.Debug.Write("Krok 6: Obrabiam wiadomości (" + i.ToString() + ")\n");
                         // pobierz zdjęcie do folderu
                         if (dialog_msg.Media.GetType().ToString() == "TeleSharp.TL.TLMessageMediaWebPage")
                         {
-                            System.Diagnostics.Debug.Write("Krok 7: Wiadomość z linkiem\n");
                             TLMessageMediaWebPage media_web_page;
                             TLWebPage web_page;
                             try
@@ -1173,14 +1226,9 @@ namespace IGTomesheqAutoLiker
 
                             if (matches.Count > 0)
                             {
-                                System.Diagnostics.Debug.Write("Krok 8: Znaleziono poprawny link\n");
-                                System.Diagnostics.Debug.Write("URL: " + matches[0].Value + "\n");
-
                                 try
                                 {
-                                    System.Diagnostics.Debug.Write("Krok 9: Zaczynam pobieranie \n");
                                     InstagramPostInfo post_info = GetPostInfoByUrl(matches[0].Value);
-                                    System.Diagnostics.Debug.Write("Krok 10: Pobrano post_info\n");
                                     if (support_group.InstagramPosts.Where(x => x.TelegramMessage == dialog_msg.Message).First() != null)
                                     {
                                         if (!post_info.IsEmpty)
@@ -1202,7 +1250,7 @@ namespace IGTomesheqAutoLiker
                                 }
                                 catch (Exception ex)
                                 {
-                                    MessageBox.Show("Błąd IronPython: " + ex.Message.ToString() + "\nGrupa: " + support_group.GroupName + "\nTelegramMsg: " + dialog_msg.Message);
+                                    MessageBox.Show("Błąd pobierania zdjęcia oraz informacji o poście Insta: " + ex.Message.ToString() + "\nGrupa: " + support_group.GroupName + "\nTelegramMsg: " + dialog_msg.Message);
                                     continue;
                                 }
 
@@ -1219,10 +1267,10 @@ namespace IGTomesheqAutoLiker
                     }
 
                     // pokazanie wszystkich id dla postów
-                    foreach (var post in support_group.InstagramPosts)
+                    /*foreach (var post in support_group.InstagramPosts)
                     {
                         System.Diagnostics.Debug.Write("\n" + post.InstaMediaShortcode + " -> " + post.InstaMediaID + "\n");
-                    }
+                    }*/
 
                     // sprawdzenie
                     /*foreach(var post in support_group.InstagramPosts)
@@ -1318,7 +1366,8 @@ namespace IGTomesheqAutoLiker
 
             this.toolStripStatusLabel1.Text = "Zaczynam pobieranie postów z Instagrama!";
             this.Refresh();
-            DownloadPhotosFromTelegramDialogs();
+            //DownloadPhotosFromTelegramDialogs();
+            await DownloadFirstPhotoFromTelegramDialogs();
             this.toolStripStatusLabel1.Text = "Gotowe! Wszystkie Posty zostały pobrane - możesz teraz komentować!";
             this.Refresh();
 
@@ -1331,7 +1380,6 @@ namespace IGTomesheqAutoLiker
             // ukrywa wyszukiwanie po dacie
             label37.Hide();
             dateTimePicker1.Hide();
-            button17.Hide();
 
             // pokaz kolejny screen
             panel_liker_commenter.Show();
@@ -1364,7 +1412,7 @@ namespace IGTomesheqAutoLiker
                     i++;
                 }
 
-                MessageBox.Show("Przynajmniej jedna z grup wsparcia nie została jeszcze ani razu skomentowana - w panelu po lewej jest kalendarzyk. Wybierz datę i godzinę od której mają zostać pobrane posty i kliknij dalej.");
+                //MessageBox.Show("Przynajmniej jedna z grup wsparcia nie została jeszcze ani razu skomentowana - w panelu po lewej jest kalendarzyk. Wybierz datę i godzinę od której mają zostać pobrane posty i kliknij dalej.");
                 m_dbConnection.Close();
             }
         }
@@ -1932,21 +1980,18 @@ namespace IGTomesheqAutoLiker
         // zaznaczono element na liscie -> pokaz zdjecia z tej grupy
         private async void listBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
-            try
+            if(listBox1.SelectedIndex != -1)
             {
-                if (support_groups.Count > 0)
-                {
-                    await PostDoneShowNext();
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message.ToString());
+                current_support_group = listBox1.SelectedIndex;
             }
         }
 
         private async Task PostDoneShowNext()
         {
+            // blokuje interfejs
+            this.listBox1.Enabled = false;
+            this.Refresh();
+
             // pokaz ile zdjec wymaga skomentowania
             label24.Text = media_to_comment_counter.ToString();
 
@@ -2163,6 +2208,9 @@ namespace IGTomesheqAutoLiker
                     }
                 } 
             }
+            // blokuje interfejs
+            this.listBox1.Enabled = true;
+            this.Refresh();
         }
 
         // button pomin zdjęcie
@@ -2256,7 +2304,7 @@ namespace IGTomesheqAutoLiker
             _instaApi = InstaApiBuilder.CreateBuilder()
                     .SetUser(userSession)
                     .UseLogger(new DebugLogger(LogLevel.All)) // use logger for requests and debug messages
-                    .SetRequestDelay(TimeSpan.FromSeconds(2))
+                    .SetRequestDelay(RequestDelay.Empty())
                     .Build();
 
             if(!_instaApi.IsUserAuthenticated)
@@ -2313,15 +2361,6 @@ namespace IGTomesheqAutoLiker
             if (e.KeyCode == Keys.Enter)
             {
                 button8.PerformClick();
-            }
-        }
-
-        // zaczyna szukac wiadomosci po wcisnieciu entera
-        private void dateTimePicker1_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.KeyCode == Keys.Enter)
-            {
-                button17.PerformClick();
             }
         }
 
@@ -2405,6 +2444,14 @@ namespace IGTomesheqAutoLiker
         private void dateTimePicker1_MouseDown(object sender, MouseEventArgs e)
         {
             //MessageBox.Show("Clicked!");
+        }
+
+        private void dateTimePicker1_KeyDown_1(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                button13.PerformClick();
+            }
         }
     }
 }

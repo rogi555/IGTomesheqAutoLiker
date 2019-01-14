@@ -314,10 +314,11 @@ namespace IGTomesheq
                 Password = password
             };
 
+            IRequestDelay delay = RequestDelay.Empty();
             _instaApi = InstaApiBuilder.CreateBuilder()
                     .SetUser(userSession)
                     .UseLogger(new DebugLogger(LogLevel.All)) // use logger for requests and debug messages
-                    .SetRequestDelay(TimeSpan.FromSeconds(0))
+                    .SetRequestDelay(delay)
                     .Build();
 
             if (!_instaApi.IsUserAuthenticated)

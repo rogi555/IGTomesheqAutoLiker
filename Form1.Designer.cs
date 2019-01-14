@@ -116,7 +116,6 @@ namespace IGTomesheqAutoLiker
             this.label41 = new System.Windows.Forms.Label();
             this.groupBox4 = new System.Windows.Forms.GroupBox();
             this.dateTimePicker1 = new System.Windows.Forms.DateTimePicker();
-            this.button17 = new System.Windows.Forms.Button();
             this.label37 = new System.Windows.Forms.Label();
             this.button13 = new System.Windows.Forms.Button();
             this.label31 = new System.Windows.Forms.Label();
@@ -1037,12 +1036,13 @@ namespace IGTomesheqAutoLiker
             // 
             this.groupBox5.Controls.Add(this.label42);
             this.groupBox5.Controls.Add(this.label41);
-            this.groupBox5.Location = new System.Drawing.Point(618, 120);
+            this.groupBox5.Location = new System.Drawing.Point(856, 71);
             this.groupBox5.Name = "groupBox5";
             this.groupBox5.Size = new System.Drawing.Size(406, 383);
             this.groupBox5.TabIndex = 30;
             this.groupBox5.TabStop = false;
             this.groupBox5.Text = "Po ostatnio skomentowanym poście";
+            this.groupBox5.Visible = false;
             // 
             // label42
             // 
@@ -1067,14 +1067,14 @@ namespace IGTomesheqAutoLiker
             // groupBox4
             // 
             this.groupBox4.Controls.Add(this.dateTimePicker1);
-            this.groupBox4.Controls.Add(this.button17);
             this.groupBox4.Controls.Add(this.label37);
-            this.groupBox4.Location = new System.Drawing.Point(183, 120);
+            this.groupBox4.Font = new System.Drawing.Font("Segoe UI", 12F);
+            this.groupBox4.Location = new System.Drawing.Point(446, 206);
             this.groupBox4.Name = "groupBox4";
             this.groupBox4.Size = new System.Drawing.Size(259, 120);
             this.groupBox4.TabIndex = 29;
             this.groupBox4.TabStop = false;
-            this.groupBox4.Text = "Wprowadź datę samemu";
+            this.groupBox4.Text = "Wprowadź datę";
             // 
             // dateTimePicker1
             // 
@@ -1082,20 +1082,10 @@ namespace IGTomesheqAutoLiker
             this.dateTimePicker1.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
             this.dateTimePicker1.Location = new System.Drawing.Point(23, 63);
             this.dateTimePicker1.Name = "dateTimePicker1";
-            this.dateTimePicker1.Size = new System.Drawing.Size(200, 22);
+            this.dateTimePicker1.Size = new System.Drawing.Size(200, 29);
             this.dateTimePicker1.TabIndex = 26;
+            this.dateTimePicker1.KeyDown += new System.Windows.Forms.KeyEventHandler(this.dateTimePicker1_KeyDown_1);
             this.dateTimePicker1.MouseDown += new System.Windows.Forms.MouseEventHandler(this.dateTimePicker1_MouseDown);
-            // 
-            // button17
-            // 
-            this.button17.Enabled = false;
-            this.button17.Location = new System.Drawing.Point(228, 63);
-            this.button17.Name = "button17";
-            this.button17.Size = new System.Drawing.Size(75, 22);
-            this.button17.TabIndex = 28;
-            this.button17.Text = "Szukaj";
-            this.button17.UseVisualStyleBackColor = true;
-            this.button17.Visible = false;
             // 
             // label37
             // 
@@ -1133,8 +1123,8 @@ namespace IGTomesheqAutoLiker
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1184, 611);
-            this.Controls.Add(this.panel_liker_commenter);
             this.Controls.Add(this.panel_choose_msg_starting_date);
+            this.Controls.Add(this.panel_liker_commenter);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.panel_hello);
             this.Controls.Add(this.panel_comments);
@@ -1280,7 +1270,6 @@ namespace IGTomesheqAutoLiker
         private System.Windows.Forms.GroupBox groupBox5;
         private System.Windows.Forms.GroupBox groupBox4;
         private System.Windows.Forms.DateTimePicker dateTimePicker1;
-        private System.Windows.Forms.Button button17;
         private System.Windows.Forms.Label label37;
         private System.Windows.Forms.Label label42;
         private System.Windows.Forms.Label label41;

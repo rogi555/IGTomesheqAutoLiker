@@ -14,7 +14,7 @@ namespace IGTomesheq
     class GroupMessages
     {
         //private TLChannelMessages all_messages;
-        private List<TLMessage> filtered_messages;
+        public List<TLMessage> filtered_messages;
         private TLMessages all_messages;
 
         public GroupMessages(int chatId, string chatName, Type dialogType)
@@ -137,26 +137,19 @@ namespace IGTomesheq
         public List<InstagramPost> CreatePostsFromMessages()
         {
             List<InstagramPost> insta_posts = new List<InstagramPost>();
-            System.Diagnostics.Debug.Write("Krok 4.1: Wchodze do foreach\n");
             foreach (var msg in filtered_messages)
             {
-                System.Diagnostics.Debug.Write("Krok 4.2: We foreach\n");
                 InstagramPost tmp_post = new InstagramPost();
                 TLMessageMediaWebPage wp = (TLMessageMediaWebPage)msg.Media;
                 TLWebPage webPage = (TLWebPage)wp.Webpage;
-                System.Diagnostics.Debug.Write("Krok 4.3: Webpage gotowe\n");
                 Regex reg = new Regex(@"https\:\/\/[www\.]*instagram\.com\/p\/[\w-]+[\/]*"); // regex linku do zdjecia
                 MatchCollection matches;
                 matches = reg.Matches(webPage.Url);
-                System.Diagnostics.Debug.Write("Krok 4.4: Sprawdzam czy znaleziono odwzorowanie\n");
                 if (matches.Count > 0)
                 {
-                    System.Diagnostics.Debug.Write("Krok 4.5: Znaleziono odwzorowanie (msg.Date = " + msg.Date.ToString() + ")\n");
                     if(tmp_post.SetTelegramInfo(matches[0].Value, msg.Message, (long)msg.Date))
                     {
-                        System.Diagnostics.Debug.Write("Krok 4.5: Znaleziono odwzorowanie (msg.Date = " + msg.Date.ToString() + ")\n");
                         insta_posts.Add(tmp_post);
-                        System.Diagnostics.Debug.Write("Krok 4.6: Dodano post do insta_posts\n");
                     }
                     else
                     {
