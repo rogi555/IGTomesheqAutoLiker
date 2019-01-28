@@ -306,6 +306,13 @@ namespace IGTomesheq
         public static string login;
         public static string password;
 
+        public async static Task<string> GetMediaIdFromUrl(string url)
+        {
+            Uri urli = new Uri(url);
+            var test = await _instaApi.GetMediaIdFromUrlAsync(urli);
+            return test.Value;
+        }
+
         public async static Task Login(string username, string password)
         {
             var userSession = new UserSessionData
@@ -326,6 +333,19 @@ namespace IGTomesheq
                 // login
                 Console.WriteLine($"Logging in as {userSession.UserName}");
                 var logInResult = await _instaApi.LoginAsync();
+                if (logInResult.Value == InstaLoginResult.ChallengeRequired)
+                {
+                    var lola = await _instaApi.ResetChallenge();
+                    var res = await _instaApi.ChooseVerifyMethod(1);
+
+                    string text = "";
+                    if(text == "")
+                    {
+
+                    }
+
+                    var res3 = await _instaApi.SendVerifyCode(text);
+                }
                 if (!logInResult.Succeeded)
                 {
                     Console.WriteLine($"Unable to login: {logInResult.Info.Message}");
@@ -333,14 +353,32 @@ namespace IGTomesheq
             }
         }
 
+        public async static Task<bool> FindMyComment(string post_id, string current_username)
+        {
+            IResult<InstaCommentList> comments = await _instaApi.GetMediaCommentsAsync(post_id, PaginationParameters.Empty);
+            if(comments.Value.Comments.Any(x => x.User.UserName == current_username))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public async static Task<InstaCommentList> GetComments(string post_id)
+        {
+            IResult<InstaCommentList> comments = await _instaApi.GetMediaCommentsAsync(post_id, PaginationParameters.Empty);
+            return comments.Value;
+        }
+
         public async static Task<bool> Logout()
         {
             IResult<bool> logout_successful = await _instaApi.LogoutAsync();
-            await _instaApi.GetCurrentUserAsync();
             return logout_successful.Value;
         }
 
-            public async static Task CheckSomething()
+        public async static Task CheckSomething()
         {
             if(_instaApi.IsUserAuthenticated)
             {
@@ -374,7 +412,7 @@ namespace IGTomesheq
                 else
                 {
                     return false;
-                } 
+                }
             }
             else
             {
@@ -382,10 +420,10 @@ namespace IGTomesheq
             }
         }
 
-        public async static Task<InstaMedia> GetInstaPost(string id)
+        public async static Task<IResult<InstaMedia>> GetInstaPost(string id)
         {
             IResult<InstaMedia> post = await _instaApi.GetMediaByIdAsync(id);
-            return post.Value;
+            return post;
         }
     }
 }

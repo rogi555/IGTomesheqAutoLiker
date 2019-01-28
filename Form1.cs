@@ -12,12 +12,10 @@ using InstaSharper.API;
 using InstaSharper.Classes;
 using InstaSharper.API.Builder;
 using InstaSharper.Logger;
-using System.Text.RegularExpressions;
 using System.Drawing;
 using System.IO;
 using InstaSharper.Classes.Models;
 using System.Net;
-using Newtonsoft.Json;
 using System.Web.Script.Serialization;
 using TLSharp.Core.Network;
 using System.Threading;
@@ -43,8 +41,6 @@ namespace IGTomesheqAutoLiker
         TLDialogs dialogs;
         List<TLChannel> channels;
         List<TLChat> chats;
-        List<GroupMessages> dialogs_messages;
-        InstagramProcessor insta;
         List<SingleEmoji> complete_emojis;
         List<Label> emoji_labels;
 
@@ -54,54 +50,47 @@ namespace IGTomesheqAutoLiker
         const int MAX_PHOTO_WIDTH = 376;
         const int MAX_PHOTO_HEIGHT = 376;
 
-        int current_support_group;
+        int support_group_index;
 
         List<SupportGroup> support_groups;
 
         private List<Label> date_support_groups;
         private List<Label> date_support_groups_last_post_dates;
 
-        private static IInstaApi _instaApi;
+        EmojisWindow ee;
+
+        string current_username;
 
         public Form1()
         {
             InitializeComponent();
 
             // baza danych
-            try
-            {
-                connectionString = "Data Source=tomesheq_db.db;Version=3;";
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show(ex.Message.ToString());
-                throw;
-            }
+            connectionString = "Data Source=tomesheq_db.db;Version=3;";
 
             // Telegram
             code = "";
             hash = "";
-            dialogs_messages = new List<GroupMessages>();
-
-            // Instagram
-            //insta = new InstagramProcessor();
 
             // ogolne
             media_to_comment_counter = 0;
             posts_newer_than_timestamp = 0;
-            current_support_group = -1;
+            support_group_index = -1;
 
             support_groups = new List<SupportGroup>();
 
             // utworzenie obiektu z klasami emoji
             complete_emojis = new List<SingleEmoji>();
             emoji_labels = new List<Label>();
+            ee = new EmojisWindow(this);
 
             this.toolStripStatusLabel1.Text = "Program gotowy do działania! Kliknij dalej...";
 
+            current_username = "";
+
             // umiejscowienie okna
             this.CenterToScreen();
-        }
+        }        
 
         /* --- SCREEN POWITALNY --- */
         // button dalej na screen1 (powitanie)
@@ -148,7 +137,7 @@ namespace IGTomesheqAutoLiker
                     command = new SQLiteCommand(sql, m_dbConnection);
                     command.ExecuteNonQuery(); // nic nie zwraca
                 }
-                m_dbConnection.Close(); 
+                m_dbConnection.Close();
             }
         }
 
@@ -453,6 +442,7 @@ namespace IGTomesheqAutoLiker
                 button14.Show();
                 button14.Text = "Wyloguj";
 
+                var post = await IGProc.GetInstaPost(await IGProc.GetMediaIdFromUrl("https://www.instagram.com/p/Bmbo7pNnMcs/"));
                 return true;
             }
             else
@@ -471,24 +461,6 @@ namespace IGTomesheqAutoLiker
 
                 return false;
             }
-        }
-
-        class InstaLoginData
-        {
-            public string login;
-            public string password;
-
-            public InstaLoginData(string log, string pas)
-            {
-                login = log;
-                password = pas;
-            }
-        }
-
-        private async void TryInstaLogin(object _login_data)
-        {
-            InstaLoginData login_data = _login_data as InstaLoginData;
-            await IGProc.Login(login_data.login, login_data.password);
         }
 
         // button logowania do insta
@@ -715,9 +687,12 @@ namespace IGTomesheqAutoLiker
                     }
 
                     // usuwanie nieuzywanych channeli z pamieci [LIFO]
-                    foreach (int index in indicies_to_be_deleted)
+                    if (!init_filtering)
                     {
-                        chats.RemoveAt(index);
+                        foreach (int index in indicies_to_be_deleted)
+                        {
+                            chats.RemoveAt(index);
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -731,8 +706,45 @@ namespace IGTomesheqAutoLiker
             }
         }
 
+        // sprawdza czy zapamiętana w DB grupa wsparcia faktycznie istnieje w Telegramie
+        private void CheckIfSupportGroupsExist()
+        {
+            foreach (ListViewItem item in listView3.Items)
+            {
+                bool exists = false;
+                foreach (var channel in channels)
+                {
+                    if (channel.Title == item.Text)
+                    {
+                        exists = true;
+                    }
+                }
+                foreach (var chat in chats)
+                {
+                    if (chat.Title == item.Text)
+                    {
+                        exists = true;
+                    }
+                }
+
+                if (!exists)
+                {
+                    MessageBox.Show($"Wygląda na to, że nie należysz już do grupy wsparcia \"{item.Text}\".\nUsuwam tę grupę z listy");
+                    listView3.Items.Remove(item);
+                    using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
+                    {
+                        m_dbConnection.Open();
+                        string sql = $"DELETE FROM support_group_names WHERE group_name = '{item.Text}'";
+                        SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+                        command.ExecuteNonQuery(); // nic nie zwraca
+                        m_dbConnection.Close();
+                    }
+                }
+            }
+        }
+
         // button dalej na screenie z logowaniem do telegrama
-        private async void button5_Click(object sender, EventArgs e)
+        private void button5_Click(object sender, EventArgs e)
         {
             // dodaj grupy wsparcia do drugiej listy
             using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
@@ -753,6 +765,7 @@ namespace IGTomesheqAutoLiker
             this.toolStripStatusLabel1.Text = "Filtrowanie chatów Telegrama...";
             FilterTelegramChannels(true/*it is initial filtering*/);
             FilterTelegramChats(true/*it is initial filtering*/);
+            CheckIfSupportGroupsExist();
 
             panel_telegram_login.Hide();
             panel_telegram_chats.Show();
@@ -766,11 +779,12 @@ namespace IGTomesheqAutoLiker
         /* --- SCREEN Z GRUPAMI WSPARCIA TELEGRAMA --- */
 
         // button dalej na screenie z grupami wsparcia telegrama
-        private async void button7_Click(object sender, EventArgs e)
+        private void button7_Click(object sender, EventArgs e)
         {
             if(listView3.Items.Count == 0)
             {
-                MessageBox.Show("Hola hola! Wybierz chć jedną grupę wsparcia i kliknij dalej");
+                MessageBox.Show("Hola hola! Wybierz choć jedną grupę wsparcia i kliknij dalej");
+                return;
             }
 
             panel_telegram_chats.Hide();
@@ -782,8 +796,8 @@ namespace IGTomesheqAutoLiker
             FilterTelegramChats(false/*it is NOT initial filtering*/);
 
             // inicjalizacja kolejnego ekranu
-            InitChooseDate();
-            panel_choose_msg_starting_date.Show();
+            //InitChooseDate();
+            panel_settings.Show();
 
             //InitLikeCommenterPanel(/*true*/);
             //panel_liker_commenter.Show();
@@ -810,50 +824,24 @@ namespace IGTomesheqAutoLiker
                         // tworzy obiekty klasy SupportGroup dla kazdej grupy wsparcia
                         support_groups.Add(new SupportGroup(channel.Title));
                         // sprawdza jaka wiadomosc z czatu byla obsluzona (like & comment) jako ostatnia
-                        long last_done_msg_timestamp = support_groups.Last().GetLastDoneMessage();
+                        long last_done_msg_timestamp = support_groups.Last().GetLastDoneMessageDate();
                         if(last_done_msg_timestamp <= 0)
                         {
                             last_done_msg_timestamp = timestamp;
                         }
                         //MessageBox.Show("Pobieram wiadomości młodsze niż: " + UnixTimeStampToDateTime(last_done_msg_timestamp).ToLongTimeString() + " " + last_done_msg_timestamp.ToString());
                         // pobiera zbior wiadomosci dla danego kanalu
-                        var peer = new TLInputPeerChannel() { ChannelId = channel.Id, AccessHash = (long)channel.AccessHash.Value };
-                        var msgs = await client.GetHistoryAsync(peer, 0, 0, 100);
-                        if (msgs is TLChannelMessages)
+                        try
                         {
-                            var messag = msgs as TLChannelMessages;
-                            //MessageBox.Show("Liczba wiadomości w channelu " + channel.Title + " = " + messag.Count.ToString());
-                            if(messag.Count <= 100)
+                            var peer = new TLInputPeerChannel() { ChannelId = channel.Id, AccessHash = (long)channel.AccessHash.Value };
+                            var msgs = await client.GetHistoryAsync(peer, 0, 0, 100);
+                            if (msgs is TLChannelMessages)
                             {
-                                var messages = messag.Messages;
-
-                                foreach (var message in messages)
+                                var messag = msgs as TLChannelMessages;
+                                //MessageBox.Show("Liczba wiadomości w channelu " + channel.Title + " = " + messag.Count.ToString());
+                                if (messag.Count <= 100)
                                 {
-                                    if (message is TLMessage)
-                                    {
-                                        var m = message as TLMessage;
-                                        // sprawdzenie czy ta wiadomość już była
-                                        if (m.Date <= last_done_msg_timestamp)
-                                        {
-                                            System.Diagnostics.Debug.Write("\n||| " + channel.Title + ": " + TLmessages.Count.ToString() + " wiadomosci pobrano!|||\n");
-                                            break;
-                                        }
-                                        TLmessages.Add(m);
-                                    }
-                                    else if (message is TLMessageService)
-                                    {
-                                        var m1 = message as TLMessageService;
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                bool done = false;
-                                int total = 0;
-                                while (/*(total < 500) && */!done) // tymczasowo - sprawdzac date wiadomosci
-                                {
-                                    var messa = msgs as TLChannelMessages;
-                                    var messages = messa.Messages;
+                                    var messages = messag.Messages;
 
                                     foreach (var message in messages)
                                     {
@@ -861,82 +849,96 @@ namespace IGTomesheqAutoLiker
                                         {
                                             var m = message as TLMessage;
                                             // sprawdzenie czy ta wiadomość już była
-                                            if(m.Date <= last_done_msg_timestamp)
+                                            if (m.Date <= last_done_msg_timestamp)
                                             {
-                                                done = true;
                                                 System.Diagnostics.Debug.Write("\n||| " + channel.Title + ": " + TLmessages.Count.ToString() + " wiadomosci pobrano!|||\n");
                                                 break;
                                             }
-                                            ++total;
                                             TLmessages.Add(m);
                                         }
                                         else if (message is TLMessageService)
                                         {
-                                            var mess = message as TLMessageService;
-                                            ++total;
-                                            done = mess.Action is TLMessageActionChatCreate;
-                                            if (done)
-                                            {
-                                                System.Diagnostics.Debug.Write("\n||| " + channel.Title + ": " + TLmessages.Count.ToString() + " wiadomosci pobrano!|||\n");
-                                                break;
-                                            }
-                                            else
-                                                continue;
+                                            var m1 = message as TLMessageService;
                                         }
                                     }
-
-                                    //MessageBox.Show("Pobrano już " + total.ToString() + " wiadomości dla dialoga " + channel.Title);
-                                    // jesli done = true, czyli znaleziono juz wiadomosci starsze niz data graniczna, nie pobieraj wiecej wiadomosci
-                                    if (!done)
+                                }
+                                else
+                                {
+                                    bool done = false;
+                                    int total = 0;
+                                    while (/*(total < 500) && */!done) // tymczasowo - sprawdzac date wiadomosci
                                     {
-                                        try
+                                        var messa = msgs as TLChannelMessages;
+                                        var messages = messa.Messages;
+
+                                        foreach (var message in messages)
                                         {
-                                            msgs = await client.GetHistoryAsync(peer, total, 0, 100);
-                                        }
-                                        catch (FloodException ex)
-                                        {
-                                            int seconds_to_wait = (int)ex.TimeToWait.TotalSeconds;
-                                            //MessageBox.Show("Próbujemy pobrać zbyt wiele wiadomości w zbyt krótkim czasie - Telegram się przed tym broni i nie udostępni wiadomości przez " + seconds_to_wait.ToString() + " sekund. Poczekaj cierpliwie i nic nie rób, a aplikacja sama wznowi działanie.");
-                                            for (int i = 0; i < seconds_to_wait; i++)
+                                            if (message is TLMessage)
                                             {
-                                                this.toolStripStatusLabel1.Text = "Próbujemy pobrać zbyt wiele wiadomości w zbyt krótkim czasie - Telegram się broni... Czekam " + (seconds_to_wait - i).ToString() + " sekund...";
-                                                this.Refresh();
-                                                Thread.Sleep(1000); 
+                                                var m = message as TLMessage;
+                                                // sprawdzenie czy ta wiadomość już była
+                                                if (m.Date <= last_done_msg_timestamp)
+                                                {
+                                                    done = true;
+                                                    System.Diagnostics.Debug.Write("\n||| " + channel.Title + ": " + TLmessages.Count.ToString() + " wiadomosci pobrano!|||\n");
+                                                    break;
+                                                }
+                                                ++total;
+                                                TLmessages.Add(m);
                                             }
-                                            this.toolStripStatusLabel1.Text = "Szukam dalej linków w grupie " + channel.Title + "...";
-                                            this.Refresh();
+                                            else if (message is TLMessageService)
+                                            {
+                                                var mess = message as TLMessageService;
+                                                ++total;
+                                                done = mess.Action is TLMessageActionChatCreate;
+                                                if (done)
+                                                {
+                                                    System.Diagnostics.Debug.Write("\n||| " + channel.Title + ": " + TLmessages.Count.ToString() + " wiadomosci pobrano!|||\n");
+                                                    break;
+                                                }
+                                                else
+                                                    continue;
+                                            }
+                                        }
+
+                                        //MessageBox.Show("Pobrano już " + total.ToString() + " wiadomości dla dialoga " + channel.Title);
+                                        // jesli done = true, czyli znaleziono juz wiadomosci starsze niz data graniczna, nie pobieraj wiecej wiadomosci
+                                        if (!done)
+                                        {
                                             try
                                             {
                                                 msgs = await client.GetHistoryAsync(peer, total, 0, 100);
                                             }
-                                            catch (FloodException ex1)
+                                            catch (FloodException ex)
                                             {
-                                                MessageBox.Show("Telegram znowu się broni... Poczekaj cierpliwie :(");
+                                                int seconds_to_wait = (int)ex.TimeToWait.TotalSeconds;
+                                                for (int i = 0; i < seconds_to_wait; i++)
+                                                {
+                                                    this.toolStripStatusLabel1.Text = "Próbujemy pobrać zbyt wiele wiadomości w zbyt krótkim czasie - Telegram się broni... Czekam " + (seconds_to_wait - i).ToString() + " sekund...";
+                                                    this.Refresh();
+                                                    Thread.Sleep(1000);
+                                                }
+                                                this.toolStripStatusLabel1.Text = "Szukam dalej linków w grupie " + channel.Title + "...";
+                                                this.Refresh();
+                                                try
+                                                {
+                                                    msgs = await client.GetHistoryAsync(peer, total, 0, 100);
+                                                }
+                                                catch (FloodException)
+                                                {
+                                                    MessageBox.Show("Telegram znowu się broni... Poczekaj cierpliwie :(");
+                                                }
                                             }
-                                            //MessageBox.Show("Bład podczas pobierania wiadomości Telegrama:\n" + "Typ wyjatku: " + ex.GetType().ToString() + "\n" + ex.Message.ToString());
-                                            //MessageBox.Show("Możliwe, że nie wszystkie wiadomości zostały pobrane... Proszę porównać z aplikacją Telegram na telefonie i zgłosić problem do Bubu!");
-                                            //break;
-                                        } 
+                                        }
                                     }
                                 }
                             }
                         }
-                        System.Diagnostics.Debug.Write("\n+++\n");
-                        foreach(var msg in TLmessages)
+                        catch (Exception ex)
                         {
-                            System.Diagnostics.Debug.Write("\n--- " + msg.Message + " ---\n");
+                            MessageBox.Show("Wystąpił błąd podczas pobierania wiadomości! Problem spowodowany jest przez niedziałające serwery Telegrama - aplikacja zostanie zamknięta. Uruchom ją ponownie i spróbuj jeszcze raz\n" + ex.Message.ToString());
                         }
-                        System.Diagnostics.Debug.Write("\n+++\n");
-                        //MessageBox.Show("Najstarsza wiadomosc dla " + channel.Title + ": " + TLmessages.Min(x => x.Date).ToString() + ", a najmłodsza: " + TLmessages.Max(x => x.Date).ToString());
-                        support_groups.Last().GroupMessages = new GroupMessages(channel.Id, channel.Title, channel.GetType());
-                        System.Diagnostics.Debug.Write("\nCHANNEL " + support_groups.Last().GroupName + "\n");
-                        support_groups.Last().GroupMessages.AddAndFilterMessages(TLmessages);
-                        //MessageBox.Show("Channel " + channel.Title + "\nLiczba wiadomosci: " + TLmessages.Count.ToString() + "\nLiczba wiadomosci z linkami: " + support_groups.Last().GroupMessages.GetFilteredMessages().Count.ToString() + "\nLiczba postow: " + support_groups.Last().InstagramPosts.Count.ToString());
-                        System.Diagnostics.Debug.Write("\n--- FILTERED MESSAGES ---\n");
-                        foreach (var msg in support_groups.Last().GroupMessages.GetFilteredMessages())
-                        {
-                            System.Diagnostics.Debug.Write("\n---"+msg.Message+"---\n");
-                        }
+                        support_groups.Last().AddAndFilterMessages(TLmessages);
                     }
                 }
             }
@@ -958,7 +960,7 @@ namespace IGTomesheqAutoLiker
                         support_groups.Add(new SupportGroup(chat.Title));
 
                         // sprawdza jaka wiadomosc z czatu byla obsluzona (like & comment) jako ostatnia
-                        long last_done_msg_timestamp = support_groups.Last().GetLastDoneMessage();
+                        long last_done_msg_timestamp = support_groups.Last().GetLastDoneMessageDate();
                         if (last_done_msg_timestamp <= 0)
                         {
                             last_done_msg_timestamp = timestamp;
@@ -1049,245 +1051,331 @@ namespace IGTomesheqAutoLiker
                                         {
                                             msgs = await client.GetHistoryAsync(peer, total, 0, 100);
                                         }
-                                        catch (FloodException ex1)
+                                        catch (FloodException)
                                         {
                                             MessageBox.Show("Telegram znowu się wyjebał... (Chaty)");
                                         }
-
-                                        // tu task z czekaniem
-                                        //MessageBox.Show("Bład podczas pobierania wiadomości Telegrama:\n" + "Typ wyjatku: " + ex.GetType().ToString() + "\n" + ex.Message.ToString());
-                                        //MessageBox.Show("Możliwe, że nie wszystkie wiadomości zostały pobrane... Proszę porównać z aplikacją Telegram na telefonie i zgłosić problem do Bubu!");
-                                        //break;
                                     } 
                                 }
                             }
                         }
-                        support_groups.Last().GroupMessages = new GroupMessages(chat.Id, chat.Title, chat.GetType());
-                        support_groups.Last().GroupMessages.AddAndFilterMessages(TLmessages);
-                        //MessageBox.Show("Chat " + chat.Title + "\nLiczba wiadomosci: " + TLmessages.Count.ToString() + "\nLiczba wiadomosci z linkami: " + support_groups.Last().GroupMessages.GetFilteredMessages().Count.ToString() + "\nLiczba postow: " + support_groups.Last().InstagramPosts.Count.ToString());
+                        support_groups.Last().AddAndFilterMessages(TLmessages);
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show("a " + ex.Message.ToString());
+                        MessageBox.Show("Wystąpił błąd podczas pobierania wiadomości!\n" + ex.Message.ToString());
                     }
                 }
             }
         }
 
-        private async Task DownloadFirstPhotoFromTelegramDialogs()
+        /* TA METODA BEDZIE USUNIETA */
+        private async Task DownloadPhotoFromSupportGroupMessages(int support_group_index, int msg_index)
         {
-            // zamraża interfejs użytkownika
-            foreach (Control ctr in this.Controls)
+            if (support_group_index > -1)
             {
-                ctr.Enabled = false;
-            }
-
-            try
-            {
-                if (support_groups != null)
+                try
                 {
-                    if (!support_groups[0].GroupMessages.isEmpty())
+                    if (support_groups != null)
                     {
-                        if (support_groups[0].GroupMessages.filtered_messages[0].Media != null)
+                        if (support_groups[support_group_index].areThereAnyMessages())
                         {
-                            var media_msg = support_groups[0].GroupMessages.filtered_messages[0].Media;
-                            if (media_msg.GetType().ToString() == "TeleSharp.TL.TLMessageMediaWebPage")
-                            {
-                                TeleSharp.TL.TLMessageMediaWebPage web_page_msg = (TeleSharp.TL.TLMessageMediaWebPage)media_msg;
-                                if (web_page_msg.Webpage != null)
-                                {
-                                    TeleSharp.TL.TLWebPage web_page = (TeleSharp.TL.TLWebPage)web_page_msg.Webpage;
-                                    if (web_page.Photo != null)
-                                    {
-                                        try
-                                        {
-                                            TeleSharp.TL.TLPhoto photo = (TeleSharp.TL.TLPhoto)web_page.Photo;
-                                            List<TLPhotoSize> photo_sizes = new List<TLPhotoSize>();
-                                            foreach (var size in photo.Sizes.ToList())
-                                            {
-                                                photo_sizes.Add((TLPhotoSize)size);
-                                            }
-                                            TLFileLocation file_location = (TLFileLocation)photo_sizes.Last().Location;
-                                            TeleSharp.TL.Upload.TLFile resFile = new TeleSharp.TL.Upload.TLFile();
-                                            try
-                                            {
-                                                resFile = await client.GetFile(new TLInputFileLocation
-                                                {
-                                                    LocalId = file_location.LocalId,
-                                                    Secret = file_location.Secret,
-                                                    VolumeId = file_location.VolumeId
-                                                }, (int)Math.Pow(2, Math.Ceiling(Math.Log(photo_sizes.Last().Size, 2))));
-                                            }
-                                            catch (Exception ex2)
-                                            {
-                                                MessageBox.Show("BŁĄD2!\n" + ex2.Message.ToString());
-                                            }
+                            // pobiera obrazek z wiadomości Telegrama
+                            string base64img = "";
 
-                                            using (var ms = new MemoryStream(resFile.Bytes))
-                                            {
-                                                byte[] byteArr = ms.ToArray();
-                                                string base64image = Convert.ToBase64String(byteArr);
-                                                MessageBox.Show("Caption = " + web_page.Description);
-                                                pictureBox2.Image = Image.FromStream(ms);
-                                                //Log.Info(Tag, "Base64 Image = " + base64image);
-                                                //await AddNewMessageToDatabase(channelName, ch_id, tLMessageMediaPhoto.caption, base64image, message.from_id.GetValueOrDefault(), message.id);
-                                            }
-                                        }
-                                        catch (Exception ex1)
-                                        {
-                                            MessageBox.Show("BŁĄD1!\n" + ex1.Message.ToString());
-                                        }
-                                    }
-                                }
+                            base64img = await DownloadPhotoFromTelegramWebPageMessage(support_groups[support_group_index].MessagesWithInstaPosts[msg_index].TelegramMessage);
+
+                            // sprawdza czy nie wystąpił błąd przy pobieraniu
+                            if (base64img.Contains("Ta wiadomość") || base64img.Contains("Nie udało"))
+                            {
+                                MessageBox.Show("Wystąpił błąd:\n" + base64img);
                             }
                             else
                             {
-                                MessageBox.Show("Ta wiadomość Telegrama nie jest stroną internetową!");
+                                // wyswietlenie zdjecia w pictureBox2
+                                var pic = Convert.FromBase64String(base64img);
+                                pictureBox2.Image = System.Drawing.Image.FromStream(new System.IO.MemoryStream(pic));
                             }
+                        }
+                        else
+                        {
+                            // w tej grupie nie ma postow do zrobienia w tym okresie czasu!
+                            MessageBox.Show("W tej grupie nie ma postow do zrobienia w tym okresie czasu");
                         }
                     }
                     else
                     {
-                        // w tej grupie nie ma postow do zrobienia w tym okresie czasu!
-                        MessageBox.Show("W tej grupie nie ma postow do zrobienia w tym okresie czasu");
+                        MessageBox.Show("Aplikacja nie znalazła grup wsparcia! Zamykam program...");
+                        Application.Exit();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("BŁĄD!\n" + ex.Message.ToString());
+                }
+            }
+            else // nie ma zadnej grupy na liscie
+            {
+                MessageBox.Show("Brak grup wsparcia!");
+            }
+        }
+
+        private async Task<string> DownloadPhotoFromTelegramWebPageMessage(TLMessage message)
+        {
+            string ret = "";
+            if (message.Media != null)
+            {
+                // zapisuje obiekt Media z wiadomosci
+                var media_msg = message.Media;
+
+                // sprawdza czy obiekt Media jest stroną internetową
+                if (media_msg.GetType().ToString() == "TeleSharp.TL.TLMessageMediaWebPage")
+                {
+                    // zapisuje obiekt Media jako wiadomość zawierającą stronę internetową do dalszej obróbki
+                    TeleSharp.TL.TLMessageMediaWebPage web_page_msg = (TeleSharp.TL.TLMessageMediaWebPage)media_msg;
+                    // sprawdzenie czy obiekt Webpage istnieje
+                    if (web_page_msg.Webpage != null)
+                    {
+                        // zapisuje obiekt Media jako stronę internetową do dalszej obróbki
+                        TeleSharp.TL.TLWebPage web_page = (TeleSharp.TL.TLWebPage)web_page_msg.Webpage;
+                        // jeśli Telegram pobrał zdjęcie
+                        if (web_page.Photo != null)
+                        {
+                            // zapisuje zdjecie jako obiekt typu TLPhoto do dalszej obrobki
+                            TeleSharp.TL.TLPhoto photo = (TeleSharp.TL.TLPhoto)web_page.Photo;
+                            // tworzy liste z rozmiarami dostepnych zdjec
+                            List<TLPhotoSize> photo_sizes = new List<TLPhotoSize>();
+                            // pobiera rozmiary dostepne z Telegrama do utworzonej listy
+                            foreach (var size in photo.Sizes.ToList())
+                            {
+                                photo_sizes.Add((TLPhotoSize)size);
+                            }
+                            // pobiera informacje o lokalizacji zdjecia do pobrania
+                            TLFileLocation file_location = (TLFileLocation)photo_sizes.Last().Location;
+                            // tworzy wydmuszkę pliku zdjęcia
+                            TeleSharp.TL.Upload.TLFile resFile = new TeleSharp.TL.Upload.TLFile();
+                            // probuje pobrac zdjecie z serwera
+                            try
+                            {
+                                resFile = await client.GetFile(new TLInputFileLocation
+                                {
+                                    LocalId = file_location.LocalId,
+                                    Secret = file_location.Secret,
+                                    VolumeId = file_location.VolumeId
+                                    }, (int)Math.Pow(2, Math.Ceiling(Math.Log(photo_sizes.Last().Size, 2))));
+                            }
+                            catch (Exception)
+                            {
+                                return "Nie udało się pobrać zdjęcia z serwera";
+                            }
+
+                            // zapisuje pobrany ciag znakow jako zdj w formacie base64
+                            using (var ms = new MemoryStream(resFile.Bytes))
+                            {
+                                byte[] byteArr = ms.ToArray();
+                                string base64image = Convert.ToBase64String(byteArr);
+                                //pictureBox2.Image = Image.FromStream(ms);
+                                return base64image;
+                            }
+                        }
+                        else
+                        {
+                            return "Ta wiadomość nie zawiera zdjęcia";
+                        }
+                    }
+                    else
+                    {
+                        return "Ta wiadomość nie zawiera odnośnika do strony internetowej";
                     }
                 }
                 else
                 {
-                    MessageBox.Show("Aplikacja nie znalazła grup wsparcia! Zamykam program...");
-                    Application.Exit();
+                    return "Ta wiadomość Telegrama nie zawiera poprawnego odnośnika do Instagrama";
+                }
+            }
+            return ret;
+        }
+
+        private InstagramPostInfo GetInstaPostInfoByShortcode(string media_shortcode)
+        {
+            try
+            {
+                var request = WebRequest.Create("https://www.instagram.com/p/" + media_shortcode + "/?__a=1");
+
+                try
+                {
+                    using (var response = request.GetResponse())
+                    using (StreamReader reader = new StreamReader(response.GetResponseStream()))
+                    {
+                        string json = reader.ReadToEnd();
+                        System.Diagnostics.Debug.Write(json);
+                        JavaScriptSerializer ser = new JavaScriptSerializer();
+                        dynamic jsonData = ser.Deserialize<dynamic>(json);
+
+                        string url = jsonData["graphql"]["shortcode_media"]["display_resources"][0]["src"];
+                        int width = jsonData["graphql"]["shortcode_media"]["display_resources"][0]["config_width"];
+                        int height = jsonData["graphql"]["shortcode_media"]["display_resources"][0]["config_height"];
+                        string id = jsonData["graphql"]["shortcode_media"]["id"];
+                        InstagramPostInfo info = new InstagramPostInfo(url, width, height, id);
+                        return info;
+                    }
+                }
+                catch (Exception ex1)
+                {
+                    MessageBox.Show("2\n" + ex1.Message.ToString());
+                    return new InstagramPostInfo();
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("BŁĄD!\n" + ex.Message.ToString());
-            }
-
-            // rozmraża interfejs użytkownika
-            foreach (Control ctr in this.Controls)
-            {
-                ctr.Enabled = true;
+                MessageBox.Show("1\n" + ex.Message.ToString());
+                return new InstagramPostInfo();
             }
         }
 
-        private void DownloadPhotosFromTelegramDialogs()
+        private InstagramPostInfo GetInstaPostInfoByUrli(string url)
         {
-            foreach(Control ctr in this.Controls)
-            {
-                ctr.Enabled = false;
-            }
+            string urli = "";
+            string id = "";
+            int width = 0;
+            int height = 0;
+            InstagramPostInfo info = new InstagramPostInfo();
 
-            //PythonInstance python = new PythonInstance();
-            foreach (SupportGroup support_group in support_groups)
+            try
             {
-                if (!support_group.GroupMessages.isEmpty())
+                var request = WebRequest.Create(url + "?__a=1");
+                bool keep_going = true;
+                int tries = 3;
+
+                while (keep_going)
                 {
-                    //MessageBox.Show("Channel " + support_group.GroupName + ", liczba postow: " + support_group.GroupMessages.GetFilteredMessages()/*.Where(x => (x.Date > timeSpan)).Count().ToString()*/);
-
-                    // przerabia wiadomosci telegrama na posty instagrama
-                    support_group.InstagramPosts = support_group.GroupMessages.CreatePostsFromMessages();
-                    this.toolStripStatusLabel1.Text = $"Pobieram posty z grupy {support_group.GroupName}... (0/{support_group.InstagramPosts.Count.ToString()})";
-                    this.Refresh();
-
-                    int i = 0;
-                    foreach (var dialog_msg in support_group.GroupMessages.GetFilteredMessages()/*.Where(x => (x.Date > timeSpan))*/)
+                    try
                     {
-                        //MessageBox.Show("Grupa: " + support_group.GroupName + "\nLiczba wiadomosci: " + support_group.GroupMessages.GetFilteredMessages().Count.ToString());
-                        this.toolStripStatusLabel1.Text = $"Pobieram posty z grupy {support_group.GroupName}... ({i}/{support_group.InstagramPosts.Count.ToString()})";
-                        this.Refresh();
-                        // pobierz zdjęcie do folderu
-                        if (dialog_msg.Media.GetType().ToString() == "TeleSharp.TL.TLMessageMediaWebPage")
+                        using (var response = request.GetResponse())
+                        using (StreamReader reader = new StreamReader(response.GetResponseStream()))
                         {
-                            TLMessageMediaWebPage media_web_page;
-                            TLWebPage web_page;
-                            try
-                            {
-                                media_web_page = (TLMessageMediaWebPage)dialog_msg.Media;
-                                web_page = (TLWebPage)media_web_page.Webpage;
-                            }
-                            catch (Exception ex)
-                            {
-                                MessageBox.Show("Błąd konwersji przefiltrowanej wiadomości telegramowej: " + ex.Message.ToString() + "\n");
-                                continue;
-                            }
+                            string json = reader.ReadToEnd();
+                            System.Diagnostics.Debug.Write(json);
+                            JavaScriptSerializer ser = new JavaScriptSerializer();
+                            dynamic jsonData = ser.Deserialize<dynamic>(json);
 
-                            Regex reg;
-                            MatchCollection matches;
-                            try
+                            urli = jsonData["graphql"]["shortcode_media"]["display_resources"][0]["src"];
+                            width = jsonData["graphql"]["shortcode_media"]["display_resources"][0]["config_width"];
+                            height = jsonData["graphql"]["shortcode_media"]["display_resources"][0]["config_height"];
+                            id = jsonData["graphql"]["shortcode_media"]["id"];
+                            info = new InstagramPostInfo(urli, width, height, id);
+                            return info;
+                        }
+                    }
+                    catch (Exception ex1)
+                    {
+                        if (ex1.Message.Contains("(404)"))// -> mozna to pozniej wykorzystac w podsumowaniu, zeby pokazac mozliwe przyczyny
+                        {
+                            return new InstagramPostInfo();
+                        }
+                        else if (ex1.Message.Contains("timed out"))
+                        {
+                            //MessageBox.Show("Nie udało się pobrać postu - sprawdź czy masz połączenie z internetem i kliknij OK");
+                            //this.toolStripStatusLabel1.Text = this.toolStripStatusLabel1.Text + "*";
+                            tries--;
+                            if (tries <= 0)
                             {
-                                reg = new Regex(@"https\:\/\/[www\.]*instagram\.com\/p\/[\w-]+[\/]*"); // regex linku do zdjecia
-                                matches = reg.Matches(web_page.Url);
-                            }
-                            catch (Exception ex)
-                            {
-                                MessageBox.Show("Błąd Regexa przefiltrowanej wiadomości telegramowej: " + ex.Message.ToString());
-                                continue;
-                            }
-
-                            if (matches.Count > 0)
-                            {
-                                try
-                                {
-                                    InstagramPostInfo post_info = GetPostInfoByUrl(matches[0].Value);
-                                    if (support_group.InstagramPosts.Where(x => x.TelegramMessage == dialog_msg.Message).First() != null)
-                                    {
-                                        if (!post_info.IsEmpty)
-                                        {
-                                            support_group.InstagramPosts.Where(x => x.TelegramMessage == dialog_msg.Message).First().UpdateInstaMediaID(post_info.PostID);
-                                            support_group.InstagramPosts.Where(x => x.TelegramMessage == dialog_msg.Message).First().PicturePathJpg = post_info.PictureURL;  
-                                        }
-                                        else
-                                        {
-                                            // nie udalo sie ustalic danych do zdjecia
-                                            support_group.InstagramPosts.Where(x => x.TelegramMessage == dialog_msg.Message).First().SetPostBroken();
-                                        }
-                                    }
-                                    else
-                                    {
-                                        MessageBox.Show("Grupa: " + support_group.GroupName + "\nInstaPosts: " + support_group.InstagramPosts.Count + "\nTelegramMsg: " + dialog_msg.Message);
-                                    }
-                                    // dodac jeszcze miejsce na wpisanie rozmiarow obrazka
-                                }
-                                catch (Exception ex)
-                                {
-                                    MessageBox.Show("Błąd pobierania zdjęcia oraz informacji o poście Insta: " + ex.Message.ToString() + "\nGrupa: " + support_group.GroupName + "\nTelegramMsg: " + dialog_msg.Message);
-                                    continue;
-                                }
-
-                                // zwieksza liczniki
-                                media_to_comment_counter++;
-                                support_group.PostsToDo++;
-                            }
-                            else
-                            {
-                                MessageBox.Show("Link podany we wiadomości jest niepoprawny!\nPodano: " + web_page.Url);
+                                keep_going = false;
                             }
                         }
-                        i++;
+                        else if (ex1.Message.Contains("(502)"))
+                        {
+                            //MessageBox.Show("Nie udało się pobrać postu - Instagram ma jakieś problemy... Kliknij OK aby spróbować pobrać to zdjęcie ponownie");
+                            //this.toolStripStatusLabel1.Text = this.toolStripStatusLabel1.Text + "^";
+                            tries--;
+                            if (tries <= 0)
+                            {
+                                keep_going = false;
+                            }
+                        }
+                        else
+                        {
+                            MessageBox.Show("Nie udało się pobrać informacji o danym poście...\nLink: " + url + "\nZebrane dane\nURL: " + urli + "\nWidth: " + width.ToString() + "\nHeight: " + height.ToString() + "\nID: " + id + "\nKomunikat błędu: " + ex1.Message.ToString());
+                            keep_going = false;
+                        }
                     }
+                }
+                return new InstagramPostInfo();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Nie udało się wysłać zapytania do instagrama dot. postu o adresie: " + url + "\nKomunikat błędu: " + ex.Message.ToString());
+                return new InstagramPostInfo();
+            }
+        }
 
-                    // pokazanie wszystkich id dla postów
-                    /*foreach (var post in support_group.InstagramPosts)
-                    {
-                        System.Diagnostics.Debug.Write("\n" + post.InstaMediaShortcode + " -> " + post.InstaMediaID + "\n");
-                    }*/
+        private Image DownloadPhotoFromUrl(string url)
+        {
+            try
+            {
+                var request = WebRequest.Create(url);
 
-                    // sprawdzenie
-                    /*foreach(var post in support_group.InstagramPosts)
+                using (var response = request.GetResponse())
+                using (var stream = response.GetResponseStream())
+                {
+                    try
                     {
-                        System.Diagnostics.Debug.Write("\nShortcode: " + post.InstaMediaShortcode + " | ID: " + post.InstaMediaID + "\n");
-                    }*/
+                        return Bitmap.FromStream(stream);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Błąd przy pokazywaniu zdjęcia!\n" + ex.Message.ToString());
+                    }
                 }
             }
-            //python = null;
-
-            foreach (Control ctr in this.Controls)
+            catch (Exception ex)
             {
-                ctr.Enabled = true;
+                MessageBox.Show("Błąd pobierania zdjęcia!\n" + ex.Message);
             }
 
-            // pokazuje w label24 ile zdjec wymaga uwagi
-            label24.Text = media_to_comment_counter.ToString();
+            return new Bitmap(10,10);
+        }
+
+        private string GetDescriptionFromTelegramWebPageMessage(TLMessage message)
+        {
+            string ret = "";
+            if (message.Media != null)
+            {
+                // zapisuje obiekt Media z wiadomosci
+                var media_msg = message.Media;
+
+                // sprawdza czy obiekt Media jest stroną internetową
+                if (media_msg.GetType().ToString() == "TeleSharp.TL.TLMessageMediaWebPage")
+                {
+                    // zapisuje obiekt Media jako wiadomość zawierającą stronę internetową do dalszej obróbki
+                    TeleSharp.TL.TLMessageMediaWebPage web_page_msg = (TeleSharp.TL.TLMessageMediaWebPage)media_msg;
+                    // sprawdzenie czy obiekt Webpage istnieje
+                    if (web_page_msg.Webpage != null)
+                    {
+                        // zapisuje obiekt Media jako stronę internetową do dalszej obróbki
+                        TeleSharp.TL.TLWebPage web_page = (TeleSharp.TL.TLWebPage)web_page_msg.Webpage;
+                        // jeśli Telegram pobrał zdjęcie
+                        if (web_page.Description != null)
+                        {
+                            return web_page.Description;
+                        }
+                        else
+                        {
+                            return "Ta wiadomość nie zawiera opisu";
+                        }
+                    }
+                    else
+                    {
+                        return "Ta wiadomość nie zawiera odnośnika do strony internetowej";
+                    }
+                }
+                else
+                {
+                    return "Ta wiadomość Telegrama nie zawiera poprawnego odnośnika do Instagrama";
+                }
+            }
+            return ret;
+            // webpage.description
         }
 
         // button przenies chat jako grupe wsparcia
@@ -1345,10 +1433,7 @@ namespace IGTomesheqAutoLiker
         private async void button13_Click(object sender, EventArgs e)
         {
             // schowaj biezacy panel
-            panel_choose_msg_starting_date.Hide();
-
-            // zainicjuj kolejny screen
-            InitLikeCommenterPanel();
+            panel_settings.Hide();
 
             // sprawdzenie daty z kalendarzyka
             posts_newer_than_timestamp = ToUnixTimestamp(dateTimePicker1.Value.ToUniversalTime());
@@ -1361,21 +1446,31 @@ namespace IGTomesheqAutoLiker
 
             // pobranie wiadomosci ze wszystkich chatow
             await GetTelegramChatsMessages(posts_newer_than_timestamp);
+            support_groups.OrderBy(group => group.Name);
             this.toolStripStatusLabel1.Text = "Zakończono szukanie linków w Telegramie!";
             this.Refresh();
 
             this.toolStripStatusLabel1.Text = "Zaczynam pobieranie postów z Instagrama!";
             this.Refresh();
             //DownloadPhotosFromTelegramDialogs();
-            await DownloadFirstPhotoFromTelegramDialogs();
-            this.toolStripStatusLabel1.Text = "Gotowe! Wszystkie Posty zostały pobrane - możesz teraz komentować!";
+            //await DownloadPhotoFromSupportGroupMessages(current_support_group, 0);
+            this.toolStripStatusLabel1.Text = "Gotowe! Posty zostały pobrane - możesz teraz komentować!";
+
+            // zainicjuj kolejny screen
+            InitLikeCommenterPanel();
+
+            if (listBox1.Items.Count > 0)
+            {
+                support_group_index = 0;
+
+                // odblokowanie listBoxa
+                this.listBox1.Enabled = true;
+
+                // wybierz pierwszy wpis na liście
+                listBox1.SelectedIndex = 0;
+            }
+
             this.Refresh();
-
-            // odblokowanie listBoxa
-            this.listBox1.Enabled = true;
-
-            // wybierz pierwszy wpis na liście
-            listBox1.SelectedIndex = 0;
 
             // ukrywa wyszukiwanie po dacie
             label37.Hide();
@@ -1398,19 +1493,6 @@ namespace IGTomesheqAutoLiker
                 string sql = "SELECT * FROM support_group_names";
                 SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
                 SQLiteDataReader reader = command.ExecuteReader();
-                int i = 0;
-                bool has_nulls = false;
-                while (reader.Read())
-                {
-                    CreateDateLabels(i, reader.GetString(1), reader.GetInt32(3));
-
-                    if(reader.GetInt32(3) == 0)
-                    {
-                        has_nulls = true;
-                    }
-
-                    i++;
-                }
 
                 //MessageBox.Show("Przynajmniej jedna z grup wsparcia nie została jeszcze ani razu skomentowana - w panelu po lewej jest kalendarzyk. Wybierz datę i godzinę od której mają zostać pobrane posty i kliknij dalej.");
                 m_dbConnection.Close();
@@ -1457,7 +1539,7 @@ namespace IGTomesheqAutoLiker
             groupBox5.Controls.Add(date_support_groups_last_post_dates.Last());
         }
 
-        // kliknieto na groupBoxa4 od wybory daty recznie
+        // DO USUNIECIA! kliknieto na groupBoxa4 od wybory daty recznie
         private void GroupBox4_Click(object sender, System.EventArgs e)
         {
             // odblokuj wszystkie kontrolsy na groupboxie4
@@ -1469,7 +1551,7 @@ namespace IGTomesheqAutoLiker
 
         }
 
-        // kliknieto na groupBoxa5 od pokazania kiedy skomentowano ostatnie posty dla danych grup
+        // DO USUNIECIA! kliknieto na groupBoxa5 od pokazania kiedy skomentowano ostatnie posty dla danych grup
         private void GroupBox5_Click(object sender, System.EventArgs e)
         {
             // odblokuj wszystkie kontrolsy na groupboxie4
@@ -1491,9 +1573,9 @@ namespace IGTomesheqAutoLiker
             label24.Text = media_to_comment_counter.ToString();
 
             // wypelnij danymi liste grup wsparcia
-            foreach (ListViewItem support_group in listView3.Items)
+            foreach(var group in support_groups)
             {
-                listBox1.Items.Add(support_group.Text);
+                listBox1.Items.Add(group.Name);
             }
 
             // wypelnij combobox komentarzy komentarzami z bazy danych
@@ -1513,22 +1595,7 @@ namespace IGTomesheqAutoLiker
 
             // pokaz najczesciej uzywane emotki oraz przycisk wiecej
             // pokazuje emojis w labelach
-            using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
-            {
-                m_dbConnection.Open();
-                string sql = $"SELECT * FROM emojis ORDER BY times_used DESC, id ASC LIMIT 8";
-                SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
-                SQLiteDataReader reader = command.ExecuteReader();
-                if (reader.HasRows)
-                {
-                    int j = 0;
-                    while (reader.Read())
-                    {
-                        CreateEmojiLabel(j, reader.GetString(reader.GetOrdinal("emoji")));
-                        j++;
-                    }
-                }
-            }
+            UpdateMostPopularEmojis();
 
             // pokazuje przycisk wiecej...
             Label more_label = new Label();
@@ -1560,9 +1627,29 @@ namespace IGTomesheqAutoLiker
 
         }
 
+        private void UpdateMostPopularEmojis()
+        {
+            using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
+            {
+                m_dbConnection.Open();
+                string sql = $"SELECT * FROM emojis ORDER BY times_used DESC, id ASC LIMIT 8";
+                SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+                SQLiteDataReader reader = command.ExecuteReader();
+                if (reader.HasRows)
+                {
+                    int j = 0;
+                    while (reader.Read())
+                    {
+                        CreateEmojiLabel(j, reader.GetString(reader.GetOrdinal("emoji")));
+                        j++;
+                    }
+                }
+            }
+        }
+
         private void More_label_Click(object sender, EventArgs e)
         {
-            EmojisWindow ee = new EmojisWindow(this);
+            //EmojisWindow ee = new EmojisWindow(this);
             ee.ShowDialog();
         }
 
@@ -1571,28 +1658,39 @@ namespace IGTomesheqAutoLiker
             var selectionIndex = richTextBox2.SelectionStart;
             richTextBox2.Text = richTextBox2.Text.Insert(selectionIndex, emoji);
             textBox1.SelectionStart = selectionIndex + emoji.Length;
+            UpdateMostPopularEmojis();
         }
 
         private void CreateEmojiLabel(int label_nr, string emoji)
         {
-            int column = label_nr % 9;
+            // jesli labele z najczęściej używanymi emojis zostały już utworzone, podmienia tylko tekst
+            if (this.panel_liker_commenter.Controls.Find("label_emoji_" + label_nr.ToString(), true).Count() > 0)
+            {
+                this.panel_liker_commenter.Controls.Find("label_emoji_" + label_nr.ToString(), true).FirstOrDefault().Text = emoji;
+            }
+            else // jesli labele z najczęściej używanymi emojis nie zostały jeszcze utworzone, tworzy je
+            {
+                int column = label_nr % 9;
 
-            Label tmp_label = new Label();
-            tmp_label.Font = new System.Drawing.Font("Microsoft Sans Serif", 16F);
-            tmp_label.Location = new System.Drawing.Point(800 + (column * 25), 330);
-            tmp_label.Name = "label" + label_nr.ToString();
-            tmp_label.Size = new System.Drawing.Size(25, 25);
-            tmp_label.TabIndex = 0;
-            tmp_label.Text = emoji;
-            tmp_label.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            tmp_label.Click += new System.EventHandler(this.label_Click);
+                Label tmp_label = new Label();
+                tmp_label.Font = new System.Drawing.Font("Microsoft Sans Serif", 16F);
+                tmp_label.Location = new System.Drawing.Point(800 + (column * 25), 330);
+                tmp_label.Name = "label_emoji_" + label_nr.ToString();
+                tmp_label.Size = new System.Drawing.Size(25, 25);
+                tmp_label.TabIndex = 0;
+                tmp_label.Text = emoji;
+                tmp_label.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+                tmp_label.Click += new System.EventHandler(this.label_Click);
 
-            complete_emojis.Add(new SingleEmoji(emoji, label_nr));
+                complete_emojis.Add(new SingleEmoji(emoji, label_nr));
 
-            emoji_labels.Add(tmp_label);
-            this.panel_liker_commenter.Controls.Add(emoji_labels.Last());
+                emoji_labels.Add(tmp_label);
+                this.panel_liker_commenter.Controls.Add(emoji_labels.Last());
+            }
+            this.Refresh();
         }
 
+        /* LABELE Z EMOJIS */
         private void label_Click(object sender, EventArgs e)
         {
             Label tmp = (Label)sender;
@@ -1600,9 +1698,11 @@ namespace IGTomesheqAutoLiker
             var selectionIndex = richTextBox2.SelectionStart;
             richTextBox2.Text = richTextBox2.Text.Insert(selectionIndex, complete_emojis.Where(x => x.label_name == tmp.Name).FirstOrDefault().emoticon);
             textBox1.SelectionStart = selectionIndex + complete_emojis.Where(x => x.label_name == tmp.Name).FirstOrDefault().emoticon.Length;
+            UpdateMostPopularEmojis();
             //MessageBox.Show("Kliknieto " + complete_emojis.Where(x => x.label_name == tmp.Name).FirstOrDefault().emoticon);
         }
 
+        // zapisuje w bazie danych, ze dana emoji zostala uzyta
         private void UpdateEmojiUsed(string emoji)
         {
             using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
@@ -1629,119 +1729,6 @@ namespace IGTomesheqAutoLiker
             }
         }
 
-        private InstagramPostInfo GetPostInfoByUrl(string url)
-        {
-            string urli = "";
-            string id = "";
-            int width = 0;
-            int height = 0;
-            InstagramPostInfo info = new InstagramPostInfo();
-
-            try
-            {
-                var request = WebRequest.Create(url + "?__a=1");
-                bool keep_going = true;
-                int tries = 3;
-
-                while (keep_going)
-                {
-                    try
-                    {
-                        using (var response = request.GetResponse())
-                        using (StreamReader reader = new StreamReader(response.GetResponseStream()))
-                        {
-                            string json = reader.ReadToEnd();
-                            System.Diagnostics.Debug.Write(json);
-                            JavaScriptSerializer ser = new JavaScriptSerializer();
-                            dynamic jsonData = ser.Deserialize<dynamic>(json);
-
-                            urli = jsonData["graphql"]["shortcode_media"]["display_resources"][0]["src"];
-                            width = jsonData["graphql"]["shortcode_media"]["display_resources"][0]["config_width"];
-                            height = jsonData["graphql"]["shortcode_media"]["display_resources"][0]["config_height"];
-                            id = jsonData["graphql"]["shortcode_media"]["id"];
-                            info = new InstagramPostInfo(urli, width, height, id);
-                            return info;
-                        }
-                    }
-                    catch (Exception ex1)
-                    {
-                        if (ex1.Message.Contains("(404)"))// -> mozna to pozniej wykorzystac w podsumowaniu, zeby pokazac mozliwe przyczyny
-                        {
-                            return new InstagramPostInfo();
-                        }
-                        else if (ex1.Message.Contains("timed out"))
-                        {
-                            //MessageBox.Show("Nie udało się pobrać postu - sprawdź czy masz połączenie z internetem i kliknij OK");
-                            this.toolStripStatusLabel1.Text = this.toolStripStatusLabel1.Text + "*";
-                            tries--;
-                            if(tries <= 0)
-                            {
-                                keep_going = false;
-                            }
-                        }
-                        else if (ex1.Message.Contains("(502)"))
-                        {
-                            //MessageBox.Show("Nie udało się pobrać postu - Instagram ma jakieś problemy... Kliknij OK aby spróbować pobrać to zdjęcie ponownie");
-                            this.toolStripStatusLabel1.Text = this.toolStripStatusLabel1.Text + "^";
-                            tries--;
-                            if (tries <= 0)
-                            {
-                                keep_going = false;
-                            }
-                        }
-                        else
-                        {
-                            MessageBox.Show("Nie udało się pobrać informacji o danym poście...\nLink: " + url + "\nZebrane dane\nURL: " + urli + "\nWidth: " + width.ToString() + "\nHeight: " + height.ToString() + "\nID: " + id + "\nKomunikat błędu: " + ex1.Message.ToString());
-                            keep_going = false;
-                        }
-                    }
-                }
-                return new InstagramPostInfo();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Nie udało się wysłać zapytania do instagrama dot. postu o adresie: " + url + "\nKomunikat błędu: " + ex.Message.ToString());
-                return new InstagramPostInfo();
-            }
-        }
-
-        private InstagramPostInfo GetPostInfoByShortcode(string media_shortcode)
-        {
-            try
-            {
-                var request = WebRequest.Create("https://www.instagram.com/p/" + media_shortcode + "/?__a=1");
-
-                try
-                {
-                    using (var response = request.GetResponse())
-                    using (StreamReader reader = new StreamReader(response.GetResponseStream()))
-                    {
-                        string json = reader.ReadToEnd();
-                        System.Diagnostics.Debug.Write(json);
-                        JavaScriptSerializer ser = new JavaScriptSerializer();
-                        dynamic jsonData = ser.Deserialize<dynamic>(json);
-
-                        string url = jsonData["graphql"]["shortcode_media"]["display_resources"][0]["src"];
-                        int width = jsonData["graphql"]["shortcode_media"]["display_resources"][0]["config_width"];
-                        int height = jsonData["graphql"]["shortcode_media"]["display_resources"][0]["config_height"];
-                        string id = jsonData["graphql"]["shortcode_media"]["id"];
-                        InstagramPostInfo info = new InstagramPostInfo(url, width, height, id);
-                        return info;
-                    }
-                }
-                catch (Exception ex1)
-                {
-                    MessageBox.Show("2\n" + ex1.Message.ToString());
-                    return new InstagramPostInfo();
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("1\n" + ex.Message.ToString());
-                return new InstagramPostInfo();
-            }
-        }
-
         private DateTime UnixTimeStampToDateTime(long unixTimeStamp)
         {
             // Unix timestamp is seconds past epoch
@@ -1750,6 +1737,15 @@ namespace IGTomesheqAutoLiker
             return dtDateTime;
         }
 
+        public static long ToUnixTimestamp(DateTime target)
+        {
+            var date = new DateTime(1970, 1, 1, 0, 0, 0, target.Kind);
+            var unixTimestamp = System.Convert.ToInt64((target - date).TotalSeconds);
+
+            return unixTimestamp;
+        }
+
+        // DO USUNIECIA
         private void ResizePictureBoxForPhoto(string file_path)
         {
             //MessageBox.Show("Resize: " + file_path);
@@ -1812,6 +1808,7 @@ namespace IGTomesheqAutoLiker
             pictureBox2.Height = new_photo_height;
         }
 
+        // DO POPRAWKI
         private void ResizePictureBoxForPhoto(int photo_width, int photo_height)
         {
             //MessageBox.Show("Resize: " + file_path);
@@ -1887,93 +1884,205 @@ namespace IGTomesheqAutoLiker
             }
         }
 
-        public static long ToUnixTimestamp(DateTime target)
-        {
-            var date = new DateTime(1970, 1, 1, 0, 0, 0, target.Kind);
-            var unixTimestamp = System.Convert.ToInt64((target - date).TotalSeconds);
-
-            return unixTimestamp;
-        }
-
-        // zmieniono date od kiedy sprawdzac komentarze
-        private void dateTimePicker1_ValueChanged(object sender, EventArgs e)
-        {
-            //button17.Enabled = true;
-        }
-
         // label38 -> nazwa uzytkownika, ktorego zdj jest wyswietlane
         // label39 -> pokazuje ile jeszcze postow w tej grupie zostalo do skomentowania
 
-        // button pobrania zdjec dla okreslonej daty
-        private async void button17_Click(object sender, EventArgs e)
+        private async Task<bool> ShowPost()
         {
-            // nothing now...
-        }
+            // zamraża interfejs użytkownika
+            FreezeUI();
 
-        // button "zrob to" na ekranie lajkowania zdjec
-        private void button10_Click(object sender, EventArgs e)
-        {
+            // pobiera dla danej grupy wsparcia index wiadomosci do pokazania
+            int current_message_index = support_groups[this.support_group_index].MessageIndex;
 
-        }
-
-        // po kliknieciu na label z opisem postu na insta
-        private void Label40_Click(object sender, System.EventArgs e)
-        {
-            //MessageBox.Show("Kliknieto na opis obrazka");
-            int index = support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().LastDonePostIndex;
-            PhotoInfo info_window = new PhotoInfo(false,  support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().InstagramPosts[index].Description);
-            info_window.Show();
-        }
-
-        // button polajkuj zdjecie insta - tylko gdy wyłaczone autolikowanie
-        private async void button11_Click(object sender, EventArgs e)
-        {
-            this.button11.Enabled = false;
-            // zapisz w bazie danych, ze to zdjecie zostalo polajkowane
-            int index = support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().LastDonePostIndex;
-            support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().InstagramPosts[index].IsLiked = true;
-            // polajkuj przez api
-            await IGProc.Like(support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().InstagramPosts[index].InstaMediaID);
-            // jesli wczesniej dodano rowniez komentarz - wyswietl kolejne zdjecie
-            long tmstmp = support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().InstagramPosts[index].TelegramMessageTimestamp;
-            if (support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().InstagramPosts[index].UpdateLiked(tmstmp))
+            // jesli w tej grupie istnieją posty do pokazania
+            if (current_message_index > -1)
             {
-                // przesuniecie indeksu na kolejne zdjecie z grupy
-                support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().LastDonePostIndex++;
-                // uaktualnienie w bazie danych dla tej grupy date ostatnio obrobionej wiadomosci
-                support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().UpdateLastDoneMessage(tmstmp);
-                media_to_comment_counter--;
-                await PostDoneShowNext();
-            } // jesli nie - ukryj przycisk lajkowania
+                // ukrywa label o braku postow w grupie
+                label43.Hide();
+
+                // jesli jeszcze nie utworzono postu Instagrama dla tej wiadomosci, to go tworzy
+                if (support_groups[this.support_group_index].MessagesWithInstaPosts[current_message_index].InstagramPost == null)
+                {
+                    // pobranie zdjecia oraz opisu z TelegramMessage
+                    try
+                    {
+                        string media_id = await IGProc.GetMediaIdFromUrl(support_groups[this.support_group_index].MessagesWithInstaPosts[current_message_index].Url);
+                        IResult<InstaMedia> tmp_post = await IGProc.GetInstaPost(media_id);
+                        support_groups[this.support_group_index].MessagesWithInstaPosts[current_message_index].CreateInstagramPost(tmp_post.Value);
+                        // jesli foto juz skomentowane lub to twoje zdjecie pomin
+                        bool already_commented = await IGProc.FindMyComment(support_groups[this.support_group_index].MessagesWithInstaPosts[current_message_index].InstagramPost.InstaPost.InstaIdentifier, IGProc.login);
+                        if (already_commented || support_groups[this.support_group_index].MessagesWithInstaPosts[current_message_index].InstagramPost.InstaPost.PhotoOfYou)
+                        {
+                            // zwiększ indeks wiadomości
+                            support_groups[this.support_group_index].IncrementMessageIndex();
+                            // rozmroź UI
+                            DefrostUI();
+                            // zwróć false, żeby z miejsca wywołania mogło kolejny raz wywołać tę funkcję
+                            return false;
+                        }
+                        // polajkuj post
+                        await IGProc.Like(support_groups[this.support_group_index].MessagesWithInstaPosts[current_message_index].InstagramPost.InstaPost.InstaIdentifier);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("TO WAŻNE! Wystąpił błąd! Zrób screena tego okienka i wyślij do Bubu 8)\n" + ex.Message);
+                        // zwiększ indeks wiadomości
+                        support_groups[this.support_group_index].IncrementMessageIndex();
+                        // rozmroź UI
+                        DefrostUI();
+                        // zwróć false, żeby z miejsca wywołania mogło kolejny raz wywołać tę funkcję
+                        return false;
+                    }
+                }
+
+                // opis postu na insta
+                label40.Text = support_groups[this.support_group_index].MessagesWithInstaPosts[current_message_index].InstagramPost.InstaPost.Caption.Text;
+                // wiadomosc telegrama
+                label22.Text = support_groups[this.support_group_index].MessagesWithInstaPosts[current_message_index].TelegramMessage.Message;
+                // autor postu
+                label38.Text = "@" + support_groups[this.support_group_index].MessagesWithInstaPosts[current_message_index].InstagramPost.InstaPost.User.UserName;
+                // liczba postow w grupie
+                label39.Text = support_groups[this.support_group_index].GetPostsToDoCounter();
+                // pokazuje zdjecie w pictureboxie
+                Image img;
+                try
+                {
+                    // jesli post typu carousel
+                    if (support_groups[this.support_group_index].MessagesWithInstaPosts[current_message_index].InstagramPost.InstaPost.Carousel != null)
+                    {
+                        img = DownloadPhotoFromUrl(support_groups[this.support_group_index].MessagesWithInstaPosts[current_message_index].InstagramPost.InstaPost.Carousel[0].Images[0].URI);
+                    }
+                    else
+                    {
+                        img = DownloadPhotoFromUrl(support_groups[this.support_group_index].MessagesWithInstaPosts[current_message_index].InstagramPost.InstaPost.Images[0].URI);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("TO WAŻNE! Wystąpił błąd! Wyślij screena tego okienka do Bubu\nDownloadPhotoFromUrl\n" + ex.Message);
+                    DefrostUI();
+                    return false;
+                }
+                if (img.Size.Height == 10 && img.Size.Width == 10)
+                {
+                    MessageBox.Show("Nie udało się załadować zdjęcia...");
+                    if (pictureBox2.Image != null)
+                    {
+                        pictureBox2.Image.Dispose();
+                        pictureBox2.Image = null;
+                    }
+                }
+                else
+                {
+                    pictureBox2.Image = img;
+                }
+            }
+            // gdy w tej grupie wsparcia nie ma wgl postów (i nie było)
+            else if(current_message_index == -1)
+            {
+                // wyswietla label z informacja o braku postow w tej grupie
+                label43.Text = "Brak postów do skomentowania w tej grupie!";
+                label43.Show();
+                // opis postu na insta
+                label40.Text = "Brak";
+                // wiadomosc telegrama
+                label22.Text = "Brak";
+                // autor postu
+                label38.Text = "@noname";
+                // liczba postow w grupie
+                label39.Text = "Brak postów w tej grupie";
+                // pokazuje zdjecie w pictureboxie
+                if (pictureBox2.Image != null)
+                {
+                    pictureBox2.Image.Dispose();
+                    pictureBox2.Image = null;
+                }
+            }
+            // gdy w tej grupie wsparcia nie ma wgl postów (i nie było)
             else
             {
-                button11.Hide();
-                button11.Enabled = true;
+                // wyswietla label z informacja o braku postow w tej grupie
+                label43.Text = "Wszystkie posty w tej grupie zostały skomentowane!";
+                label43.Show();
+                // opis postu na insta
+                label40.Text = "Brak";
+                // wiadomosc telegrama
+                label22.Text = "Brak";
+                // autor postu
+                label38.Text = "@noname";
+                // liczba postow w grupie
+                label39.Text = "Wszystkie posty w tej grupie zostały skomentowane!";
+                // pokazuje zdjecie w pictureboxie
+                if (pictureBox2.Image != null)
+                {
+                    pictureBox2.Image.Dispose();
+                    pictureBox2.Image = null; 
+                }
             }
+
+            // rozmraża interfejs użytkownika
+            DefrostUI();
+
+            return true;
+        }
+
+        // zamraża interfejs użytkownika, żeby nie mógł nic kliknąć
+        private void FreezeUI()
+        {
+            // zamraża wszystkie kontrolki
+            this.panel_liker_commenter.Enabled = false;
+            // pokazuje animowane kółeczko "loading"
+            this.pictureBox3.Show();
+            // odświeża interfejs
+            this.Refresh();
+        }
+
+        // rozmraża interfejs użytkownika, żeby znowu mógł klikać
+        private void DefrostUI()
+        {
+            // rozmraża wszystkie kontrolki
+            this.panel_liker_commenter.Enabled = true;
+            // chowa animowane kółeczko "loading"
+            this.pictureBox3.Hide();
+            // odświeża interfejs
+            this.Refresh();
         }
 
         // button dodaj komentarz insta
         private async void button12_Click(object sender, EventArgs e)
         {
-            // zapisz w bazie danych, ze to zdjecie zostalo skomentowane
-            int index = support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().LastDonePostIndex;
-            support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().InstagramPosts[index].IsCommented = true;
-            // dodaj komentarz przez instaAPI
-            await IGProc.Comment(support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().InstagramPosts[index].InstaMediaID, richTextBox2.Text);
-            // jesli wczesniej dodano rowniez komentarz - wyswietl kolejne zdjecie
-            long tmstmp = support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().InstagramPosts[index].TelegramMessageTimestamp;
-            if (support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().InstagramPosts[index].UpdateCommented(tmstmp, richTextBox2.Text))
+            FreezeUI();
+            // pobierz index postu
+            int current_message_index = support_groups[this.support_group_index].MessageIndex;
+            // dodaj komentarz
+            await IGProc.Comment(support_groups[this.support_group_index].MessagesWithInstaPosts[current_message_index].InstagramPost.InstaPost.InstaIdentifier, richTextBox2.Text);
+            // zmniejsz licznik liczby postow do zrobienia
+            //media_to_comment_counter--;
+            // zwiększ index grupy wsparcia
+            if(support_groups[this.support_group_index].IncrementMessageIndex())
             {
-                // przesuniecie indeksu na kolejne zdjecie z grupy
-                support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().LastDonePostIndex++;
-                // uaktualnienie w bazie danych dla tej grupy date ostatnio obrobionej wiadomosci
-                support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().UpdateLastDoneMessage(tmstmp);
-                media_to_comment_counter--;
-                await PostDoneShowNext();
-            } // jesli nie - ukryj przycisk lajkowania
+                while (!(await ShowPost())) ;
+            }
             else
             {
-                button12.Hide();
+                // skomentowano już ostatni post - pokaż tylko raz
+                await ShowPost();
+            }
+            DefrostUI();
+        }
+
+        // button pomin zdjęcie
+        private async void button16_Click(object sender, EventArgs e)
+        {
+            // pobierz index postu
+            int current_message_index = support_groups[this.support_group_index].MessageIndex;
+            // zmniejsz licznik liczby postow do zrobienia
+            media_to_comment_counter--;
+            // zwiększ index grupy wsparcia
+            if (support_groups[this.support_group_index].IncrementMessageIndex())
+            {
+                while (!(await ShowPost())) ;
             }
         }
 
@@ -1982,295 +2091,52 @@ namespace IGTomesheqAutoLiker
         {
             if(listBox1.SelectedIndex != -1)
             {
-                current_support_group = listBox1.SelectedIndex;
+                // wyswietla odpowiedni post
+                this.support_group_index = listBox1.SelectedIndex;
+                while (!(await ShowPost())) ;
             }
         }
 
-        private async Task PostDoneShowNext()
+        // button "zrob to" na ekranie lajkowania zdjec
+        private void button10_Click(object sender, EventArgs e)
         {
-            // blokuje interfejs
-            this.listBox1.Enabled = false;
-            this.Refresh();
 
-            // pokaz ile zdjec wymaga skomentowania
-            label24.Text = media_to_comment_counter.ToString();
+        }
 
-            // wykasowanie starego obrazka z pictureboxa
+        // tymczasowo tutaj
+        public string ShortcodeToID(string shortcode)
+        {
+            char character;
+            long id = 0;
+            var alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+            for (var i = 0; i < shortcode.Length; i++)
+            {
+                character = shortcode[i];
+                id = (id * 64) + alphabet.IndexOf(character);
+            }
+            return id.ToString();
+        }
+
+        // po kliknieciu na label z opisem postu na insta
+        private void Label40_Click(object sender, System.EventArgs e)
+        {
+            int index = support_groups.Where(x => (x.Name == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().MessageIndex;
+            PhotoInfo info_window = new PhotoInfo(false, support_groups.Where(x => (x.Name == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().MessagesWithInstaPosts[index].InstagramPost.Description);
+            info_window.Show();
+        }
+
+        // po kliknieciu na label z wiadomoscia instagrama
+        private void label22_Click(object sender, EventArgs e)
+        {
             if (pictureBox2.Image != null)
             {
-                pictureBox2.Image.Dispose();
+                // wyswietl okienko z wiadomoscia ne telegramie
+                // i podpisem zdjecia na insta
+                int index = support_groups.Where(x => (x.Name == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().MessageIndex;
+                PhotoInfo info_window = new PhotoInfo(true, support_groups.Where(x => (x.Name == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().MessagesWithInstaPosts[index].TelegramMessage.Message);
+                //string message = support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().GroupMessages.GetFilteredMessages().Where(x => x.)
+                info_window.Show();
             }
-
-            // odblokowanie przycisków lajkowania i komentowania
-            button11.Show();
-            button12.Show();
-
-            if (support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).First() == null)
-            {
-                // nie ma takiej grupy wsparcia!
-                MessageBox.Show("Nie ma takiej grupy wsparcia!");
-                return;
-            }
-
-            if (support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).First() != null)
-            {
-                if (support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).First().InstagramPosts != null)
-                {
-                    // pokaz w labelu na dole ile zdjec w tej grupie wymaga uwagi, pod warunkiem, ze zainicjowano
-                    if (support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).FirstOrDefault().InstagramPosts.Count > 0)
-                    {
-                        int index = 0;
-                        try
-                        {
-                            index = support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).FirstOrDefault().LastDonePostIndex;
-                        }
-                        catch (Exception ex)
-                        {
-                            MessageBox.Show("Wystąpił błąd podczas pobierania indeksu ostatnio zrobionego postu\nKomunikat błędu:\n" + ex.Message.ToString());
-                            return;
-                        }
-
-                        if (index > (support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).FirstOrDefault().InstagramPosts.Count - 1))
-                        {
-                            label39.Text = "Wszystkie posty w tej grupie zrobione!";
-                            pictureBox2.Image.Dispose();
-                            pictureBox2.Image = null;
-                        }
-                        else
-                        {
-                            // jesli post istnieje i zostal poprawnie stworzony
-                            if (support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).FirstOrDefault().InstagramPosts[index].SuccessfullyCreated)
-                            {
-                                InstaMedia media;
-                                try
-                                {
-                                    // pobranie obrazka
-                                    media = await IGProc.GetInstaPost(support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).FirstOrDefault().InstagramPosts[index].InstaMediaID);
-                                }
-                                catch (Exception ex)
-                                {
-                                    MessageBox.Show("Wystąpił błąd podczas pobierania obrazka (GetInstaPost)\nKomunikat błędu:\n" + ex.Message.ToString());
-                                    return;
-                                }
-
-                                try
-                                {
-                                    // wpis nazwy uzytkownika wlasciciela postu
-                                    support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).FirstOrDefault().InstagramPosts[index].Description = media.Caption.Text;
-                                }
-                                catch (Exception ex)
-                                {
-                                    MessageBox.Show("Wystąpił błąd podczas uaktualniania opisu (Description)\nKomunikat błędu:\n" + ex.Message.ToString());
-                                    return;
-                                }
-
-                                try
-                                {
-                                    // wpis opisu pod postem na insta
-                                    support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).FirstOrDefault().InstagramPosts[index].Owner = "@" + media.User.UserName;
-                                }
-                                catch (Exception ex)
-                                {
-                                    MessageBox.Show("Wystąpił błąd podczas uaktualniania autora postu (Owner)\nKomunikat błędu:\n" + ex.Message.ToString());
-                                    return;
-                                }
-
-                                try
-                                {
-                                    // pokazanie pobranych danych
-                                    label39.Text = support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).FirstOrDefault().GetPostsToDoCounter();
-                                    label38.Text = support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).FirstOrDefault().InstagramPosts[support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().LastDonePostIndex].Owner;
-                                    label40.Text = support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).FirstOrDefault().InstagramPosts[support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().LastDonePostIndex].Description;
-                                    label22.Text = support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).FirstOrDefault().InstagramPosts[support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().LastDonePostIndex].TelegramMessage;
-                                }
-                                catch (Exception ex)
-                                {
-                                    MessageBox.Show("Wystąpił błąd podczas wyswietlania danych dot postu (ile zostalo postow do zrobienia, autor postu, opis, wiadomosc Telegrama)\nKomunikat błędu:\n" + ex.Message.ToString());
-                                    return;
-                                }
-                                // wyswietl pierwsze zdjecie w pictureboxie
-                                //string pic_path_jpg = support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().InstagramPosts.Where(x => (!x.IsLiked || !x.IsCommented)).FirstOrDefault().PicturePathJpg;
-
-                                if (media.Images.Count > 0)
-                                {
-                                    var request = WebRequest.Create(media.Images[0].URI);
-
-                                    using (var response = request.GetResponse())
-                                    using (var stream = response.GetResponseStream())
-                                    {
-                                        try
-                                        {
-                                            ResizePictureBoxForPhoto(media.Images[0].Width, media.Images[0].Height);
-                                            pictureBox2.Image = Bitmap.FromStream(stream);
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            MessageBox.Show("Błąd przy pokazywaniu zdjęcia!\n" + ex.Message.ToString());
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    //MessageBox.Show("Nie udało się pobrać obrazka za pierwszym razem, ale próbuję jeszcze raz...");
-                                    try
-                                    {
-                                        //ResizePictureBoxForPhoto(media.Images[0].Width, media.Images[0].Height);
-                                        pictureBox2.Load(support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).FirstOrDefault().InstagramPosts[index].PicturePathJpg);
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        MessageBox.Show("Błąd przy pokazywaniu zdjęcia!\n" + ex.Message.ToString());
-                                    }
-                                }
-
-                                // automatyczne polubienie postu
-                                // ukryj przycisk lajkowania
-                                button11.Hide();
-                                try
-                                {
-                                    // zapisz, ze juz polajkowany w pamieci
-                                    support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).FirstOrDefault().InstagramPosts[index].IsLiked = true;
-                                }
-                                catch (Exception ex)
-                                {
-                                    MessageBox.Show("Wystąpił błąd podczas zapisu w pamieci RAM, że dany post jest już zrobiony\nKomunikat błędu:\n" + ex.Message.ToString());
-                                    return;
-                                }
-                                // polajkuj przez api
-                                await IGProc.Like(support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).FirstOrDefault().InstagramPosts[index].InstaMediaID);
-
-                                //string pic_path_jpg = support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).Single().InstagramPosts[index].PicturePathJpg;
-                                //string pic_path_png = support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).Single().InstagramPosts[index].PicturePathPng;
-
-                                /*try
-                                {
-                                    //MessageBox.Show(pic_path_jpg);
-                                    //ResizePictureBoxForPhoto(pic_path_jpg);
-                                    pictureBox2.Image = new Bitmap(pic_path_jpg);
-                                }
-                                catch (Exception ex)
-                                {
-                                    MessageBox.Show("Nie udalo sie zaladowac obrazka...\n" + ex.Message.ToString());
-                                    try
-                                    {
-                                        pictureBox2.Image = new Bitmap(pic_path_png);
-                                    }
-                                    catch (Exception ex1)
-                                    {
-                                        MessageBox.Show("Nie udalo sie zaladowac obrazka...\n" + ex1.Message.ToString());
-                                    }
-                                }*/ 
-                            }
-                        }
-                    }
-                    else
-                    {
-                        label39.Text = "Brak postów w tej grupie";
-                        /*int selected_index = listBox1.SelectedIndex;
-                        if (listBox1.SelectedIndex < (listBox1.Items.Count - 1))
-                        {
-                            listBox1.SelectedIndex++; 
-                        }
-                        else
-                        {
-                            if(listBox1.Items.Count > 1)
-                            {
-                                listBox1.SelectedIndex--;
-                            }
-                            else
-                            {
-                                listBox1.SelectedIndex = -1;
-                            }
-                        }
-                        listBox1.Items.RemoveAt(selected_index);*/
-                        label38.Text = "";
-                        label40.Text = "Brak opisu";
-                        label22.Text = "Brak wiadomości";
-                        pictureBox2.Image = null;
-                    }
-                }
-                else
-                {
-                    try
-                    {
-                        for (int i = 0; i < listBox1.Items.Count; i++)
-                        {
-                            if (listBox1.Items[i].ToString() == support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).Single().GroupName)
-                            {
-                                listBox1.Items.RemoveAt(i);
-                                break;
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show("Jedna z grup nie utworzyla listy postow Instagrama i wystapil blad\n" + ex.Message.ToString());
-                    }
-                } 
-            }
-            // blokuje interfejs
-            this.listBox1.Enabled = true;
-            this.Refresh();
-        }
-
-        // button pomin zdjęcie
-        private async void button16_Click(object sender, EventArgs e)
-        {
-            // oznacz to zdjecie jako polajkowane i skomentowane
-            int index = 0;
-            try
-            {
-                index = support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().LastDonePostIndex;
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Wystąpił błąd podczas pobierania indeksu ostatnio polubionego/skomentowanego zdjęcia\nKomunikat błędu:\n" + ex.Message.ToString());
-                return;
-            }
-
-            try
-            {
-                support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().InstagramPosts[index].UpdateLiked(0);
-            }
-            catch (Exception ex)
-            {
-
-                MessageBox.Show("Wystąpił błąd podczas uaktualniania statusu (polubiono zdjęcie)\nKomunikat błędu:\n" + ex.Message.ToString());
-                return;
-            }
-
-            try
-            {
-                support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().InstagramPosts[index].UpdateCommented(0, "");
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Wystąpił błąd podczas uaktualniania statusu (skomentowano zdjęcie)\nKomunikat błędu:\n" + ex.Message.ToString());
-                return;
-            }
-
-            try
-            {
-                support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().LastDonePostIndex++;
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Wystąpił błąd podczas zwiększania indeksu ostatnio polubionego/skomentowanego zdjęcia\nKomunikat błędu:\n" + ex.Message.ToString());
-                return;
-            }
-
-            long tmstmp = support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().InstagramPosts[index].TelegramMessageTimestamp;
-            support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().UpdateLastDoneMessage(tmstmp);
-            // pokaz nastepne zdjecie z grupy
-            // uaktualnienie w bazie danych dla tej grupy date ostatnio obrobionej wiadomosci
-            media_to_comment_counter--;
-            await PostDoneShowNext();
-        }
-
-        // kliknieto na zdjecie
-        private void pictureBox2_Click(object sender, EventArgs e)
-        {
-            // nothing...
         }
 
         // zaznaczono, ze grupa typu tylko like
@@ -2293,38 +2159,7 @@ namespace IGTomesheqAutoLiker
         }
         /* --- |SCREEN LAJKOWANIA ZDJEC| --- */
 
-        public async static Task MainAsync()
-        {
-            var userSession = new UserSessionData
-            {
-                UserName = "martha_farewell",
-                Password = "rooney892"
-            };
-
-            _instaApi = InstaApiBuilder.CreateBuilder()
-                    .SetUser(userSession)
-                    .UseLogger(new DebugLogger(LogLevel.All)) // use logger for requests and debug messages
-                    .SetRequestDelay(RequestDelay.Empty())
-                    .Build();
-
-            if(!_instaApi.IsUserAuthenticated)
-            {
-                // login
-                Console.WriteLine($"Logging in as {userSession.UserName}");
-                var logInResult = await _instaApi.LoginAsync();
-                if (!logInResult.Succeeded)
-                {
-                    Console.WriteLine($"Unable to login: {logInResult.Info.Message}");
-                }
-                else
-                {
-                    MessageBox.Show("OMG! ZALOGOWANO!");
-                    //await _instaApi.GetCurrentUserAsync();
-                }
-            }
-        }
-
-        private void Form1_FormClosed(object sender, FormClosedEventArgs e)
+        private async void Form1_FormClosed(object sender, FormClosedEventArgs e)
         {
             // wyczysc pobrane obrazki
             if (pictureBox2.Image != null)
@@ -2333,17 +2168,11 @@ namespace IGTomesheqAutoLiker
                 pictureBox2.Image = null; 
             }
 
-            /*foreach (SupportGroup group in support_groups)
+            // wyloguj z insta
+            if (IGProc.IsUserAuthenticated())
             {
-                try
-                {
-                    Directory.Delete(group.GetMediaFolderPath(), true);
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show(ex.Message.ToString());
-                }
-            }*/
+                await IGProc.Logout(); 
+            }
         }
 
         // dodaje komentarz do Instagrama po wcisnieciu entera na richtextboxie do wpisania komentarza
@@ -2427,31 +2256,103 @@ namespace IGTomesheqAutoLiker
             }
         }
 
-        // po kliknieciu na label z wiadomoscia instagrama
-        private void label22_Click(object sender, EventArgs e)
-        {
-            if (pictureBox2.Image != null)
-            {
-                // wyswietl okienko z wiadomoscia ne telegramie
-                // i podpisem zdjecia na insta
-                int index = support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().LastDonePostIndex;
-                PhotoInfo info_window = new PhotoInfo(true, support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().InstagramPosts[index].TelegramMessage);
-                //string message = support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().GroupMessages.GetFilteredMessages().Where(x => x.)
-                info_window.Show();
-            }
-        }
-
-        private void dateTimePicker1_MouseDown(object sender, MouseEventArgs e)
-        {
-            //MessageBox.Show("Clicked!");
-        }
-
         private void dateTimePicker1_KeyDown_1(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Enter)
             {
                 button13.PerformClick();
             }
+        }
+
+        // button pobrania zdjec dla okreslonej daty
+        private void button17_Click(object sender, EventArgs e)
+        {
+            // nothing now...
+        }
+
+        // zmieniono date od kiedy sprawdzac komentarze
+        private void dateTimePicker1_ValueChanged(object sender, EventArgs e)
+        {
+            // ??
+        }
+
+        // kliknieto na zdjecie
+        private void pictureBox2_Click(object sender, EventArgs e)
+        {
+            // nothing...
+        }
+
+        private void pictureBox_settings_menu_Click(object sender, EventArgs e)
+        {
+            if(panel_settings_menu.Visible)
+            {
+                panel_settings_menu.Hide();
+            }
+            else
+            {
+                panel_settings_menu.Show();
+            }
+        }
+
+        private void label_settings_menu_choose_date_Click(object sender, EventArgs e)
+        {
+            HideAllSettingsPanels();
+            panel_choose_starting_date.Show();
+            label_settings_menu_choose_date.BackColor = System.Drawing.Color.DarkSalmon;
+        }
+
+        private void label_settings_menu_choose_support_groups_Click(object sender, EventArgs e)
+        {
+            HideAllSettingsPanels();
+            panel_settings_choose_support_groups.Show();
+            label_settings_menu_choose_support_groups.BackColor = System.Drawing.Color.DarkSalmon;
+        }
+
+        private void label_settings_menu_support_groups_Click(object sender, EventArgs e)
+        {
+            HideAllSettingsPanels();
+            panel_settings_support_groups.Show();
+            label_settings_menu_support_groups.BackColor = System.Drawing.Color.DarkSalmon;
+        }
+
+        private void label_settings_menu_instagram_Click(object sender, EventArgs e)
+        {
+            HideAllSettingsPanels();
+            panel_settings_instagram.Show();
+            label_settings_menu_instagram.BackColor = System.Drawing.Color.DarkSalmon;
+        }
+
+        private void label_settings_menu_telegram_Click(object sender, EventArgs e)
+        {
+            HideAllSettingsPanels();
+            panel_settings_telegram.Show();
+            label_settings_menu_telegram.BackColor = System.Drawing.Color.DarkSalmon;
+        }
+
+        private void label_settings_menu_default_comments_Click(object sender, EventArgs e)
+        {
+            HideAllSettingsPanels();
+            panel_settings_default_comments.Show();
+            label_settings_menu_default_comments.BackColor = System.Drawing.Color.DarkSalmon;
+        }
+
+        private void HideAllSettingsPanels()
+        {
+            // ukryj wszystkie panele
+            panel_settings_choose_support_groups.Hide();
+            panel_settings_default_comments.Hide();
+            panel_settings_instagram.Hide();
+            panel_settings_support_groups.Hide();
+            panel_settings_telegram.Hide();
+            panel_choose_starting_date.Hide();
+
+            // pokoloruj tło wszystkich labeli w menu na szaro
+            label_settings_menu_choose_date.BackColor = System.Drawing.SystemColors.AppWorkspace;
+            label_settings_menu_choose_support_groups.BackColor = System.Drawing.SystemColors.AppWorkspace;
+            label_settings_menu_default_comments.BackColor = System.Drawing.SystemColors.AppWorkspace;
+            label_settings_menu_instagram.BackColor = System.Drawing.SystemColors.AppWorkspace;
+            label_settings_menu_support_groups.BackColor = System.Drawing.SystemColors.AppWorkspace;
+            label_settings_menu_telegram.BackColor = System.Drawing.SystemColors.AppWorkspace;
         }
     }
 }

@@ -128,6 +128,9 @@ namespace IGTomesheq
 
             this.Controls.Add(next_screen_label);
             this.Controls.Add(previous_screen_label);
+
+            // umiejscowienie okna
+            this.CenterToScreen();
         }
 
         private void Previous_screen_label_Click(object sender, EventArgs e)
@@ -165,7 +168,7 @@ namespace IGTomesheq
             Label tmp_label = new Label();
             tmp_label.Font = new System.Drawing.Font("Microsoft Sans Serif", 16F);
             tmp_label.Location = new System.Drawing.Point(15 + (column * 25), 15 + (row * 25));
-            tmp_label.Name = "label" + label_nr.ToString();
+            tmp_label.Name = "label_emoji_" + label_nr.ToString();
             tmp_label.Size = new System.Drawing.Size(25, 25);
             tmp_label.TabIndex = 0;
             tmp_label.Text = emoji;
@@ -261,7 +264,7 @@ namespace IGTomesheq
         public SingleEmoji(string emoji, int label_nr)
         {
             emoticon = emoji;
-            label_name = "label" + label_nr.ToString();
+            label_name = "label_emoji_" + label_nr.ToString();
         }
     }
 }

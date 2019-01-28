@@ -3,36 +3,20 @@ using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using TeleSharp.TL;
+using TeleSharp.TL.Messages;
 
 namespace IGTomesheq
 {
     class SupportGroup
     {
-        private int id;
-        public int DialogId
+        private string name;
+        public string Name
         {
-            get { return this.id; }
-            set { this.id = value; }
-        }
-        private string group_name;
-        public string GroupName
-        {
-            get { return this.group_name; }
-            set { this.group_name = value; }
-        }
-        private Type dialog_type;
-        public Type DialogType
-        {
-            get { return this.dialog_type; }
-            set { this.dialog_type = value; }
-        }
-
-        private int posts_to_do;
-        public int PostsToDo
-        {
-            get { return this.posts_to_do; }
-            set { this.posts_to_do = value; }
+            get { return this.name; }
+            set { this.name = value; }
         }
 
         private bool only_likes;
@@ -42,52 +26,116 @@ namespace IGTomesheq
             set { this.only_likes = value; }
         }
 
-        private int last_done_post_index;
-        public int LastDonePostIndex
+        private int msg_index;
+        public int MessageIndex
         {
-            get { return this.last_done_post_index; }
-            set { this.last_done_post_index = value; }
+            get { return this.msg_index; }
+            set { this.msg_index = value; }
         }
 
-        private long last_done_msg_timestamp;
-        public long LastDoneMsgTimestamp
+        private long last_done_msg_date;
+        public long LastDoneMsgDate
         {
-            get { return this.last_done_msg_timestamp; }
-            set { this.last_done_msg_timestamp = value; }
+            get { return this.last_done_msg_date; }
+            set { this.last_done_msg_date = value; }
         }
 
-        private bool already_got_messages;
-        public bool AlreadyGotMessages
-        {
-            get { return this.already_got_messages; }
-            set { this.already_got_messages = value; }
-        }
-
-        public GroupMessages GroupMessages;
-        public List<InstagramPost> InstagramPosts;
+        // wszystkie, gole wiadomosci pobrane z telegrama
+        private TLMessages all_messages;
+        // te dwie listy powinny miec zawsze taka sama dlugosc
+        public List<PostData> MessagesWithInstaPosts;
 
         // DB
-        //private SQLiteConnection m_dbConnection;
         private string connectionString;
 
+        // konstruktor
         public SupportGroup(string name)
         {
-            InstagramPosts = new List<InstagramPost>();
-            group_name = name;
-            posts_to_do = 0;
-            only_likes = false;
-            last_done_post_index = -1;
-            GroupMessages = new GroupMessages(this.id, group_name, dialog_type);
             connectionString = "Data Source=tomesheq_db.db;Version=3;";
-            //current_index = 0;
+
+            all_messages = new TLMessages();
+            MessagesWithInstaPosts = new List<PostData>();
+
+            this.name = name;
+            only_likes = false;
+            msg_index = -1;
         }
 
+        // Tutaj odbywa się filtracja wiadomości - te, zawierające linki do zdjęć instagrama zostają dodane do odpowiedniej listy
+        public void AddAndFilterMessages(List<TLMessage> msgs)
+        {
+            try
+            {
+                Regex reg = new Regex(@"https\:\/\/[www\.]*instagram\.com\/p\/[\w-]+[\/]*"); // regex linku do zdjecia
+                MatchCollection matches;
+                foreach (TLMessage msg in msgs)
+                {
+                    if (msg.Media != null)
+                    {
+                        if (msg.Media is TLMessageMediaWebPage)
+                        {
+                            TLMessageMediaWebPage mm = (TLMessageMediaWebPage)msg.Media;
+                            if (mm is TLMessageMediaWebPage)
+                            {
+                                TLWebPage wp = mm.Webpage as TLWebPage;
+                                if (wp is TLWebPage)
+                                {
+                                    matches = reg.Matches(wp.Url);
+                                    if (matches.Count == 1)
+                                    {
+                                        MessagesWithInstaPosts.Add(new PostData(msg));
+                                    }
+                                    else
+                                    {
+                                        System.Diagnostics.Debug.Write($"\nNie znaleziono jednoznacznego przyporządkowania dla wiadomości o URL = {wp.Url}");
+                                    }
+                                }
+                                else
+                                {
+                                    System.Diagnostics.Debug.Write($"\nmm.WebPage nie jest typu TLWebPage, tylko {msg.Media.GetType().ToString()}");
+                                }
+                            }
+                            else
+                            {
+                                System.Diagnostics.Debug.Write($"\nmsg.Media nie jest typu TLMessageMediaWebPage, tylko {msg.Media.GetType().ToString()}");
+                            }
+                        }
+                        else
+                        {
+                            System.Diagnostics.Debug.Write("\nMedia != null, ale tonie WebPage, tylko " + msg.Media.GetType().ToString());
+                        }
+                    }
+                }
+                if(MessagesWithInstaPosts.Count > 0)
+                {
+                    msg_index = 0;
+                    //return true;
+                }
+                else
+                {
+                    //return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.Write("Filtrowanie wiadomosci telegrama nie powiodlo sie: " + ex.Message.ToString());
+                //return false;
+            }
+        }
+
+        // sprawdza czy w tej grupie wsparcia są jakieś wiadomości z linkami do Instagrama
+        public bool areThereAnyMessages()
+        {
+            return (MessagesWithInstaPosts.Count != 0);
+        }
+
+        // sprawdza ile postów zostało do zrobienia
         public string GetPostsToDoCounter()
         {
-            int counter = this.last_done_post_index + 1;
-            if(InstagramPosts.Count > 0)
+            int counter = this.msg_index + 1;
+            if(MessagesWithInstaPosts.Count > 0)
             {
-                return ("Post " + counter.ToString() + "/" + InstagramPosts.Count.ToString() + " w tej grupie");
+                return ("Post " + counter.ToString() + "/" + MessagesWithInstaPosts.Count.ToString() + " w tej grupie");
             }
             else
             {
@@ -95,14 +143,30 @@ namespace IGTomesheq
             }
         }
 
-        public long GetLastDoneMessage()
+        // zwieksza numer wiadomosci do wyswietlenia i jesli to koniec zbioru wiadomosci, zwraca false
+        public bool IncrementMessageIndex()
+        {
+            this.MessageIndex++;
+            if((MessagesWithInstaPosts.Count - 1) >= MessageIndex)
+            {
+                return true;
+            }
+            else
+            {
+                this.MessageIndex = -2;
+                return false;
+            }
+        }
+
+        // zwraca pobraną z DB datę ostatnio skomentowanego (lub dla grup tylko like - polajkowanego) zdjęcia
+        public long GetLastDoneMessageDate()
         {
             try
             {
                 using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
                 {
                     m_dbConnection.Open();
-                    string sql = $"SELECT * FROM support_group_names WHERE group_name = '{this.GroupName}'";
+                    string sql = $"SELECT * FROM support_group_names WHERE group_name = '{this.Name}'";
                     SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
                     SQLiteDataReader reader = command.ExecuteReader();
                     while (reader.Read())
@@ -110,10 +174,10 @@ namespace IGTomesheq
                         if (reader.HasRows)
                         {
                             System.Diagnostics.Debug.Write("\nlast_done_msg: " + reader["last_done_msg"] + "\n");
-                            this.last_done_msg_timestamp = (reader["last_done_msg"] as long?).Value;
+                            this.last_done_msg_date = (reader["last_done_msg"] as long?).Value;
                             if (reader["last_done_msg"] != null)
                             {
-                                return this.last_done_msg_timestamp;
+                                return this.last_done_msg_date;
                             }
                             else
                             {
@@ -136,6 +200,7 @@ namespace IGTomesheq
             }
         }
 
+        // aktualizuje w DB wpis dot. daty ostatnio skomentowanego (lub dla grup tylko like - polajkowanego) zdjęcia
         public bool UpdateLastDoneMessage(long timestamp)
         {
             try
@@ -143,7 +208,7 @@ namespace IGTomesheq
                 using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
                 {
                     m_dbConnection.Open();
-                    string sql = $"UPDATE support_group_names SET last_done_msg = {timestamp} WHERE group_name = '{this.GroupName}'";
+                    string sql = $"UPDATE support_group_names SET last_done_msg = {timestamp} WHERE group_name = '{this.Name}'";
                     SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
                     command.ExecuteNonQuery();
                     m_dbConnection.Close(); 

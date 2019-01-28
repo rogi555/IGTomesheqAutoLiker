@@ -1,28 +1,22 @@
-﻿using System;
+﻿using InstaSharper.Classes.Models;
+using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
+using System.Drawing;
+using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Web.Script.Serialization;
+using System.Windows.Forms;
 
 namespace IGTomesheq
 {
     class InstagramPost
     {
         private string URL;
-        private string telegram_message;
-        public string TelegramMessage
-        {
-            get { return this.telegram_message; }
-            set { this.telegram_message = value; }
-        }
-        private long telegram_message_timestamp;
-        public long TelegramMessageTimestamp
-        {
-            get { return this.telegram_message_timestamp; }
-            set { this.telegram_message_timestamp = value; }
-        }
         private bool liked;
         public bool IsLiked
         {
@@ -71,6 +65,25 @@ namespace IGTomesheq
             get { return this.successfully_created; }
             set { this.successfully_created = value; }
         }
+        private string base64image;
+        public string Base64Image
+        {
+            get { return this.base64image; }
+            set { this.base64image = value; }
+        }
+        private Image image;
+        public Image Image
+        {
+            get { return this.image; }
+            set { this.image = value; }
+        }
+
+        private InstaMedia instagram_post;
+        public InstaMedia InstaPost
+        {
+            get { return this.instagram_post; }
+            set { this.instagram_post = value; }
+        }
 
         private DateTime date_commented;
         private DateTime date_liked;
@@ -79,18 +92,76 @@ namespace IGTomesheq
         // DB
         private string connectionString;
 
-        public InstagramPost()
+        public InstagramPost(string base64img)
         {
+            base64image = base64img;
             connectionString = "Data Source=tomesheq_db.db;Version=3;";
             URL = "";
-            telegram_message = "";
             liked = false;
             commented = false;
             date_commented = new DateTime();
             date_liked = new DateTime();
             comment_text = "";
-            successfully_created = true;
+            successfully_created = false;
             picture_path_jpg = "";
+        }
+
+        public InstagramPost(Image image)
+        {
+            Image = image;
+            connectionString = "Data Source=tomesheq_db.db;Version=3;";
+            URL = "";
+            liked = false;
+            commented = false;
+            date_commented = new DateTime();
+            date_liked = new DateTime();
+            comment_text = "";
+            successfully_created = false;
+            picture_path_jpg = "";
+        }
+
+        public InstagramPost(InstaMedia post)
+        {
+            InstaPost = post;
+        }
+
+        private string GetMediaShortcodeFromURL()
+        {
+            string ret = "";
+
+            Regex reg = new Regex(@"\/[\w-]+[^.]*[\/]");
+            if (this.URL.Last() != '/')
+            {
+                this.URL += "/";
+            }
+            MatchCollection matches1 = reg.Matches(this.URL);
+
+            if (matches1.Count == 1)
+            {
+                foreach (Match match in matches1)
+                {
+                    ret = match.Value.Substring(3, match.Value.Length - 3);
+                    if (ret.Last() == '/')
+                    {
+                        ret = ret.Remove(ret.Length - 1);
+                    }
+                }
+            }
+
+            return ret;
+        }
+
+        public string ShortcodeToID(string shortcode)
+        {
+            char character;
+            long id = 0;
+            var alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+            for (var i = 0; i < shortcode.Length; i++)
+            {
+                character = shortcode[i];
+                id = (id * 64) + alphabet.IndexOf(character);
+            }
+            return id.ToString();
         }
 
         public bool SetTelegramInfo(string url, string telegram_msg, long msg_timestamp)
@@ -98,8 +169,6 @@ namespace IGTomesheq
             try
             {
                 this.URL = url;
-                this.telegram_message = telegram_msg;
-                this.TelegramMessageTimestamp = msg_timestamp;
                 this.CreateDBRecord();
                 successfully_created = true;
                 return true;
@@ -109,31 +178,6 @@ namespace IGTomesheq
                 System.Diagnostics.Debug.Write("ERROR!\n" + ex.Message);
                 return false;
             }
-        }
-
-        private string GetMediaShortcodeFromURL()
-        {
-            Regex reg = new Regex(@"\/[\w-]+[^.]*[\/]");
-            if(this.URL.Last() != '/')
-            {
-                this.URL += "/";
-            }
-            MatchCollection matches1 = reg.Matches(this.URL);
-            string tmp = "";
-
-            if(matches1.Count == 1)
-            {
-                foreach (Match match in matches1)
-                {
-                    tmp = match.Value.Substring(3, match.Value.Length - 3);
-                    if(tmp.Last() == '/')
-                    {
-                        tmp = tmp.Remove(tmp.Length - 1);
-                    }
-                }
-            }
-
-            return tmp;
         }
 
         private void CreateDBRecord()
@@ -230,19 +274,6 @@ namespace IGTomesheq
         {
             successfully_created = false;
         }
-
-        public string ShortcodeToID(string shortcode)
-        {
-            char character;
-            long id = 0;
-            var alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
-            for (var i = 0; i < shortcode.Length; i++)
-            {
-                character = shortcode[i];
-                id = (id * 64) + alphabet.IndexOf(character);
-            }
-            return id.ToString();
-        }
     }
 
     class InstagramPostInfo
@@ -270,6 +301,30 @@ namespace IGTomesheq
         {
             get { return this.post_id; }
             set { this.post_id = value; }
+        }
+        private string author;
+        public string Author
+        {
+            get { return this.author; }
+            set { this.author = value; }
+        }
+        private string description;
+        public string Description
+        {
+            get { return this.description; }
+            set { this.description = value; }
+        }
+        private bool did_i_like_it_already;
+        public bool DidILikeItAlready
+        {
+            get { return this.did_i_like_it_already; }
+            set { this.did_i_like_it_already = value; }
+        }
+        private bool is_it_photo_of_me;
+        public bool IsItPhotoOfMe
+        {
+            get { return this.is_it_photo_of_me; }
+            set { this.is_it_photo_of_me = value; }
         }
         private bool is_empty;
         public bool IsEmpty
