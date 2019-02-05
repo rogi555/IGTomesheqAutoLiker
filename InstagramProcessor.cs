@@ -19,9 +19,156 @@ using InstaSharper.API.Builder;
 using InstaSharper.Logger;
 using System.Collections.Specialized;
 using InstaSharper.Classes.Models;
+using InstaSharper.Classes.ResponseWrappers;
 
-namespace IGTomesheq
+namespace IGTomesheqAutoLiker
 {
+    public static class IGProc
+    {
+        private static IInstaApi _instaApi;
+
+        public static string login;
+        public static string password;
+
+        // po podaniu adresu postu na insta - znajduje ID postu
+        public async static Task<string> GetMediaIdFromUrl(string url)
+        {
+            Uri urli = new Uri(url);
+            var test = await _instaApi.GetMediaIdFromUrlAsync(urli);
+            return test.Value;
+        }
+
+        // loguje użytkownika do instagrama
+        public async static Task<InstaLoginResult> Login(string username, string password)
+        {
+            // przechowuje wyniki zapytan
+            IResult<InstaLoginResult> logInResult;
+            InstaLoginResult ret;
+
+            // ustawienie loginu i hasla
+            var userSession = new UserSessionData
+            {
+                UserName = username,
+                Password = password
+            };
+
+            // utworzenie objektu komunikacji z insta - wykorzystywany rowniez w innych metodach
+            IRequestDelay delay = RequestDelay.Empty();
+            _instaApi = InstaApiBuilder.CreateBuilder()
+                    .SetUser(userSession)
+                    .UseLogger(new DebugLogger(LogLevel.All)) // use logger for requests and debug messages
+                    .SetRequestDelay(delay)
+                    .Build();
+
+            // jesli uzytkownik jeszcze niezalogowany
+            if (!_instaApi.IsUserAuthenticated)
+            {
+                // login
+                Console.WriteLine($"Logging in as {userSession.UserName}");
+                logInResult = await _instaApi.LoginAsync();
+                ret = logInResult.Value;
+                if (logInResult.Value == InstaLoginResult.ChallengeRequired)
+                {
+                    login = username;
+                    var lola = await _instaApi.ResetChallenge();
+                    var res = await _instaApi.ChooseVerifyMethod(1);
+                }
+                if (!logInResult.Succeeded)
+                {
+                    Console.WriteLine($"Unable to login: {logInResult.Info.Message}");
+                    ret = InstaLoginResult.Exception;
+                }
+            }
+            else // jesli juz zalogowany
+            {
+                login = username;
+                ret = InstaLoginResult.Success;
+            }
+
+            // zwraca wartosc
+            return ret;
+        }
+
+        public async static Task<bool> FindMyComment(string post_id, string current_username)
+        {
+            IResult<InstaCommentList> comments = await _instaApi.GetMediaCommentsAsync(post_id, PaginationParameters.Empty);
+            if (comments.Value.Comments.Any(x => x.User.UserName == current_username))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public async static Task<InstaCommentList> GetComments(string post_id)
+        {
+            IResult<InstaCommentList> comments = await _instaApi.GetMediaCommentsAsync(post_id, PaginationParameters.Empty);
+            return comments.Value;
+        }
+
+        public async static Task<bool> Logout()
+        {
+            IResult<bool> logout_successful = await _instaApi.LogoutAsync();
+            return logout_successful.Value;
+        }
+
+        public async static Task CheckSomething()
+        {
+            if (_instaApi.IsUserAuthenticated)
+            {
+                IResult<InstaMedia> mediaItem = await _instaApi.GetMediaByIdAsync("1918376805137779938");
+                //System.Diagnostics.Debug.Write("\nUser zalogowany!\nUser: " + user.Value.FullName);
+            }
+            else
+            {
+                System.Diagnostics.Debug.Write("\nUser niezalogowany...");
+            }
+        }
+
+        public async static Task Like(string post_id)
+        {
+            await _instaApi.LikeMediaAsync(post_id);
+        }
+
+        public async static Task Comment(string post_id, string comment_text)
+        {
+            await _instaApi.CommentMediaAsync(post_id, comment_text);
+        }
+
+        public static bool IsUserAuthenticated()
+        {
+            if (_instaApi != null)
+            {
+                if (_instaApi.IsUserAuthenticated)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public async static Task<InstaResetChallenge> SendVerifyCode(string code)
+        {
+            IResult<InstaResetChallenge> res = await _instaApi.SendVerifyCode(code);
+            return res.Value;
+        }
+
+        public async static Task<IResult<InstaMedia>> GetInstaPost(string id)
+        {
+            IResult<InstaMedia> post = await _instaApi.GetMediaByIdAsync(id);
+            return post;
+        }
+    }
+
     class InstagramProcessor
     {
         private string login;
@@ -262,168 +409,5 @@ namespace IGTomesheq
         }
     }
 
-    public class PythonInstance
-    {
-        private ScriptRuntime python_runtime;
-        private dynamic script_scope;
-        public dynamic instance;
-
-        public PythonInstance()
-        {
-            python_runtime = Python.CreateRuntime();
-            script_scope = python_runtime.UseFile("InstaRogi.py");
-            instance = script_scope.InstaRogi();
-        }
-    }
-
-    public class PythonIron
-    {
-        ScriptEngine engine;
-        ScriptSource source;
-        ScriptScope scope;
-        ObjectOperations operations;
-        //static string ironpath = @"InstaRogi.py";
-
-        public PythonIron()
-        {
-            engine = Python.CreateEngine();
-            source = engine.CreateScriptSourceFromFile("InstaRogi.py", Encoding.UTF8);
-            scope = engine.CreateScope();
-            operations = engine.CreateOperations();
-            source.Execute(scope);
-            dynamic rogi_class = scope.GetVariable("InstaRogi");
-            dynamic rogi_class_obj = operations.CreateInstance(rogi_class);
-            //var f = operations.GetMember(rogi_class_obj, "");
-            //string tmp = f as string;
-            //System.Diagnostics.Debug.Write("\nurl: "+ tmp +"\n");
-        }
-    }
-
-    public static class IGProc
-    {
-        private static IInstaApi _instaApi;
-
-        public static string login;
-        public static string password;
-
-        public async static Task<string> GetMediaIdFromUrl(string url)
-        {
-            Uri urli = new Uri(url);
-            var test = await _instaApi.GetMediaIdFromUrlAsync(urli);
-            return test.Value;
-        }
-
-        public async static Task Login(string username, string password)
-        {
-            var userSession = new UserSessionData
-            {
-                UserName = username,
-                Password = password
-            };
-
-            IRequestDelay delay = RequestDelay.Empty();
-            _instaApi = InstaApiBuilder.CreateBuilder()
-                    .SetUser(userSession)
-                    .UseLogger(new DebugLogger(LogLevel.All)) // use logger for requests and debug messages
-                    .SetRequestDelay(delay)
-                    .Build();
-
-            if (!_instaApi.IsUserAuthenticated)
-            {
-                // login
-                Console.WriteLine($"Logging in as {userSession.UserName}");
-                var logInResult = await _instaApi.LoginAsync();
-                if (logInResult.Value == InstaLoginResult.ChallengeRequired)
-                {
-                    var lola = await _instaApi.ResetChallenge();
-                    var res = await _instaApi.ChooseVerifyMethod(1);
-
-                    string text = "";
-                    if(text == "")
-                    {
-
-                    }
-
-                    var res3 = await _instaApi.SendVerifyCode(text);
-                }
-                if (!logInResult.Succeeded)
-                {
-                    Console.WriteLine($"Unable to login: {logInResult.Info.Message}");
-                }
-            }
-        }
-
-        public async static Task<bool> FindMyComment(string post_id, string current_username)
-        {
-            IResult<InstaCommentList> comments = await _instaApi.GetMediaCommentsAsync(post_id, PaginationParameters.Empty);
-            if(comments.Value.Comments.Any(x => x.User.UserName == current_username))
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        public async static Task<InstaCommentList> GetComments(string post_id)
-        {
-            IResult<InstaCommentList> comments = await _instaApi.GetMediaCommentsAsync(post_id, PaginationParameters.Empty);
-            return comments.Value;
-        }
-
-        public async static Task<bool> Logout()
-        {
-            IResult<bool> logout_successful = await _instaApi.LogoutAsync();
-            return logout_successful.Value;
-        }
-
-        public async static Task CheckSomething()
-        {
-            if(_instaApi.IsUserAuthenticated)
-            {
-                IResult<InstaMedia> mediaItem = await _instaApi.GetMediaByIdAsync("1918376805137779938");
-                //System.Diagnostics.Debug.Write("\nUser zalogowany!\nUser: " + user.Value.FullName);
-            }
-            else
-            {
-                System.Diagnostics.Debug.Write("\nUser niezalogowany...");
-            }
-        }
-
-        public async static Task Like(string post_id)
-        {
-            await _instaApi.LikeMediaAsync(post_id);
-        }
-
-        public async static Task Comment(string post_id, string comment_text)
-        {
-            await _instaApi.CommentMediaAsync(post_id, comment_text);
-        }
-
-        public static bool IsUserAuthenticated()
-        {
-            if (_instaApi != null)
-            {
-                if (_instaApi.IsUserAuthenticated)
-                {
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        public async static Task<IResult<InstaMedia>> GetInstaPost(string id)
-        {
-            IResult<InstaMedia> post = await _instaApi.GetMediaByIdAsync(id);
-            return post;
-        }
-    }
+    
 }

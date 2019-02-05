@@ -113,6 +113,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ApplicationContext.cs" />
+    <Compile Include="DefaultComment.cs" />
     <Compile Include="Emoji.cs" />
     <Compile Include="EmojisWindow.cs">
       <SubType>Form</SubType>
@@ -145,6 +146,7 @@
     </Compile>
     <Compile Include="SupportGroup.cs" />
     <Compile Include="PostData.cs" />
+    <Compile Include="SupportGroupSettings.cs" />
     <EmbeddedResource Include="EmojisWindow.resx">
       <DependentUpon>EmojisWindow.cs</DependentUpon>
     </EmbeddedResource>

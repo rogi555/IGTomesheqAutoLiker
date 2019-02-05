@@ -1,4 +1,5 @@
-﻿using System;
+﻿using IGTomesheq;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
@@ -15,7 +16,8 @@ namespace IGTomesheqAutoLiker
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new Form1());
+            MyApplicationContext context = new MyApplicationContext();
+            Application.Run(context);
         }
     }
 }

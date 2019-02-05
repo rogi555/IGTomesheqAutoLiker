@@ -8,10 +8,16 @@ using System.Threading.Tasks;
 using TeleSharp.TL;
 using TeleSharp.TL.Messages;
 
-namespace IGTomesheq
+namespace IGTomesheqAutoLiker
 {
-    class SupportGroup
+    public class SupportGroup
     {
+        public enum DownloadMessagesFrom {
+            LastCommentedPost, /* Posty dodane po ostatnio skomentowanym poście */
+            CustomDate, /* Posty dodane po ręcznie wpisanej dacie (w kalendarzyku) */
+            GivenPeriod /* Posty dodane w ciągu podanego czasu (np. z ostatnich 24h) */
+        };
+
         private string name;
         public string Name
         {
@@ -40,6 +46,15 @@ namespace IGTomesheq
             set { this.last_done_msg_date = value; }
         }
 
+        private long starting_point_timestamp;
+        public long StartingPointTimestamp
+        {
+            get { return this.starting_point_timestamp; }
+            set { this.starting_point_timestamp = value; }
+        }
+
+        public SupportGroupSettings Settings;
+
         // wszystkie, gole wiadomosci pobrane z telegrama
         private TLMessages all_messages;
         // te dwie listy powinny miec zawsze taka sama dlugosc
@@ -59,6 +74,24 @@ namespace IGTomesheq
             this.name = name;
             only_likes = false;
             msg_index = -1;
+
+            Settings = new SupportGroupSettings();
+        }
+
+        public SupportGroup(string name, bool only_likes, long last_done_msg)
+        {
+            connectionString = "Data Source=tomesheq_db.db;Version=3;";
+
+            all_messages = new TLMessages();
+            MessagesWithInstaPosts = new List<PostData>();
+
+            this.Name = name;
+            this.OnlyLikes = only_likes;
+            this.LastDoneMsgDate = last_done_msg;
+
+            msg_index = -1;
+
+            Settings = new SupportGroupSettings();
         }
 
         // Tutaj odbywa się filtracja wiadomości - te, zawierające linki do zdjęć instagrama zostają dodane do odpowiedniej listy
@@ -166,7 +199,7 @@ namespace IGTomesheq
                 using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
                 {
                     m_dbConnection.Open();
-                    string sql = $"SELECT * FROM support_group_names WHERE group_name = '{this.Name}'";
+                    string sql = $"SELECT * FROM support_groups WHERE group_name = '{this.Name}'";
                     SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
                     SQLiteDataReader reader = command.ExecuteReader();
                     while (reader.Read())
@@ -208,7 +241,7 @@ namespace IGTomesheq
                 using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
                 {
                     m_dbConnection.Open();
-                    string sql = $"UPDATE support_group_names SET last_done_msg = {timestamp} WHERE group_name = '{this.Name}'";
+                    string sql = $"UPDATE support_groups SET last_done_msg = {timestamp} WHERE group_name = '{this.Name}'";
                     SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
                     command.ExecuteNonQuery();
                     m_dbConnection.Close(); 
@@ -220,6 +253,33 @@ namespace IGTomesheq
                 System.Diagnostics.Debug.Write("Blad przy aktualizacji daty najnowszego zrobionego postu Telegrama: " + ex.Message.ToString());
                 return false;
             }
+        }
+
+        // ustawia datę od kiedy mają zostać pobrane wiadomości
+        // wersja dla ostatnio polubionego postu
+        public void SetStartingPoint()
+        {
+            this.StartingPointTimestamp = this.LastDoneMsgDate;
+        }
+
+        // wersja dla kalendarzyka
+        public void SetStartingPoint(DateTime date_and_time)
+        {
+            this.StartingPointTimestamp = ToUnixTimestamp(date_and_time);
+        }
+
+        // wersja dla ilości godzin wstecz
+        public void SetStartingPoint(int hours)
+        {
+            this.StartingPointTimestamp = ToUnixTimestamp(DateTime.Now) - (hours * 60 * 60);
+        }
+
+        public static long ToUnixTimestamp(DateTime target)
+        {
+            var date = new DateTime(1970, 1, 1, 0, 0, 0, target.Kind);
+            var unixTimestamp = System.Convert.ToInt64((target - date).TotalSeconds);
+
+            return unixTimestamp;
         }
     }
 }

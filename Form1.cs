@@ -61,6 +61,9 @@ namespace IGTomesheqAutoLiker
 
         string current_username;
 
+        InitDataHolder data_holder;
+        bool is_form_initialized;
+
         public Form1()
         {
             InitializeComponent();
@@ -90,7 +93,208 @@ namespace IGTomesheqAutoLiker
 
             // umiejscowienie okna
             this.CenterToScreen();
-        }        
+
+            data_holder = new InitDataHolder();
+
+            is_form_initialized = false;
+        }     
+        
+        public Form1(InitDataHolder holder)
+        {
+            InitializeComponent();
+            data_holder = holder;
+
+            // baza danych
+            connectionString = "Data Source=tomesheq_db.db;Version=3;";
+
+            // ogolne
+            media_to_comment_counter = 0;
+            posts_newer_than_timestamp = 0;
+            support_group_index = -1;
+
+            support_groups = new List<SupportGroup>();
+
+            this.toolStripStatusLabel1.Text = "Program gotowy do działania! Kliknij dalej...";
+
+            current_username = "";
+
+            // umiejscowienie okna
+            this.CenterToScreen();
+        }
+
+        public bool Initialize()
+        {
+            if (!is_form_initialized)
+            {
+                // telegram
+                if (data_holder.client.IsUserAuthorized())
+                {
+                    SetUpTelegramPanel(InitDataHolder.ShowTelegramPanelWith.LoginSuccess);
+                }
+                else
+                {
+                    SetUpTelegramPanel(InitDataHolder.ShowTelegramPanelWith.InsertPhoneNumber);
+                }
+
+                // instagram
+                SetUpInstagramPanel(data_holder.InstaLoginStatus);
+
+                // domyślne komentarze
+                if (data_holder.default_comments.Count > 0)
+                {
+                    InitDefaultCommentsList(data_holder.default_comments);
+                }
+
+                // grupy wsparcia
+                if ((data_holder.channels != null) && (data_holder.chats != null))
+                {
+                    InitSupportGroupsPanel(data_holder.channels, data_holder.chats, data_holder.initial_support_groups);
+                }
+                else
+                {
+                    // nie udalo sie pobrac danych z telegrama - co robic?!
+                }
+
+                is_form_initialized = true; 
+            }
+            return true;
+        }
+
+        private bool InitDefaultCommentsList(List<DefaultComment> default_comments)
+        {
+            try
+            {
+                foreach (DefaultComment comment in default_comments)
+                {
+                    listView1.Items.Add(comment.Comment); 
+                }
+                return true;
+            }
+            catch(Exception ex)
+            {
+                return false;
+            }
+        }
+
+        private bool InitSupportGroupsPanel(List<TLChannel> channels, List<TLChat> chats, List<SupportGroup> initial_support_groups)
+        {
+            try
+            {
+                foreach(TLChannel channel in channels)
+                {
+                    listView2.Items.Add(channel.Title);
+                }
+                foreach (TLChat chat in chats)
+                {
+                    listView2.Items.Add(chat.Title);
+                }
+                foreach (SupportGroup group in initial_support_groups)
+                {
+                    listView3.Items.Add(group.Name);
+                    listBox2.Items.Add(group.Name);
+                }
+                listBox2.SelectedIndex = 0;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
+        private void SetUpTelegramPanel(InitDataHolder.ShowTelegramPanelWith show_option)
+        {
+            // panel6 -> panel z labelem z info o nieudanym logowaniu
+            // panel5 -> panel z labele z info o pomyślnym logownai
+            // panel4 -> panel z kodem bezpieczeństwa
+            // panel3 -> panel z numerem telefonu
+
+            switch(show_option)
+            {
+                case InitDataHolder.ShowTelegramPanelWith.InsertPhoneNumber:
+                    panel6.Hide();
+                    panel5.Hide();
+                    panel4.Hide();
+                    panel3.Show();
+                    break;
+
+                case InitDataHolder.ShowTelegramPanelWith.InsertSecurityCode:
+                    panel6.Hide();
+                    panel5.Hide();
+                    panel4.Show();
+                    panel3.Hide();
+                    break;
+
+                case InitDataHolder.ShowTelegramPanelWith.LoginFailed:
+                    panel6.Show();
+                    panel5.Hide();
+                    panel4.Hide();
+                    panel3.Show();
+                    break;
+
+                case InitDataHolder.ShowTelegramPanelWith.LoginSuccess:
+                    panel6.Hide();
+                    panel5.Show();
+                    panel4.Hide();
+                    panel3.Hide();
+                    break;
+
+                default:
+                    panel6.Hide();
+                    panel5.Hide();
+                    panel4.Hide();
+                    panel3.Show();
+                    break;
+            }
+        }
+
+        private void SetUpInstagramPanel(InitDataHolder.ShowInstagramPanelWith show_option)
+        {
+            // panel1 -> panel loginu i hasła w panelu insta
+            // panel2 -> panel kodu bezpieczeństwa w panelu insta
+            // panel7 -> panel logowanie udane
+            // panel8 -> panel logowanie nieudane
+
+            switch (show_option)
+            {
+                case InitDataHolder.ShowInstagramPanelWith.InsertLoginData:
+                    panel1.Show();
+                    panel2.Hide();
+                    panel7.Hide();
+                    panel8.Hide();
+                    break;
+
+                case InitDataHolder.ShowInstagramPanelWith.InsertSecurityCode:
+                    label62.Text = $"Witaj @{IGProc.login}!";
+                    panel1.Hide();
+                    panel2.Show();
+                    panel7.Hide();
+                    panel8.Hide();
+                    break;
+
+                case InitDataHolder.ShowInstagramPanelWith.LoginFailed:
+                    panel1.Show();
+                    panel2.Hide();
+                    panel7.Hide();
+                    panel8.Show();
+                    break;
+
+                case InitDataHolder.ShowInstagramPanelWith.LoginSuccess:
+                    label56.Text = $"Witaj @{IGProc.login}!";
+                    panel1.Hide();
+                    panel2.Hide();
+                    panel7.Show();
+                    panel8.Hide();
+                    break;
+
+                default:
+                    panel1.Show();
+                    panel2.Hide();
+                    panel7.Hide();
+                    panel8.Hide();
+                    break;
+            }
+        }
 
         /* --- SCREEN POWITALNY --- */
         // button dalej na screen1 (powitanie)
@@ -499,7 +703,7 @@ namespace IGTomesheqAutoLiker
                                 command = new SQLiteCommand(sql, m_dbConnection);
                                 command.ExecuteNonQuery();
                             }
-                            m_dbConnection.Close(); 
+                            m_dbConnection.Close();
                         }
 
                         // schowanie pol do wpisania danych
@@ -541,7 +745,7 @@ namespace IGTomesheqAutoLiker
                         label29.Show();
                         label28.Hide();
                     }
-                } 
+                }
             }
             else
             {
@@ -571,22 +775,6 @@ namespace IGTomesheqAutoLiker
                     MessageBox.Show("Wylogowano - aby zalogować się na nowo, uruchom ponownie aplikację");
 
                     Application.Exit();
-
-                    /*
-                    // pokaz dane do logowania ponownie
-                    label26.Show();
-                    label27.Show();
-                    textBox2.Show();
-                    textBox3.Show();
-                    button14.Show();
-
-                    // pokaz labele informacyjne
-                    label29.Hide();
-                    label28.Hide();
-
-                    button14.Text = "Zaloguj";
-
-                    MessageBox.Show(IGProc.IsUserAuthenticated().ToString());*/
                 }
                 else
                 {
@@ -734,7 +922,7 @@ namespace IGTomesheqAutoLiker
                     using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
                     {
                         m_dbConnection.Open();
-                        string sql = $"DELETE FROM support_group_names WHERE group_name = '{item.Text}'";
+                        string sql = $"DELETE FROM support_groups WHERE group_name = '{item.Text}'";
                         SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
                         command.ExecuteNonQuery(); // nic nie zwraca
                         m_dbConnection.Close();
@@ -750,7 +938,7 @@ namespace IGTomesheqAutoLiker
             using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
             {
                 m_dbConnection.Open();
-                string sql = "SELECT * FROM support_group_names";
+                string sql = "SELECT * FROM support_groups";
                 SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
                 SQLiteDataReader reader = command.ExecuteReader();
                 while (reader.Read())
@@ -1383,14 +1571,15 @@ namespace IGTomesheqAutoLiker
         {
             if (listView2.SelectedIndices.Count > 0)
             {
-                // wyswietl na liscie grup wsparcia
+                // wyswietl na liscie grup wsparcia w panelu wyboru grup
                 listView3.Items.Add(listView2.SelectedItems[0].Text);
+                listBox2.Items.Add(listView2.SelectedItems[0].Text);
 
                 // dodaj do bazy danych
                 using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
                 {
                     m_dbConnection.Open();
-                    string sql = $"INSERT INTO support_group_names (id_group, group_name, last_done_msg) VALUES (NULL, '{listView2.SelectedItems[0].Text}', 0)";
+                    string sql = $"INSERT INTO support_groups (id_group, group_name, last_done_msg, last_done_msg_author, starting_date_method) VALUES (NULL, '{listView2.SelectedItems[0].Text}', 0, '', 1)";
                     SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
                     command.ExecuteNonQuery(); // nic nie zwraca
                     m_dbConnection.Close(); 
@@ -1415,12 +1604,14 @@ namespace IGTomesheqAutoLiker
                 using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
                 {
                     m_dbConnection.Open();
-                    string sql = $"DELETE FROM support_group_names WHERE group_name = '{listView3.SelectedItems[0].Text}'";
+                    string sql = $"DELETE FROM support_groups WHERE group_name = '{listView3.SelectedItems[0].Text}'";
                     SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
                     command.ExecuteNonQuery(); // nic nie zwraca
                     m_dbConnection.Close(); 
                 }
 
+                int tmp = listBox2.Items.IndexOf(listView3.SelectedItems[0].Text);
+                listBox2.Items.RemoveAt(tmp);
                 listView3.SelectedItems[0].Remove();
             }
         }
@@ -1490,7 +1681,7 @@ namespace IGTomesheqAutoLiker
             using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
             {
                 m_dbConnection.Open();
-                string sql = "SELECT * FROM support_group_names";
+                string sql = "SELECT * FROM support_groups";
                 SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
                 SQLiteDataReader reader = command.ExecuteReader();
 
@@ -1535,32 +1726,8 @@ namespace IGTomesheqAutoLiker
             //tmp_group_name.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             date_support_groups_last_post_dates.Add(tmp_group_date);
 
-            groupBox5.Controls.Add(date_support_groups.Last());
-            groupBox5.Controls.Add(date_support_groups_last_post_dates.Last());
-        }
-
-        // DO USUNIECIA! kliknieto na groupBoxa4 od wybory daty recznie
-        private void GroupBox4_Click(object sender, System.EventArgs e)
-        {
-            // odblokuj wszystkie kontrolsy na groupboxie4
-            EnableGroupBoxControls(this.groupBox4);
-
-            // zablokuj wszystkie kontrolsy na groupboxie5
-            DisableGroupBoxControls(this.groupBox5);
-
-
-        }
-
-        // DO USUNIECIA! kliknieto na groupBoxa5 od pokazania kiedy skomentowano ostatnie posty dla danych grup
-        private void GroupBox5_Click(object sender, System.EventArgs e)
-        {
-            // odblokuj wszystkie kontrolsy na groupboxie4
-            EnableGroupBoxControls(this.groupBox5);
-
-            // zablokuj wszystkie kontrolsy na groupboxie5
-            DisableGroupBoxControls(this.groupBox4);
-
-
+            //groupBox5.Controls.Add(date_support_groups.Last());
+            //groupBox5.Controls.Add(date_support_groups_last_post_dates.Last());
         }
 
         /* --- |SCREEN WYBORU DATY| --- */
@@ -2353,6 +2520,189 @@ namespace IGTomesheqAutoLiker
             label_settings_menu_instagram.BackColor = System.Drawing.SystemColors.AppWorkspace;
             label_settings_menu_support_groups.BackColor = System.Drawing.SystemColors.AppWorkspace;
             label_settings_menu_telegram.BackColor = System.Drawing.SystemColors.AppWorkspace;
+        }
+
+        // button wyloguj z konta insta
+        private async void button20_Click(object sender, EventArgs e)
+        {
+            if(!IGProc.IsUserAuthenticated())
+            {
+                SetUpInstagramPanel(InitDataHolder.ShowInstagramPanelWith.InsertLoginData);
+                return;
+            }
+            else
+            {
+                string login = IGProc.login;
+                string password = IGProc.password;
+
+                if (await IGProc.Logout())
+                {
+                    // usun wpis dot uzytkownika z bazy danych
+                    using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
+                    {
+                        m_dbConnection.Open();
+                        string sql = $"DELETE FROM instagram_data WHERE login = '{login}' AND password = '{password}'";
+                        SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+                        command.ExecuteNonQuery(); // nic nie zwraca
+                        m_dbConnection.Close();
+                    }
+                    SetUpInstagramPanel(InitDataHolder.ShowInstagramPanelWith.InsertLoginData);
+                    return;
+                }
+                else
+                {
+                    MessageBox.Show("Błąd podczas wylogowania! Spróbuj się zalogować...");
+                    SetUpInstagramPanel(InitDataHolder.ShowInstagramPanelWith.InsertLoginData);
+                    return;
+                }
+            }
+        }
+
+        // button logowanie do insta
+        private async void button18_Click(object sender, EventArgs e)
+        {
+            if (!IGProc.IsUserAuthenticated())
+            {
+                if ((textBox5.Text.Length > 0) && (textBox6.Text.Length > 0))
+                {
+                    // informacja o logowaniu do instagrama
+                    this.toolStripStatusLabel1.Text = $"Witaj {textBox2.Text}! Trwa logowanie do Instagrama...";
+
+                    //MessageBox.Show($"login: {textBox2.Text}\npassword: {textBox3.Text}");
+                    await IGProc.Login(textBox5.Text, textBox6.Text);
+                    if (IGProc.IsUserAuthenticated())
+                    {
+                        using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
+                        {
+                            m_dbConnection.Open();
+                            string sql = $"SELECT * FROM instagram_data WHERE login = '{textBox5.Text}' AND password = '{textBox6.Text}'";
+                            SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+                            SQLiteDataReader reader = command.ExecuteReader();
+                            if (reader.HasRows)
+                            {
+                                // wszystko OK - nic nie rob
+                            }
+                            else
+                            {
+                                // nie ma takiego loginu w bazie - zapisz go
+                                IGProc.login = textBox5.Text;
+                                IGProc.password = textBox6.Text;
+                                sql = $"INSERT INTO instagram_data (login, password) VALUES ('{textBox5.Text}', '{textBox6.Text}')";
+                                command = new SQLiteCommand(sql, m_dbConnection);
+                                command.ExecuteNonQuery();
+                            }
+                            m_dbConnection.Close();
+                        }
+                        // informacja o logowaniu do instagrama
+                        this.toolStripStatusLabel1.Text = $"Gotowe! Kliknij dalej...";
+                        data_holder.InstaLoginStatus = InitDataHolder.ShowInstagramPanelWith.LoginSuccess;
+                    }
+                    else
+                    {
+                        data_holder.InstaLoginStatus = InitDataHolder.ShowInstagramPanelWith.LoginSuccess;
+                    }
+
+                    SetUpInstagramPanel(data_holder.InstaLoginStatus);
+                }
+            }
+        }
+
+        // button wyslij kod bezpieczenstwa
+        private async void button19_Click(object sender, EventArgs e)
+        {
+            if (textBox7.Text.Length > 4)
+            {
+                var res3 = await IGProc.SendVerifyCode(textBox7.Text); 
+            }
+        }
+
+        // po wcisnieciu entera
+        private void textBox7_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                button19.PerformClick();
+            }
+        }
+
+        // zmieniono zaznaczenie, że ta grupa wsparcia jest typu "Tylko like"
+        private void checkBox1_CheckedChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        // zaznaczono "po ostatnio skomentowanym poście"
+        private void radioButton1_CheckedChanged(object sender, EventArgs e)
+        {
+            // odznacz pozostałe radiobutton
+            if (radioButton1.Checked)
+            {
+                radioButton2.Checked = false;
+                radioButton3.Checked = false; 
+            }
+        }
+
+        // zaznaczono "po dacie wpisanej w kalendarzyku"
+        private void radioButton2_CheckedChanged(object sender, EventArgs e)
+        {
+            if (radioButton2.Checked)
+            {
+                radioButton1.Checked = false;
+                radioButton3.Checked = false; 
+            }
+        }
+
+        // zaznaczono "dodane w ciągu ostatnich x godzin"
+        private void radioButton3_CheckedChanged(object sender, EventArgs e)
+        {
+            if (radioButton3.Checked)
+            {
+                radioButton1.Checked = false;
+                radioButton2.Checked = false; 
+            }
+        }
+
+        // zaznacza radioButton3
+        private void numericUpDown1_Click(object sender, EventArgs e)
+        {
+            radioButton1.Checked = false;
+            radioButton2.Checked = false;
+            radioButton3.Checked = true;
+        }
+
+        public void GetDataForSupportGroupSettingsPanel()
+        {
+
+        }
+
+        // wybrano grupe wsparcia na liscie w panelu z ustawieniami grup
+        private void listBox2_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        // po wybraniu grupy wsparcia, wypelnia panel ustawien tej grupy odpowiednimi danymi
+        void SetUpSupportGroupsSettingsPanel(string support_group_name)
+        {
+            int selected_support_group_index = support_groups.FindIndex(x => x.Name == support_group_name);
+            if(selected_support_group_index >= 0)
+            {
+
+            }
+            else
+            {
+                MessageBox.Show("Wystąpił błąd - wybrana grupa wsparcia nie istnieje!");
+            }
+        }
+
+        // zmieniono liczbę godzin do przeszukania wiadomości (o ile godzin od teraz się cofnąć)
+        private void numericUpDown1_ValueChanged(object sender, EventArgs e)
+        {
+            int selected_group_index = support_groups.FindIndex(x => x.Name == listBox2.SelectedItem.ToString());
+            Double hours_value = Decimal.ToDouble(numericUpDown1.Value);
+            hours_value = (-1) * hours_value;
+            support_groups[selected_group_index].Settings.LastHoursTimestamp = ToUnixTimestamp(DateTime.Now.AddHours(hours_value));
+            MessageBox.Show("Teraz: " + ToUnixTimestamp(DateTime.Now) + "\nUstawiona: " + ToUnixTimestamp(DateTime.Now.AddHours(hours_value)));
         }
     }
 }

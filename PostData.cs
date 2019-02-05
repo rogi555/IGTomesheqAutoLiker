@@ -8,9 +8,9 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using TeleSharp.TL;
 
-namespace IGTomesheq
+namespace IGTomesheqAutoLiker
 {
-    class PostData
+    public class PostData
     {
         public TLMessage TelegramMessage;
         public InstagramPost InstagramPost;

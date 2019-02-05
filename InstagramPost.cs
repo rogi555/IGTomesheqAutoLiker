@@ -12,9 +12,9 @@ using System.Threading.Tasks;
 using System.Web.Script.Serialization;
 using System.Windows.Forms;
 
-namespace IGTomesheq
+namespace IGTomesheqAutoLiker
 {
-    class InstagramPost
+    public class InstagramPost
     {
         private string URL;
         private bool liked;
