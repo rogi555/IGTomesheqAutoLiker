@@ -12,12 +12,6 @@ namespace IGTomesheqAutoLiker
 {
     public class SupportGroup
     {
-        public enum DownloadMessagesFrom {
-            LastCommentedPost, /* Posty dodane po ostatnio skomentowanym poście */
-            CustomDate, /* Posty dodane po ręcznie wpisanej dacie (w kalendarzyku) */
-            GivenPeriod /* Posty dodane w ciągu podanego czasu (np. z ostatnich 24h) */
-        };
-
         private string name;
         public string Name
         {
@@ -25,32 +19,11 @@ namespace IGTomesheqAutoLiker
             set { this.name = value; }
         }
 
-        private bool only_likes;
-        public bool OnlyLikes
-        {
-            get { return this.only_likes; }
-            set { this.only_likes = value; }
-        }
-
         private int msg_index;
         public int MessageIndex
         {
             get { return this.msg_index; }
             set { this.msg_index = value; }
-        }
-
-        private long last_done_msg_date;
-        public long LastDoneMsgDate
-        {
-            get { return this.last_done_msg_date; }
-            set { this.last_done_msg_date = value; }
-        }
-
-        private long starting_point_timestamp;
-        public long StartingPointTimestamp
-        {
-            get { return this.starting_point_timestamp; }
-            set { this.starting_point_timestamp = value; }
         }
 
         public SupportGroupSettings Settings;
@@ -63,7 +36,7 @@ namespace IGTomesheqAutoLiker
         // DB
         private string connectionString;
 
-        // konstruktor
+        // konstruktor używany, gdy zostaje recznie dodana grupa wsparcia i nie ma dla niej ustawien
         public SupportGroup(string name)
         {
             connectionString = "Data Source=tomesheq_db.db;Version=3;";
@@ -72,13 +45,13 @@ namespace IGTomesheqAutoLiker
             MessagesWithInstaPosts = new List<PostData>();
 
             this.name = name;
-            only_likes = false;
             msg_index = -1;
 
-            Settings = new SupportGroupSettings();
+            Settings = new SupportGroupSettings(this);
         }
 
-        public SupportGroup(string name, bool only_likes, long last_done_msg)
+        // konstruktor używany, gdy zostaje dodana grupa wsparcia z bazy danych
+        public SupportGroup(string name, StartingDateMethod method, bool only_likes, long last_done_msg, int last_hours, string last_post_author)
         {
             connectionString = "Data Source=tomesheq_db.db;Version=3;";
 
@@ -86,12 +59,9 @@ namespace IGTomesheqAutoLiker
             MessagesWithInstaPosts = new List<PostData>();
 
             this.Name = name;
-            this.OnlyLikes = only_likes;
-            this.LastDoneMsgDate = last_done_msg;
-
             msg_index = -1;
 
-            Settings = new SupportGroupSettings();
+            Settings = new SupportGroupSettings(this, method, only_likes, last_done_msg, last_hours, last_post_author);
         }
 
         // Tutaj odbywa się filtracja wiadomości - te, zawierające linki do zdjęć instagrama zostają dodane do odpowiedniej listy
@@ -207,10 +177,10 @@ namespace IGTomesheqAutoLiker
                         if (reader.HasRows)
                         {
                             System.Diagnostics.Debug.Write("\nlast_done_msg: " + reader["last_done_msg"] + "\n");
-                            this.last_done_msg_date = (reader["last_done_msg"] as long?).Value;
+                            this.Settings.LastCommentedPostTimestamp = (reader["last_done_msg"] as long?).Value;
                             if (reader["last_done_msg"] != null)
                             {
-                                return this.last_done_msg_date;
+                                return this.Settings.LastCommentedPostTimestamp;
                             }
                             else
                             {
@@ -246,6 +216,7 @@ namespace IGTomesheqAutoLiker
                     command.ExecuteNonQuery();
                     m_dbConnection.Close(); 
                 }
+                this.Settings.LastCommentedPostTimestamp = timestamp;
                 return true;
             }
             catch (Exception ex)
@@ -253,33 +224,6 @@ namespace IGTomesheqAutoLiker
                 System.Diagnostics.Debug.Write("Blad przy aktualizacji daty najnowszego zrobionego postu Telegrama: " + ex.Message.ToString());
                 return false;
             }
-        }
-
-        // ustawia datę od kiedy mają zostać pobrane wiadomości
-        // wersja dla ostatnio polubionego postu
-        public void SetStartingPoint()
-        {
-            this.StartingPointTimestamp = this.LastDoneMsgDate;
-        }
-
-        // wersja dla kalendarzyka
-        public void SetStartingPoint(DateTime date_and_time)
-        {
-            this.StartingPointTimestamp = ToUnixTimestamp(date_and_time);
-        }
-
-        // wersja dla ilości godzin wstecz
-        public void SetStartingPoint(int hours)
-        {
-            this.StartingPointTimestamp = ToUnixTimestamp(DateTime.Now) - (hours * 60 * 60);
-        }
-
-        public static long ToUnixTimestamp(DateTime target)
-        {
-            var date = new DateTime(1970, 1, 1, 0, 0, 0, target.Kind);
-            var unixTimestamp = System.Convert.ToInt64((target - date).TotalSeconds);
-
-            return unixTimestamp;
         }
     }
 }

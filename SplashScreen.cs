@@ -70,7 +70,7 @@ namespace IGTomesheqAutoLiker
             toolStripStatusLabel1.Text = "Pobieram zapamiętane grupy wsparcia z bazy danych...";
             statusStrip1.Refresh();
             // grupy wsparcia
-            data_holder.GetSupportGroups();
+            data_holder.GetSupportGroups(); // !!! dorobić ifa - zraca false w przypadku niepowodzneia
             toolStripStatusLabel1.Text = "Gotowe!";
             statusStrip1.Refresh();
             Thread.Sleep(500);

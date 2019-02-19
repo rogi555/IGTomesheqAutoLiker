@@ -184,10 +184,13 @@ namespace IGTomesheqAutoLiker
                     SQLiteDataReader reader = command.ExecuteReader();
                     if (reader.HasRows)
                     {
+                        int i = 0;
                         while (reader.Read())
                         {
-                            initial_support_groups.Add(new SupportGroup(reader.GetString(1), (reader.GetInt32(2) == 1) ? true : false, reader.GetInt64(3)));
+                            initial_support_groups.Add(new SupportGroup(reader.GetString(1), (StartingDateMethod)reader.GetInt32(6), (reader.GetInt32(2) == 1) ? true : false, reader.GetInt64(3), reader.GetInt32(4), reader.GetString(5)));
+                            i++;
                         }
+                        i++;
                     }
                     m_dbConnection.Close();
                 }

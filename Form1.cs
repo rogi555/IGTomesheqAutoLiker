@@ -112,6 +112,11 @@ namespace IGTomesheqAutoLiker
             posts_newer_than_timestamp = 0;
             support_group_index = -1;
 
+            // utworzenie obiektu z klasami emoji
+            complete_emojis = new List<SingleEmoji>();
+            emoji_labels = new List<Label>();
+            ee = new EmojisWindow(this);
+
             support_groups = new List<SupportGroup>();
 
             this.toolStripStatusLabel1.Text = "Program gotowy do działania! Kliknij dalej...";
@@ -190,8 +195,10 @@ namespace IGTomesheqAutoLiker
                 }
                 foreach (SupportGroup group in initial_support_groups)
                 {
+                    listView2.Items.Remove(listView2.FindItemWithText(group.Name));
                     listView3.Items.Add(group.Name);
                     listBox2.Items.Add(group.Name);
+                    support_groups.Add(group);
                 }
                 listBox2.SelectedIndex = 0;
                 return true;
@@ -478,10 +485,10 @@ namespace IGTomesheqAutoLiker
             return false;
         }
 
-        private async void GetAllTelegramChannelsAndChats()
+        private async Task GetAllTelegramChannelsAndChats()
         {
             // pobiera wszystkie chaty uzytkownika
-            dialogs = (TLDialogs)await client.GetUserDialogsAsync();
+            dialogs = (TLDialogs)await data_holder.client.GetUserDialogsAsync();
             try
             {
                 channels = dialogs.Chats
@@ -1022,7 +1029,7 @@ namespace IGTomesheqAutoLiker
                         try
                         {
                             var peer = new TLInputPeerChannel() { ChannelId = channel.Id, AccessHash = (long)channel.AccessHash.Value };
-                            var msgs = await client.GetHistoryAsync(peer, 0, 0, 100);
+                            var msgs = await data_holder.client.GetHistoryAsync(peer, 0, 0, 100);
                             if (msgs is TLChannelMessages)
                             {
                                 var messag = msgs as TLChannelMessages;
@@ -1095,7 +1102,7 @@ namespace IGTomesheqAutoLiker
                                         {
                                             try
                                             {
-                                                msgs = await client.GetHistoryAsync(peer, total, 0, 100);
+                                                msgs = await data_holder.client.GetHistoryAsync(peer, total, 0, 100);
                                             }
                                             catch (FloodException ex)
                                             {
@@ -1110,7 +1117,7 @@ namespace IGTomesheqAutoLiker
                                                 this.Refresh();
                                                 try
                                                 {
-                                                    msgs = await client.GetHistoryAsync(peer, total, 0, 100);
+                                                    msgs = await data_holder.client.GetHistoryAsync(peer, total, 0, 100);
                                                 }
                                                 catch (FloodException)
                                                 {
@@ -1130,6 +1137,262 @@ namespace IGTomesheqAutoLiker
                     }
                 }
             }
+        }
+
+        private async Task<List<TLMessage>> GetTelegramMessagesFromChannel(SupportGroup support_group)
+        {
+            // informacja 
+            this.toolStripStatusLabel1.Text = "Szukam linków w grupie " + support_group.Name + "...";
+            this.Refresh();
+
+            // utworzenie zmiennej z wiadomosciami
+            List<TLMessage> TLmessages = new List<TLMessage>();
+
+            // sprawdza jaka wiadomosc z czatu byla obsluzona (like & comment) jako ostatnia
+            long download_timestamp = 0;
+            switch (support_group.Settings.StartingDateMethod)
+            {
+                case StartingDateMethod.ChosenFromCalendar:
+                    download_timestamp = support_group.Settings.CalendarDateTimestamp;
+                    break;
+
+                case StartingDateMethod.LastPost:
+                    download_timestamp = support_group.Settings.LastCommentedPostTimestamp;
+                    break;
+
+                case StartingDateMethod.LastXHours:
+                    download_timestamp = ToUnixTimestamp(DateTime.Now.Subtract(TimeSpan.FromHours(support_group.Settings.LastHours)));
+                    break;
+            }
+
+            if (download_timestamp > 0)
+            {
+                if (channels != null)
+                {
+                    TLChannel channel = channels.Where(x => x.Title == support_group.Name).FirstOrDefault();
+
+                    if (channel != null)
+                    {
+                        if (channel.AccessHash != null)
+                        {
+                            // pobiera zbior wiadomosci dla danego kanalu
+                            try
+                            {
+                                var peer = new TLInputPeerChannel() { ChannelId = channel.Id, AccessHash = (long)channel.AccessHash.Value };
+                                var msgs = await data_holder.client.GetHistoryAsync(peer, 0, 0, 100);
+                                if (msgs is TLChannelMessages)
+                                {
+                                    var messag = msgs as TLChannelMessages;
+                                    //MessageBox.Show("Liczba wiadomości w channelu " + channel.Title + " = " + messag.Count.ToString());
+                                    if (messag.Count <= 100)
+                                    {
+                                        var messages = messag.Messages;
+
+                                        foreach (var message in messages)
+                                        {
+                                            if (message is TLMessage)
+                                            {
+                                                var m = message as TLMessage;
+                                                // sprawdzenie czy ta wiadomość już była
+                                                if (m.Date <= download_timestamp)
+                                                {
+                                                    System.Diagnostics.Debug.Write("\n||| " + channel.Title + ": " + TLmessages.Count.ToString() + " wiadomosci pobrano!|||\n");
+                                                    break;
+                                                }
+                                                TLmessages.Add(m);
+                                            }
+                                            else if (message is TLMessageService)
+                                            {
+                                                var m1 = message as TLMessageService;
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        bool done = false;
+                                        int total = 0;
+                                        while (/*(total < 500) && */!done) // tymczasowo - sprawdzac date wiadomosci
+                                        {
+                                            var messa = msgs as TLChannelMessages;
+                                            var messages = messa.Messages;
+
+                                            foreach (var message in messages)
+                                            {
+                                                if (message is TLMessage)
+                                                {
+                                                    var m = message as TLMessage;
+                                                    // sprawdzenie czy ta wiadomość już była
+                                                    if (m.Date <= download_timestamp)
+                                                    {
+                                                        done = true;
+                                                        System.Diagnostics.Debug.Write("\n||| " + channel.Title + ": " + TLmessages.Count.ToString() + " wiadomosci pobrano!|||\n");
+                                                        break;
+                                                    }
+                                                    ++total;
+                                                    TLmessages.Add(m);
+                                                }
+                                                else if (message is TLMessageService)
+                                                {
+                                                    var mess = message as TLMessageService;
+                                                    ++total;
+                                                    done = mess.Action is TLMessageActionChatCreate;
+                                                    if (done)
+                                                    {
+                                                        System.Diagnostics.Debug.Write("\n||| " + channel.Title + ": " + TLmessages.Count.ToString() + " wiadomosci pobrano!|||\n");
+                                                        break;
+                                                    }
+                                                    else
+                                                        continue;
+                                                }
+                                            }
+
+                                            //MessageBox.Show("Pobrano już " + total.ToString() + " wiadomości dla dialoga " + channel.Title);
+                                            // jesli done = true, czyli znaleziono juz wiadomosci starsze niz data graniczna, nie pobieraj wiecej wiadomosci
+                                            if (!done)
+                                            {
+                                                try
+                                                {
+                                                    msgs = await data_holder.client.GetHistoryAsync(peer, total, 0, 100);
+                                                }
+                                                catch (FloodException ex)
+                                                {
+                                                    int seconds_to_wait = (int)ex.TimeToWait.TotalSeconds;
+                                                    for (int i = 0; i < seconds_to_wait; i++)
+                                                    {
+                                                        this.toolStripStatusLabel1.Text = "Próbujemy pobrać zbyt wiele wiadomości w zbyt krótkim czasie - Telegram się broni... Czekam " + (seconds_to_wait - i).ToString() + " sekund...";
+                                                        this.Refresh();
+                                                        Thread.Sleep(1000);
+                                                    }
+                                                    this.toolStripStatusLabel1.Text = "Szukam dalej linków w grupie " + channel.Title + "...";
+                                                    this.Refresh();
+                                                    try
+                                                    {
+                                                        msgs = await data_holder.client.GetHistoryAsync(peer, total, 0, 100);
+                                                    }
+                                                    catch (FloodException)
+                                                    {
+                                                        MessageBox.Show("Telegram znowu się broni... Poczekaj cierpliwie :(");
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                MessageBox.Show("Wystąpił błąd podczas pobierania wiadomości! Problem spowodowany jest przez niedziałające serwery Telegrama - aplikacja zostanie zamknięta. Uruchom ją ponownie i spróbuj jeszcze raz\n" + ex.Message.ToString());
+                            }
+                        }
+                    }
+                    else // sprawdza chaty, jesli nie znalazlo w channelach
+                    {
+                        if (chats != null)
+                        {
+                            TLChat chat = chats.Where(x => x.Title == support_group.Name).First();
+
+                            if (chat != null)
+                            {
+                                // pobierz wiadomosci dla danego chatu
+                                var peer = new TLInputPeerChat() { ChatId = chat.Id };
+                                TLAbsMessages msgs = await data_holder.client.GetHistoryAsync(peer, 0, -1, 100);
+
+                                if (msgs is TLMessages)
+                                {
+                                    var messages = msgs as TLMessages;
+
+                                    foreach (var message in messages.Messages)
+                                    {
+                                        if (message is TLMessage)
+                                        {
+                                            var m = message as TLMessage;
+                                            // sprawdzenie czy ta wiadomość już była
+                                            if (m.Date <= download_timestamp)
+                                            {
+                                                System.Diagnostics.Debug.Write("\n||| " + chat.Title + ": " + TLmessages.Count.ToString() + " wiadomosci pobrano!|||\n");
+                                                break;
+                                            }
+                                            TLmessages.Add(m);
+                                        }
+                                        else if (message is TLMessageService)
+                                        {
+                                            var m1 = message as TLMessageService;
+                                        }
+                                    }
+                                }
+                                else if (msgs is TLMessagesSlice)
+                                {
+                                    bool done = false;
+                                    int total = 0;
+                                    while (!done/* && (total < 500)*/)
+                                    {
+                                        var messages = msgs as TLMessagesSlice;
+
+                                        foreach (var message in messages.Messages)
+                                        {
+                                            if (message is TLMessage)
+                                            {
+                                                var m = message as TLMessage;
+                                                // sprawdzenie czy ta wiadomość już była
+                                                if (m.Date <= download_timestamp)
+                                                {
+                                                    done = true;
+                                                    System.Diagnostics.Debug.Write("\n||| " + chat.Title + ": " + TLmessages.Count.ToString() + " wiadomosci pobrano!|||\n");
+                                                    break;
+                                                }
+                                                ++total;
+                                                TLmessages.Add(message as TLMessage);
+                                            }
+                                            else if (message is TLMessageService)
+                                            {
+                                                var mess = message as TLMessageService;
+                                                ++total;
+                                                done = mess.Action is TLMessageActionChatCreate;
+                                                if (done)
+                                                {
+                                                    System.Diagnostics.Debug.Write("\n||| " + chat.Title + ": " + TLmessages.Count.ToString() + " wiadomosci pobrano!|||\n");
+                                                    break;
+                                                }
+                                                else
+                                                    continue;
+                                            }
+                                        }
+
+                                        // jesli done = true, czyli znaleziono juz wiadomosci starsze niz data graniczna, nie pobieraj wiecej wiadomosci
+                                        if (!done)
+                                        {
+                                            try
+                                            {
+                                                msgs = await data_holder.client.GetHistoryAsync(peer, total, 0, 0);
+                                            }
+                                            catch (FloodException ex)
+                                            {
+                                                int seconds_to_wait = (int)ex.TimeToWait.TotalSeconds;
+                                                MessageBox.Show("Próbujemy pobrać zbyt wiele wiadomości w zbyt krótkim czasie - Telegram się przed tym broni i nie udostępni wiadomości przez " + seconds_to_wait.ToString() + " sekund. Poczekaj cierpliwie i nic nie rób, a aplikacja sama wznowi działanie.");
+                                                this.toolStripStatusLabel1.Text = "Telegram się broni... Czekam " + seconds_to_wait.ToString() + " sekund...";
+                                                this.Refresh();
+                                                Thread.Sleep((seconds_to_wait + 1) * 1000);
+                                                this.toolStripStatusLabel1.Text = "Szukam dalej linków w grupie " + chat.Title + "...";
+                                                this.Refresh();
+                                                try
+                                                {
+                                                    msgs = await data_holder.client.GetHistoryAsync(peer, total, 0, 100);
+                                                }
+                                                catch (FloodException)
+                                                {
+                                                    MessageBox.Show("Telegram znowu się wyjebał... (Chaty)");
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } 
+            }
+
+            return TLmessages;
         }
 
         /* Po tej metodzie w support_gourps[i].GroupMessages są już tylko wiadomości zawierające linki do zdjęć */
@@ -1156,7 +1419,7 @@ namespace IGTomesheqAutoLiker
 
                         // pobierz wiadomosci dla danego chatu
                         var peer = new TLInputPeerChat() { ChatId = chat.Id };
-                        TLAbsMessages msgs = await client.GetHistoryAsync(peer, 0, -1, 100);
+                        TLAbsMessages msgs = await data_holder.client.GetHistoryAsync(peer, 0, -1, 100);
 
                         if (msgs is TLMessages)
                         {
@@ -1224,7 +1487,7 @@ namespace IGTomesheqAutoLiker
                                 {
                                     try
                                     {
-                                        msgs = await client.GetHistoryAsync(peer, total, 0, 0);
+                                        msgs = await data_holder.client.GetHistoryAsync(peer, total, 0, 0);
                                     }
                                     catch (FloodException ex)
                                     {
@@ -1237,7 +1500,7 @@ namespace IGTomesheqAutoLiker
                                         this.Refresh();
                                         try
                                         {
-                                            msgs = await client.GetHistoryAsync(peer, total, 0, 100);
+                                            msgs = await data_holder.client.GetHistoryAsync(peer, total, 0, 100);
                                         }
                                         catch (FloodException)
                                         {
@@ -1574,12 +1837,13 @@ namespace IGTomesheqAutoLiker
                 // wyswietl na liscie grup wsparcia w panelu wyboru grup
                 listView3.Items.Add(listView2.SelectedItems[0].Text);
                 listBox2.Items.Add(listView2.SelectedItems[0].Text);
+                support_groups.Add(new SupportGroup(listView2.SelectedItems[0].Text));
 
                 // dodaj do bazy danych
                 using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
                 {
                     m_dbConnection.Open();
-                    string sql = $"INSERT INTO support_groups (id_group, group_name, last_done_msg, last_done_msg_author, starting_date_method) VALUES (NULL, '{listView2.SelectedItems[0].Text}', 0, '', 1)";
+                    string sql = $"INSERT INTO support_groups (id_group, group_name, only_likes, last_done_msg, last_hours, last_done_msg_author, starting_date_method) VALUES (NULL, '{listView2.SelectedItems[0].Text}', 0, 0, 0, '', 0)";
                     SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
                     command.ExecuteNonQuery(); // nic nie zwraca
                     m_dbConnection.Close(); 
@@ -1610,8 +1874,10 @@ namespace IGTomesheqAutoLiker
                     m_dbConnection.Close(); 
                 }
 
-                int tmp = listBox2.Items.IndexOf(listView3.SelectedItems[0].Text);
-                listBox2.Items.RemoveAt(tmp);
+                int tmp1 = listBox2.Items.IndexOf(listView3.SelectedItems[0].Text);
+                int tmp2 = support_groups.FindIndex(x => x.Name == listView3.SelectedItems[0].Text);
+                listBox2.Items.RemoveAt(tmp1);
+                support_groups.RemoveAt(tmp2);
                 listView3.SelectedItems[0].Remove();
             }
         }
@@ -1626,18 +1892,26 @@ namespace IGTomesheqAutoLiker
             // schowaj biezacy panel
             panel_settings.Hide();
 
-            // sprawdzenie daty z kalendarzyka
-            posts_newer_than_timestamp = ToUnixTimestamp(dateTimePicker1.Value.ToUniversalTime());
-            //MessageBox.Show(posts_newer_than_timestamp.ToString());
+            // dla kazdej grupy wsparcia, dla ktorej zostalo wybrane ustawienie "data z kalendarzyka" przepisuje date z kalendarza
+            AssignCalendarDateToSupportGroups(dateTimePicker1.Value);
 
             // pobranie wiadomosci ze wszystkich kanalow
             this.toolStripStatusLabel1.Text = "Zaczynam szukanie linków w Telegramie!";
             this.Refresh();
-            await GetTelegramChannelsMessages(posts_newer_than_timestamp);
+
+            // pobiera chaty i channele
+            await GetAllTelegramChannelsAndChats();
+            // filtrowanie 
+            //FilterTelegramChannels(false);
+            //FilterTelegramChats(false);
+            
+            // pobiera wiadomosci z dialogow
+            foreach(var group in support_groups)
+            {
+                group.AddAndFilterMessages(await GetTelegramMessagesFromChannel(group));
+            }
 
             // pobranie wiadomosci ze wszystkich chatow
-            await GetTelegramChatsMessages(posts_newer_than_timestamp);
-            support_groups.OrderBy(group => group.Name);
             this.toolStripStatusLabel1.Text = "Zakończono szukanie linków w Telegramie!";
             this.Refresh();
 
@@ -2194,6 +2468,92 @@ namespace IGTomesheqAutoLiker
             return true;
         }
 
+        private async Task<bool> OnlyLikePost()
+        {
+            // zamraża interfejs użytkownika
+            FreezeUI();
+
+            // pobiera dla danej grupy wsparcia index wiadomosci do pokazania
+            int current_message_index = support_groups[this.support_group_index].MessageIndex;
+
+            // jesli w tej grupie istnieją posty do pokazania
+            if (current_message_index > -1)
+            {
+                // ukrywa label o braku postow w grupie
+                label43.Hide();
+                // pobranie zdjecia oraz opisu z TelegramMessage
+                try
+                {
+                    // znajdz media ID
+                    string media_id = await IGProc.GetMediaIdFromUrl(support_groups[this.support_group_index].MessagesWithInstaPosts[current_message_index].Url);
+                    IResult<InstaMedia> tmp_post = await IGProc.GetInstaPost(media_id);
+                    // polajkuj post
+                    await IGProc.Like(tmp_post.Value.InstaIdentifier);
+                    // zwieksz indeks wiadomosci
+                    support_groups[this.support_group_index].IncrementMessageIndex();
+                    // rozmroź UI
+                    DefrostUI();
+                    // liczba postow w grupie
+                    label39.Text = support_groups[this.support_group_index].GetPostsToDoCounter();
+                }
+                catch(Exception ex)
+                {
+                    support_groups[this.support_group_index].IncrementMessageIndex();
+                    return false;
+                }
+            }
+            // gdy w tej grupie wsparcia nie ma wgl postów (i nie było)
+            else if (current_message_index == -1)
+            {
+                // wyswietla label z informacja o braku postow w tej grupie
+                label43.Text = "Brak postów do skomentowania w tej grupie!";
+                label43.Show();
+                // opis postu na insta
+                label40.Text = "Brak";
+                // wiadomosc telegrama
+                label22.Text = "Brak";
+                // autor postu
+                label38.Text = "@noname";
+                // liczba postow w grupie
+                label39.Text = "Brak postów w tej grupie";
+                // pokazuje zdjecie w pictureboxie
+                if (pictureBox2.Image != null)
+                {
+                    pictureBox2.Image.Dispose();
+                    pictureBox2.Image = null;
+                }
+                // rozmroź UI
+                DefrostUI();
+                return false;
+            }
+            // gdy w tej grupie wsparcia nie ma wgl postów (i nie było)
+            else
+            {
+                // wyswietla label z informacja o braku postow w tej grupie
+                label43.Text = "Wszystkie posty w tej grupie zostały skomentowane!";
+                label43.Show();
+                // opis postu na insta
+                label40.Text = "Brak";
+                // wiadomosc telegrama
+                label22.Text = "Brak";
+                // autor postu
+                label38.Text = "@noname";
+                // liczba postow w grupie
+                label39.Text = "Wszystkie posty w tej grupie zostały skomentowane!";
+                // pokazuje zdjecie w pictureboxie
+                if (pictureBox2.Image != null)
+                {
+                    pictureBox2.Image.Dispose();
+                    pictureBox2.Image = null;
+                }
+                // rozmroź UI
+                DefrostUI();
+                return false;
+            }
+
+            return true;
+        }
+
         // zamraża interfejs użytkownika, żeby nie mógł nic kliknąć
         private void FreezeUI()
         {
@@ -2260,7 +2620,14 @@ namespace IGTomesheqAutoLiker
             {
                 // wyswietla odpowiedni post
                 this.support_group_index = listBox1.SelectedIndex;
-                while (!(await ShowPost())) ;
+                if (support_groups[support_group_index].Settings.OnlyLike)
+                {
+                    while(await OnlyLikePost());
+                }
+                else
+                {
+                    while (!(await ShowPost())) ;
+                }
             }
         }
 
@@ -2480,6 +2847,8 @@ namespace IGTomesheqAutoLiker
             HideAllSettingsPanels();
             panel_settings_support_groups.Show();
             label_settings_menu_support_groups.BackColor = System.Drawing.Color.DarkSalmon;
+            // odswieza widok
+            label64.Text = GetDateFromCalendar(); 
         }
 
         private void label_settings_menu_instagram_Click(object sender, EventArgs e)
@@ -2628,7 +2997,9 @@ namespace IGTomesheqAutoLiker
         // zmieniono zaznaczenie, że ta grupa wsparcia jest typu "Tylko like"
         private void checkBox1_CheckedChanged(object sender, EventArgs e)
         {
-
+            int index = support_groups.FindIndex(x => x.Name == listBox2.SelectedItem.ToString());
+            support_groups[index].Settings.OnlyLike = checkBox1.Checked;
+            button21.Show();
         }
 
         // zaznaczono "po ostatnio skomentowanym poście"
@@ -2640,34 +3011,56 @@ namespace IGTomesheqAutoLiker
                 radioButton2.Checked = false;
                 radioButton3.Checked = false; 
             }
+
+            // zmien metode pobierania daty w ustawieniach grupy
+            int selected_group_index = support_groups.FindIndex(x => x.Name == listBox2.SelectedItem.ToString());
+            support_groups[selected_group_index].Settings.StartingDateMethod = StartingDateMethod.LastPost;
+
+            // wyswietl przycisk zapisu zmian
+            button21.Show();
         }
 
         // zaznaczono "po dacie wpisanej w kalendarzyku"
         private void radioButton2_CheckedChanged(object sender, EventArgs e)
         {
+            // odznacz pozostałe radiobutton
             if (radioButton2.Checked)
             {
                 radioButton1.Checked = false;
                 radioButton3.Checked = false; 
             }
+
+            // zmien metode pobierania daty w ustawieniach grupy
+            int selected_group_index = support_groups.FindIndex(x => x.Name == listBox2.SelectedItem.ToString());
+            support_groups[selected_group_index].Settings.StartingDateMethod = StartingDateMethod.ChosenFromCalendar;
+
+            // wyswietl przycisk zapisu zmian
+            button21.Show();
         }
 
         // zaznaczono "dodane w ciągu ostatnich x godzin"
         private void radioButton3_CheckedChanged(object sender, EventArgs e)
         {
+            // odznacz pozostałe radiobutton
             if (radioButton3.Checked)
             {
                 radioButton1.Checked = false;
                 radioButton2.Checked = false; 
             }
+
+            // zmien metode pobierania daty w ustawieniach grupy
+            int selected_group_index = support_groups.FindIndex(x => x.Name == listBox2.SelectedItem.ToString());
+            support_groups[selected_group_index].Settings.StartingDateMethod = StartingDateMethod.LastXHours;
+
+            // wyswietl przycisk zapisu zmian
+            button21.Show();
         }
 
         // zaznacza radioButton3
         private void numericUpDown1_Click(object sender, EventArgs e)
         {
-            radioButton1.Checked = false;
-            radioButton2.Checked = false;
-            radioButton3.Checked = true;
+            int selected_group_index = support_groups.FindIndex(x => x.Name == listBox2.SelectedItem.ToString());
+            support_groups[selected_group_index].Settings.LastHours = Decimal.ToInt32(numericUpDown1.Value);
         }
 
         public void GetDataForSupportGroupSettingsPanel()
@@ -2678,21 +3071,230 @@ namespace IGTomesheqAutoLiker
         // wybrano grupe wsparcia na liscie w panelu z ustawieniami grup
         private void listBox2_SelectedIndexChanged(object sender, EventArgs e)
         {
-
+            int index = 0;
+            
+                if (listBox2.SelectedIndex > -1)
+                {
+                    index = support_groups.FindIndex(x => x.Name == listBox2.SelectedItem.ToString());
+                    SetUpSupportGroupsSettingsPanel(index);  
+                }
+                else
+                {
+                    SetUpSupportGroupsSettingsPanel(-1);
+                }
+            
         }
 
         // po wybraniu grupy wsparcia, wypelnia panel ustawien tej grupy odpowiednimi danymi
-        void SetUpSupportGroupsSettingsPanel(string support_group_name)
+        void SetUpSupportGroupsSettingsPanel(int support_group_index)
         {
-            int selected_support_group_index = support_groups.FindIndex(x => x.Name == support_group_name);
-            if(selected_support_group_index >= 0)
+            if(support_group_index >= 0)
             {
+                checkBox1.Enabled = true;
+                label41.Enabled = true;
+                label42.Enabled = true;
+                label61.Enabled = true;
+                label64.Enabled = true;
+                label65.Enabled = true;
+                label66.Enabled = true;
+                label67.Enabled = true;
+                numericUpDown1.Enabled = true;
+                radioButton1.Enabled = true;
+                radioButton2.Enabled = true;
+                radioButton3.Enabled = true;
 
+                // zaznaczenie checkboxa czy grupa typu tylko like
+                checkBox1.Checked = support_groups[support_group_index].Settings.OnlyLike;
+                // ustawienie radioButtonow
+                switch(support_groups[support_group_index].Settings.StartingDateMethod)
+                {
+                    case StartingDateMethod.LastPost:
+                        radioButton1.Checked = true;
+                        radioButton2.Checked = false;
+                        radioButton3.Checked = false;
+                        break;
+
+                    case StartingDateMethod.ChosenFromCalendar:
+                        radioButton1.Checked = false;
+                        radioButton2.Checked = true;
+                        radioButton3.Checked = false;
+                        break;
+
+                    case StartingDateMethod.LastXHours:
+                        radioButton1.Checked = false;
+                        radioButton2.Checked = false;
+                        radioButton3.Checked = true;
+                        break;
+
+                    default:
+                        // nothing
+                        radioButton1.Checked = false;
+                        radioButton2.Checked = false;
+                        radioButton3.Checked = false;
+                        break;
+                }
+                // jesli wybrano ilosc godzin wstecz - pokazuje ile godzin wybrano
+                numericUpDown1.Value = support_groups[support_group_index].Settings.LastHours;
+
+                // wpisanie dat do labeli
+                // label61 - data -> ostatnio skomentowany post
+                label61.Text = GetDateLastCommentedPost();
+
+                // wpisanie daty z kalendarzyka do labela
+                // label64 - data -> data wybrana w kalendarzyku
+                label64.Text = GetDateFromCalendar();
             }
             else
             {
-                MessageBox.Show("Wystąpił błąd - wybrana grupa wsparcia nie istnieje!");
+                //MessageBox.Show("Wystąpił błąd - wybrana grupa wsparcia nie istnieje!");
+                checkBox1.Enabled = false;
+                label41.Enabled = false;
+                label42.Enabled = false;
+                label61.Enabled = false;
+                label64.Enabled = false;
+                label65.Enabled = false;
+                label66.Enabled = false;
+                label67.Enabled = false;
+                numericUpDown1.Enabled = false;
+                radioButton1.Enabled = false;
+                radioButton2.Enabled = false;
+                radioButton3.Enabled = false;
+
             }
+        }
+
+        private string GetDateLastCommentedPost()
+        {
+            int selected_group_index = support_groups.FindIndex(x => x.Name == listBox2.SelectedItem.ToString());
+            long timestamp = support_groups[selected_group_index].Settings.LastCommentedPostTimestamp;
+            string my_format = "";
+
+            // jesli istnieje wartosc
+            if (timestamp > 0)
+            {
+                radioButton1.Enabled = true;
+                label42.Enabled = true;
+                label61.Enabled = true;
+
+                DateTime dt = UnixTimeStampToDateTime(timestamp);
+                string month = "";
+                switch (dt.Month)
+                {
+                    case 1:
+                        month = "stycznia";
+                        break;
+                    case 2:
+                        month = "lutego";
+                        break;
+                    case 3:
+                        month = "marca";
+                        break;
+                    case 4:
+                        month = "kwietnia";
+                        break;
+                    case 5:
+                        month = "maja";
+                        break;
+                    case 6:
+                        month = "czerwca";
+                        break;
+                    case 7:
+                        month = "lipca";
+                        break;
+                    case 8:
+                        month = "sierpnia";
+                        break;
+                    case 9:
+                        month = "września";
+                        break;
+                    case 10:
+                        month = "października";
+                        break;
+                    case 11:
+                        month = "listopada";
+                        break;
+                    case 12:
+                        month = "grudnia";
+                        break;
+                }
+
+                my_format = String.Concat(dt.Hour.ToString(), ":", dt.Minute.ToString(), ", ", dt.Day.ToString(), " ", month, " ", dt.Year.ToString());
+            }
+            else // jesli nie istnieje
+            {
+                my_format = "jeszcze nigdy";
+                radioButton1.Enabled = false;
+                label42.Enabled = false;
+                label61.Enabled = false;
+                if(radioButton1.Checked)
+                {
+                    radioButton1.Checked = false;
+                    radioButton2.Checked = true;
+                    support_groups[selected_group_index].Settings.StartingDateMethod = StartingDateMethod.ChosenFromCalendar;
+                }
+            }
+            
+            return my_format;
+        }
+
+        private string GetDateFromCalendar()
+        {
+            long timestamp = ToUnixTimestamp(dateTimePicker1.Value);
+            string my_format = "";
+
+            // jesli istnieje wartosc
+            if (timestamp > 0)
+            {
+                DateTime dt = UnixTimeStampToDateTime(timestamp);
+                string month = "";
+                switch (dt.Month)
+                {
+                    case 1:
+                        month = "stycznia";
+                        break;
+                    case 2:
+                        month = "lutego";
+                        break;
+                    case 3:
+                        month = "marca";
+                        break;
+                    case 4:
+                        month = "kwietnia";
+                        break;
+                    case 5:
+                        month = "maja";
+                        break;
+                    case 6:
+                        month = "czerwca";
+                        break;
+                    case 7:
+                        month = "lipca";
+                        break;
+                    case 8:
+                        month = "sierpnia";
+                        break;
+                    case 9:
+                        month = "września";
+                        break;
+                    case 10:
+                        month = "października";
+                        break;
+                    case 11:
+                        month = "listopada";
+                        break;
+                    case 12:
+                        month = "grudnia";
+                        break;
+                }
+
+                my_format = String.Concat(dt.Hour.ToString(), ":", dt.Minute.ToString(), ", ", dt.Day.ToString(), " ", month, " ", dt.Year.ToString());
+            }
+            else // jesli nie istnieje
+            {
+                my_format = "jeszcze nigdy";
+            }
+
+            return my_format;
         }
 
         // zmieniono liczbę godzin do przeszukania wiadomości (o ile godzin od teraz się cofnąć)
@@ -2700,9 +3302,58 @@ namespace IGTomesheqAutoLiker
         {
             int selected_group_index = support_groups.FindIndex(x => x.Name == listBox2.SelectedItem.ToString());
             Double hours_value = Decimal.ToDouble(numericUpDown1.Value);
-            hours_value = (-1) * hours_value;
-            support_groups[selected_group_index].Settings.LastHoursTimestamp = ToUnixTimestamp(DateTime.Now.AddHours(hours_value));
-            MessageBox.Show("Teraz: " + ToUnixTimestamp(DateTime.Now) + "\nUstawiona: " + ToUnixTimestamp(DateTime.Now.AddHours(hours_value)));
+            support_groups[selected_group_index].Settings.LastHours = (int)hours_value;
+            support_groups[selected_group_index].Settings.LastHoursTimestamp = ToUnixTimestamp(DateTime.Now.AddHours(hours_value)); // to raczej niepotrzebne
+            //MessageBox.Show("Teraz: " + ToUnixTimestamp(DateTime.Now) + "\nUstawiona: " + ToUnixTimestamp(DateTime.Now.AddHours(hours_value)));
+
+            // pokaz przycisk zapisu do bazy danych
+            button21.Show();
+        }
+
+        // zapisz ustawienia grupy wsparcia do bazy danych
+        private void button21_Click(object sender, EventArgs e)
+        {
+            int selected_group_index = support_groups.FindIndex(x => x.Name == listBox2.SelectedItem.ToString());
+            support_groups[selected_group_index].Settings.LastHours = Decimal.ToInt32(numericUpDown1.Value);
+            support_groups[selected_group_index].Settings.SaveGroupSettingsToDB();
+            button21.Hide();
+        }
+
+        // zapisuje datę z kalendarzyka tylko do grup wsparcia, ktore maja wybrana te opcje
+        private bool AssignCalendarDateToSupportGroups(DateTime calendar_date)
+        {
+            try
+            {
+                foreach (SupportGroup group in support_groups)
+                {
+                    if (group.Settings.StartingDateMethod == StartingDateMethod.ChosenFromCalendar)
+                    {
+                        group.Settings.CalendarDateTimestamp = ToUnixTimestamp(calendar_date);
+                        group.Settings.StartingDateTimestamp = ToUnixTimestamp(calendar_date);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+            return true;
+        }
+
+        // zmienila sie data w kalendarzyku
+        private void dateTimePicker1_ValueChanged_1(object sender, EventArgs e)
+        {
+            foreach(SupportGroup group in support_groups)
+            {
+                group.Settings.CalendarDateTimestamp = ToUnixTimestamp(dateTimePicker1.Value);
+            }
+        }
+
+        private void numericUpDown1_MouseClick(object sender, MouseEventArgs e)
+        {
+            radioButton1.Checked = false;
+            radioButton2.Checked = false;
+            radioButton3.Checked = true;
         }
     }
 }

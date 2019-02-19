@@ -100,6 +100,8 @@ namespace IGTomesheqAutoLiker
             this.toolStripProgressBar1 = new System.Windows.Forms.ToolStripProgressBar();
             this.panel_settings = new System.Windows.Forms.Panel();
             this.panel_settings_support_groups = new System.Windows.Forms.Panel();
+            this.button21 = new System.Windows.Forms.Button();
+            this.listBox2 = new System.Windows.Forms.ListBox();
             this.label67 = new System.Windows.Forms.Label();
             this.numericUpDown1 = new System.Windows.Forms.NumericUpDown();
             this.label66 = new System.Windows.Forms.Label();
@@ -113,6 +115,11 @@ namespace IGTomesheqAutoLiker
             this.label41 = new System.Windows.Forms.Label();
             this.checkBox1 = new System.Windows.Forms.CheckBox();
             this.label48 = new System.Windows.Forms.Label();
+            this.panel_choose_starting_date = new System.Windows.Forms.Panel();
+            this.label37 = new System.Windows.Forms.Label();
+            this.label31 = new System.Windows.Forms.Label();
+            this.groupBox4 = new System.Windows.Forms.GroupBox();
+            this.dateTimePicker1 = new System.Windows.Forms.DateTimePicker();
             this.panel_settings_choose_support_groups = new System.Windows.Forms.Panel();
             this.button9 = new System.Windows.Forms.Button();
             this.button8 = new System.Windows.Forms.Button();
@@ -152,11 +159,6 @@ namespace IGTomesheqAutoLiker
             this.label13 = new System.Windows.Forms.Label();
             this.listView1 = new System.Windows.Forms.ListView();
             this.label44 = new System.Windows.Forms.Label();
-            this.panel_choose_starting_date = new System.Windows.Forms.Panel();
-            this.label37 = new System.Windows.Forms.Label();
-            this.label31 = new System.Windows.Forms.Label();
-            this.groupBox4 = new System.Windows.Forms.GroupBox();
-            this.dateTimePicker1 = new System.Windows.Forms.DateTimePicker();
             this.panel_settings_telegram = new System.Windows.Forms.Panel();
             this.panel3 = new System.Windows.Forms.Panel();
             this.button11 = new System.Windows.Forms.Button();
@@ -181,7 +183,6 @@ namespace IGTomesheqAutoLiker
             this.label_settings_menu_choose_date = new System.Windows.Forms.Label();
             this.button13 = new System.Windows.Forms.Button();
             this.pictureBox3 = new System.Windows.Forms.PictureBox();
-            this.listBox2 = new System.Windows.Forms.ListBox();
             this.panel_hello.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.panel_comments.SuspendLayout();
@@ -196,6 +197,8 @@ namespace IGTomesheqAutoLiker
             this.panel_settings.SuspendLayout();
             this.panel_settings_support_groups.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).BeginInit();
+            this.panel_choose_starting_date.SuspendLayout();
+            this.groupBox4.SuspendLayout();
             this.panel_settings_choose_support_groups.SuspendLayout();
             this.panel_settings_instagram.SuspendLayout();
             this.panel1.SuspendLayout();
@@ -204,8 +207,6 @@ namespace IGTomesheqAutoLiker
             this.panel7.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox4)).BeginInit();
             this.panel_settings_default_comments.SuspendLayout();
-            this.panel_choose_starting_date.SuspendLayout();
-            this.groupBox4.SuspendLayout();
             this.panel_settings_telegram.SuspendLayout();
             this.panel3.SuspendLayout();
             this.panel4.SuspendLayout();
@@ -966,10 +967,10 @@ namespace IGTomesheqAutoLiker
             // panel_settings
             // 
             this.panel_settings.Controls.Add(this.panel_settings_support_groups);
+            this.panel_settings.Controls.Add(this.panel_choose_starting_date);
             this.panel_settings.Controls.Add(this.panel_settings_choose_support_groups);
             this.panel_settings.Controls.Add(this.panel_settings_instagram);
             this.panel_settings.Controls.Add(this.panel_settings_default_comments);
-            this.panel_settings.Controls.Add(this.panel_choose_starting_date);
             this.panel_settings.Controls.Add(this.panel_settings_telegram);
             this.panel_settings.Controls.Add(this.panel_settings_menu);
             this.panel_settings.Controls.Add(this.button13);
@@ -980,6 +981,7 @@ namespace IGTomesheqAutoLiker
             // 
             // panel_settings_support_groups
             // 
+            this.panel_settings_support_groups.Controls.Add(this.button21);
             this.panel_settings_support_groups.Controls.Add(this.listBox2);
             this.panel_settings_support_groups.Controls.Add(this.label67);
             this.panel_settings_support_groups.Controls.Add(this.numericUpDown1);
@@ -998,6 +1000,27 @@ namespace IGTomesheqAutoLiker
             this.panel_settings_support_groups.Name = "panel_settings_support_groups";
             this.panel_settings_support_groups.Size = new System.Drawing.Size(600, 500);
             this.panel_settings_support_groups.TabIndex = 32;
+            // 
+            // button21
+            // 
+            this.button21.Font = new System.Drawing.Font("Segoe UI", 10F);
+            this.button21.Location = new System.Drawing.Point(462, 450);
+            this.button21.Name = "button21";
+            this.button21.Size = new System.Drawing.Size(103, 33);
+            this.button21.TabIndex = 26;
+            this.button21.Text = "Zapisz zmiany";
+            this.button21.UseVisualStyleBackColor = true;
+            this.button21.Visible = false;
+            this.button21.Click += new System.EventHandler(this.button21_Click);
+            // 
+            // listBox2
+            // 
+            this.listBox2.FormattingEnabled = true;
+            this.listBox2.Location = new System.Drawing.Point(24, 85);
+            this.listBox2.Name = "listBox2";
+            this.listBox2.Size = new System.Drawing.Size(269, 368);
+            this.listBox2.TabIndex = 25;
+            this.listBox2.SelectedIndexChanged += new System.EventHandler(this.listBox2_SelectedIndexChanged);
             // 
             // label67
             // 
@@ -1021,6 +1044,7 @@ namespace IGTomesheqAutoLiker
             this.numericUpDown1.TabIndex = 23;
             this.numericUpDown1.ValueChanged += new System.EventHandler(this.numericUpDown1_ValueChanged);
             this.numericUpDown1.Click += new System.EventHandler(this.numericUpDown1_Click);
+            this.numericUpDown1.MouseClick += new System.Windows.Forms.MouseEventHandler(this.numericUpDown1_MouseClick);
             // 
             // label66
             // 
@@ -1137,6 +1161,61 @@ namespace IGTomesheqAutoLiker
             this.label48.Size = new System.Drawing.Size(287, 25);
             this.label48.TabIndex = 0;
             this.label48.Text = "USTAWIENIA GRUP WSPARCIA";
+            // 
+            // panel_choose_starting_date
+            // 
+            this.panel_choose_starting_date.Controls.Add(this.label37);
+            this.panel_choose_starting_date.Controls.Add(this.label31);
+            this.panel_choose_starting_date.Controls.Add(this.groupBox4);
+            this.panel_choose_starting_date.Location = new System.Drawing.Point(60, 50);
+            this.panel_choose_starting_date.Name = "panel_choose_starting_date";
+            this.panel_choose_starting_date.Size = new System.Drawing.Size(600, 500);
+            this.panel_choose_starting_date.TabIndex = 31;
+            // 
+            // label37
+            // 
+            this.label37.AutoSize = true;
+            this.label37.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.label37.Location = new System.Drawing.Point(21, 267);
+            this.label37.Name = "label37";
+            this.label37.Size = new System.Drawing.Size(565, 15);
+            this.label37.TabIndex = 30;
+            this.label37.Text = "Aplikacja pobierz z grup wsparcia wiadomości, które zostały do nich wysłane po wy" +
+    "branej dacie i godzinie.";
+            // 
+            // label31
+            // 
+            this.label31.AutoSize = true;
+            this.label31.Font = new System.Drawing.Font("Segoe UI", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label31.ForeColor = System.Drawing.Color.DarkSlateGray;
+            this.label31.Location = new System.Drawing.Point(125, 34);
+            this.label31.Name = "label31";
+            this.label31.Size = new System.Drawing.Size(332, 25);
+            this.label31.TabIndex = 0;
+            this.label31.Text = "WYBIERZ OD KIEDY POBRAĆ POSTY";
+            // 
+            // groupBox4
+            // 
+            this.groupBox4.Controls.Add(this.dateTimePicker1);
+            this.groupBox4.Font = new System.Drawing.Font("Segoe UI Semibold", 12F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Italic))), System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.groupBox4.ForeColor = System.Drawing.Color.DarkBlue;
+            this.groupBox4.Location = new System.Drawing.Point(158, 126);
+            this.groupBox4.Name = "groupBox4";
+            this.groupBox4.Size = new System.Drawing.Size(259, 88);
+            this.groupBox4.TabIndex = 29;
+            this.groupBox4.TabStop = false;
+            this.groupBox4.Text = "Wybierz datę i godzinę";
+            // 
+            // dateTimePicker1
+            // 
+            this.dateTimePicker1.CustomFormat = "dd/MM/yyyy HH:mm:ss";
+            this.dateTimePicker1.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
+            this.dateTimePicker1.Location = new System.Drawing.Point(23, 40);
+            this.dateTimePicker1.Name = "dateTimePicker1";
+            this.dateTimePicker1.Size = new System.Drawing.Size(200, 29);
+            this.dateTimePicker1.TabIndex = 26;
+            this.dateTimePicker1.ValueChanged += new System.EventHandler(this.dateTimePicker1_ValueChanged_1);
+            this.dateTimePicker1.KeyDown += new System.Windows.Forms.KeyEventHandler(this.dateTimePicker1_KeyDown_1);
             // 
             // panel_settings_choose_support_groups
             // 
@@ -1557,60 +1636,6 @@ namespace IGTomesheqAutoLiker
             this.label44.TabIndex = 0;
             this.label44.Text = "ZARZĄDZAJ DOMYŚLNYMI KOMENTARZAMI";
             // 
-            // panel_choose_starting_date
-            // 
-            this.panel_choose_starting_date.Controls.Add(this.label37);
-            this.panel_choose_starting_date.Controls.Add(this.label31);
-            this.panel_choose_starting_date.Controls.Add(this.groupBox4);
-            this.panel_choose_starting_date.Location = new System.Drawing.Point(60, 50);
-            this.panel_choose_starting_date.Name = "panel_choose_starting_date";
-            this.panel_choose_starting_date.Size = new System.Drawing.Size(600, 500);
-            this.panel_choose_starting_date.TabIndex = 31;
-            // 
-            // label37
-            // 
-            this.label37.AutoSize = true;
-            this.label37.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.label37.Location = new System.Drawing.Point(21, 267);
-            this.label37.Name = "label37";
-            this.label37.Size = new System.Drawing.Size(565, 15);
-            this.label37.TabIndex = 30;
-            this.label37.Text = "Aplikacja pobierz z grup wsparcia wiadomości, które zostały do nich wysłane po wy" +
-    "branej dacie i godzinie.";
-            // 
-            // label31
-            // 
-            this.label31.AutoSize = true;
-            this.label31.Font = new System.Drawing.Font("Segoe UI", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label31.ForeColor = System.Drawing.Color.DarkSlateGray;
-            this.label31.Location = new System.Drawing.Point(125, 34);
-            this.label31.Name = "label31";
-            this.label31.Size = new System.Drawing.Size(332, 25);
-            this.label31.TabIndex = 0;
-            this.label31.Text = "WYBIERZ OD KIEDY POBRAĆ POSTY";
-            // 
-            // groupBox4
-            // 
-            this.groupBox4.Controls.Add(this.dateTimePicker1);
-            this.groupBox4.Font = new System.Drawing.Font("Segoe UI Semibold", 12F, ((System.Drawing.FontStyle)((System.Drawing.FontStyle.Bold | System.Drawing.FontStyle.Italic))), System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.groupBox4.ForeColor = System.Drawing.Color.DarkBlue;
-            this.groupBox4.Location = new System.Drawing.Point(158, 126);
-            this.groupBox4.Name = "groupBox4";
-            this.groupBox4.Size = new System.Drawing.Size(259, 88);
-            this.groupBox4.TabIndex = 29;
-            this.groupBox4.TabStop = false;
-            this.groupBox4.Text = "Wybierz datę i godzinę";
-            // 
-            // dateTimePicker1
-            // 
-            this.dateTimePicker1.CustomFormat = "dd/MM/yyyy HH:mm:ss";
-            this.dateTimePicker1.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.dateTimePicker1.Location = new System.Drawing.Point(23, 40);
-            this.dateTimePicker1.Name = "dateTimePicker1";
-            this.dateTimePicker1.Size = new System.Drawing.Size(200, 29);
-            this.dateTimePicker1.TabIndex = 26;
-            this.dateTimePicker1.KeyDown += new System.Windows.Forms.KeyEventHandler(this.dateTimePicker1_KeyDown_1);
-            // 
             // panel_settings_telegram
             // 
             this.panel_settings_telegram.Controls.Add(this.panel3);
@@ -1882,26 +1907,17 @@ namespace IGTomesheqAutoLiker
             this.pictureBox3.TabStop = false;
             this.pictureBox3.Visible = false;
             // 
-            // listBox2
-            // 
-            this.listBox2.FormattingEnabled = true;
-            this.listBox2.Location = new System.Drawing.Point(24, 85);
-            this.listBox2.Name = "listBox2";
-            this.listBox2.Size = new System.Drawing.Size(269, 368);
-            this.listBox2.TabIndex = 25;
-            this.listBox2.SelectedIndexChanged += new System.EventHandler(this.listBox2_SelectedIndexChanged);
-            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1184, 611);
             this.Controls.Add(this.panel_settings);
+            this.Controls.Add(this.panel_liker_commenter);
             this.Controls.Add(this.panel_telegram_login);
             this.Controls.Add(this.panel_telegram_chats);
             this.Controls.Add(this.panel_comments);
             this.Controls.Add(this.pictureBox3);
-            this.Controls.Add(this.panel_liker_commenter);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.panel_hello);
             this.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -1934,6 +1950,9 @@ namespace IGTomesheqAutoLiker
             this.panel_settings_support_groups.ResumeLayout(false);
             this.panel_settings_support_groups.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).EndInit();
+            this.panel_choose_starting_date.ResumeLayout(false);
+            this.panel_choose_starting_date.PerformLayout();
+            this.groupBox4.ResumeLayout(false);
             this.panel_settings_choose_support_groups.ResumeLayout(false);
             this.panel_settings_choose_support_groups.PerformLayout();
             this.panel_settings_instagram.ResumeLayout(false);
@@ -1949,9 +1968,6 @@ namespace IGTomesheqAutoLiker
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox4)).EndInit();
             this.panel_settings_default_comments.ResumeLayout(false);
             this.panel_settings_default_comments.PerformLayout();
-            this.panel_choose_starting_date.ResumeLayout(false);
-            this.panel_choose_starting_date.PerformLayout();
-            this.groupBox4.ResumeLayout(false);
             this.panel_settings_telegram.ResumeLayout(false);
             this.panel_settings_telegram.PerformLayout();
             this.panel3.ResumeLayout(false);
@@ -2139,6 +2155,7 @@ namespace IGTomesheqAutoLiker
         private Label label61;
         private Label label42;
         private ListBox listBox2;
+        private Button button21;
     }
 }
 
