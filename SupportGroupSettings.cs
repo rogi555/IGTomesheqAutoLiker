@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace IGTomesheqAutoLiker
 {
-    public enum StartingDateMethod { LastPost = 1, ChosenFromCalendar = 2, LastXHours = 3 };
+    public enum StartingDateMethod { NotInitialized = 0, LastPost = 1, ChosenFromCalendar = 2, LastXHours = 3 };
     public class SupportGroupSettings
     {
         private string Name;

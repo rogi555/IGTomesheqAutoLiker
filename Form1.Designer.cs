@@ -31,45 +31,6 @@ namespace IGTomesheqAutoLiker
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
-            this.panel_hello = new System.Windows.Forms.Panel();
-            this.label8 = new System.Windows.Forms.Label();
-            this.button1 = new System.Windows.Forms.Button();
-            this.label4 = new System.Windows.Forms.Label();
-            this.label3 = new System.Windows.Forms.Label();
-            this.label2 = new System.Windows.Forms.Label();
-            this.label1 = new System.Windows.Forms.Label();
-            this.pictureBox1 = new System.Windows.Forms.PictureBox();
-            this.panel_comments = new System.Windows.Forms.Panel();
-            this.label11 = new System.Windows.Forms.Label();
-            this.label10 = new System.Windows.Forms.Label();
-            this.label9 = new System.Windows.Forms.Label();
-            this.label7 = new System.Windows.Forms.Label();
-            this.label6 = new System.Windows.Forms.Label();
-            this.label5 = new System.Windows.Forms.Label();
-            this.button2 = new System.Windows.Forms.Button();
-            this.panel_telegram_login = new System.Windows.Forms.Panel();
-            this.button15 = new System.Windows.Forms.Button();
-            this.label30 = new System.Windows.Forms.Label();
-            this.textBox4 = new System.Windows.Forms.TextBox();
-            this.label29 = new System.Windows.Forms.Label();
-            this.label28 = new System.Windows.Forms.Label();
-            this.button14 = new System.Windows.Forms.Button();
-            this.textBox3 = new System.Windows.Forms.TextBox();
-            this.textBox2 = new System.Windows.Forms.TextBox();
-            this.label27 = new System.Windows.Forms.Label();
-            this.label26 = new System.Windows.Forms.Label();
-            this.label25 = new System.Windows.Forms.Label();
-            this.label17 = new System.Windows.Forms.Label();
-            this.label16 = new System.Windows.Forms.Label();
-            this.button6 = new System.Windows.Forms.Button();
-            this.textBox1 = new System.Windows.Forms.TextBox();
-            this.label15 = new System.Windows.Forms.Label();
-            this.label14 = new System.Windows.Forms.Label();
-            this.button5 = new System.Windows.Forms.Button();
-            this.panel_telegram_chats = new System.Windows.Forms.Panel();
-            this.button7 = new System.Windows.Forms.Button();
-            this.label21 = new System.Windows.Forms.Label();
-            this.label18 = new System.Windows.Forms.Label();
             this.panel_liker_commenter = new System.Windows.Forms.Panel();
             this.label43 = new System.Windows.Forms.Label();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
@@ -99,9 +60,20 @@ namespace IGTomesheqAutoLiker
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
             this.toolStripProgressBar1 = new System.Windows.Forms.ToolStripProgressBar();
             this.panel_settings = new System.Windows.Forms.Panel();
+            this.panel_settings_settings = new System.Windows.Forms.Panel();
+            this.label3 = new System.Windows.Forms.Label();
+            this.label2 = new System.Windows.Forms.Label();
+            this.textBox_max_time_betw_likes = new System.Windows.Forms.TextBox();
+            this.textBox_min_time_betw_likes = new System.Windows.Forms.TextBox();
+            this.textBox_likes_limit = new System.Windows.Forms.TextBox();
+            this.button_settings_save = new System.Windows.Forms.Button();
+            this.label_max_time_betw_likes = new System.Windows.Forms.Label();
+            this.label_min_time_betw_likes = new System.Windows.Forms.Label();
+            this.label_like_limit = new System.Windows.Forms.Label();
+            this.label1 = new System.Windows.Forms.Label();
             this.panel_settings_support_groups = new System.Windows.Forms.Panel();
             this.button21 = new System.Windows.Forms.Button();
-            this.listBox2 = new System.Windows.Forms.ListBox();
+            this.listView_2 = new System.Windows.Forms.ListView();
             this.label67 = new System.Windows.Forms.Label();
             this.numericUpDown1 = new System.Windows.Forms.NumericUpDown();
             this.label66 = new System.Windows.Forms.Label();
@@ -175,6 +147,7 @@ namespace IGTomesheqAutoLiker
             this.pictureBox5 = new System.Windows.Forms.PictureBox();
             this.label52 = new System.Windows.Forms.Label();
             this.panel_settings_menu = new System.Windows.Forms.Panel();
+            this.label_settings_menu_settings = new System.Windows.Forms.Label();
             this.label_settings_menu_default_comments = new System.Windows.Forms.Label();
             this.label_settings_menu_telegram = new System.Windows.Forms.Label();
             this.label_settings_menu_instagram = new System.Windows.Forms.Label();
@@ -183,11 +156,11 @@ namespace IGTomesheqAutoLiker
             this.label_settings_menu_choose_date = new System.Windows.Forms.Label();
             this.button13 = new System.Windows.Forms.Button();
             this.pictureBox3 = new System.Windows.Forms.PictureBox();
-            this.panel_hello.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
-            this.panel_comments.SuspendLayout();
-            this.panel_telegram_login.SuspendLayout();
-            this.panel_telegram_chats.SuspendLayout();
+            this.panel_please_wait = new System.Windows.Forms.Panel();
+            this.label_progress = new System.Windows.Forms.Label();
+            this.button_cancel = new System.Windows.Forms.Button();
+            this.progressBar1 = new System.Windows.Forms.ProgressBar();
+            this.label_wait_info = new System.Windows.Forms.Label();
             this.panel_liker_commenter.SuspendLayout();
             this.groupBox3.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -195,6 +168,7 @@ namespace IGTomesheqAutoLiker
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox2)).BeginInit();
             this.statusStrip1.SuspendLayout();
             this.panel_settings.SuspendLayout();
+            this.panel_settings_settings.SuspendLayout();
             this.panel_settings_support_groups.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).BeginInit();
             this.panel_choose_starting_date.SuspendLayout();
@@ -215,454 +189,8 @@ namespace IGTomesheqAutoLiker
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox5)).BeginInit();
             this.panel_settings_menu.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox3)).BeginInit();
+            this.panel_please_wait.SuspendLayout();
             this.SuspendLayout();
-            // 
-            // panel_hello
-            // 
-            this.panel_hello.Controls.Add(this.label8);
-            this.panel_hello.Controls.Add(this.button1);
-            this.panel_hello.Controls.Add(this.label4);
-            this.panel_hello.Controls.Add(this.label3);
-            this.panel_hello.Controls.Add(this.label2);
-            this.panel_hello.Controls.Add(this.label1);
-            this.panel_hello.Controls.Add(this.pictureBox1);
-            this.panel_hello.Location = new System.Drawing.Point(15, 6);
-            this.panel_hello.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            this.panel_hello.Name = "panel_hello";
-            this.panel_hello.Size = new System.Drawing.Size(1154, 577);
-            this.panel_hello.TabIndex = 0;
-            this.panel_hello.Visible = false;
-            // 
-            // label8
-            // 
-            this.label8.AutoSize = true;
-            this.label8.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label8.Location = new System.Drawing.Point(426, 331);
-            this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(303, 21);
-            this.label8.TabIndex = 6;
-            this.label8.Text = "Teraz może to trwać nawet niecałą minutę!";
-            // 
-            // button1
-            // 
-            this.button1.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.button1.Location = new System.Drawing.Point(1012, 531);
-            this.button1.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(86, 33);
-            this.button1.TabIndex = 5;
-            this.button1.Text = "Dalej";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
-            // 
-            // label4
-            // 
-            this.label4.AutoSize = true;
-            this.label4.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label4.Location = new System.Drawing.Point(378, 436);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(432, 21);
-            this.label4.TabIndex = 4;
-            this.label4.Text = "Chcesz przekonać się jak to działa? Wystarczy kliknąć \"Dalej\"!";
-            // 
-            // label3
-            // 
-            this.label3.AutoSize = true;
-            this.label3.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label3.Location = new System.Drawing.Point(228, 310);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(708, 21);
-            this.label3.TabIndex = 3;
-            this.label3.Text = "Twoim ukochanym \"kolegom\" z instagramowych grup wsparcia. Zamiast siedzieć nad ty" +
-    "m godzinami";
-            // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label2.Location = new System.Drawing.Point(208, 290);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(755, 21);
-            this.label2.TabIndex = 2;
-            this.label2.Text = "Mam przyjemność przedstawić Ci aplikację, która skróci czas spędzany na lajkowani" +
-    "u i komentowaniu zdjęć ";
-            // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Font = new System.Drawing.Font("Corbel", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.Location = new System.Drawing.Point(500, 246);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(150, 24);
-            this.label1.TabIndex = 1;
-            this.label1.Text = "Witaj Tomesheq!";
-            // 
-            // pictureBox1
-            // 
-            this.pictureBox1.Image = global::IGTomesheq.Properties.Resources.seal;
-            this.pictureBox1.Location = new System.Drawing.Point(455, 25);
-            this.pictureBox1.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(256, 191);
-            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
-            this.pictureBox1.TabIndex = 0;
-            this.pictureBox1.TabStop = false;
-            // 
-            // panel_comments
-            // 
-            this.panel_comments.Controls.Add(this.label11);
-            this.panel_comments.Controls.Add(this.label10);
-            this.panel_comments.Controls.Add(this.label9);
-            this.panel_comments.Controls.Add(this.label7);
-            this.panel_comments.Controls.Add(this.label6);
-            this.panel_comments.Controls.Add(this.label5);
-            this.panel_comments.Controls.Add(this.button2);
-            this.panel_comments.Location = new System.Drawing.Point(15, 6);
-            this.panel_comments.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            this.panel_comments.Name = "panel_comments";
-            this.panel_comments.Size = new System.Drawing.Size(1154, 577);
-            this.panel_comments.TabIndex = 6;
-            this.panel_comments.Visible = false;
-            // 
-            // label11
-            // 
-            this.label11.AutoSize = true;
-            this.label11.Font = new System.Drawing.Font("Segoe UI", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label11.Location = new System.Drawing.Point(472, 240);
-            this.label11.Name = "label11";
-            this.label11.Size = new System.Drawing.Size(204, 20);
-            this.label11.TabIndex = 12;
-            this.label11.Text = "i pasowały do każdej sytuacji.";
-            // 
-            // label10
-            // 
-            this.label10.AutoSize = true;
-            this.label10.Font = new System.Drawing.Font("Segoe UI", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label10.Location = new System.Drawing.Point(68, 220);
-            this.label10.Name = "label10";
-            this.label10.Size = new System.Drawing.Size(922, 20);
-            this.label10.TabIndex = 11;
-            this.label10.Text = "Komentarze te będą mogły być wykorzystane do automatycznego komentowania zdjęć, d" +
-    "latego pamiętaj, żeby były odpowiednio ogólne";
-            // 
-            // label9
-            // 
-            this.label9.AutoSize = true;
-            this.label9.Font = new System.Drawing.Font("Segoe UI", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label9.Location = new System.Drawing.Point(400, 173);
-            this.label9.Name = "label9";
-            this.label9.Size = new System.Drawing.Size(363, 25);
-            this.label9.TabIndex = 10;
-            this.label9.Text = "\"Super zdjęcie, miłego pobytu <emotka>\"";
-            // 
-            // label7
-            // 
-            this.label7.AutoSize = true;
-            this.label7.Font = new System.Drawing.Font("Segoe UI", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label7.Location = new System.Drawing.Point(84, 147);
-            this.label7.Name = "label7";
-            this.label7.Size = new System.Drawing.Size(985, 25);
-            this.label7.TabIndex = 8;
-            this.label7.Text = "dokurwiają Cię tak bardzo, że po prostu nie jesteś w stanie napisać im komentarza" +
-    " od serca, więc piszesz coś w stylu";
-            // 
-            // label6
-            // 
-            this.label6.AutoSize = true;
-            this.label6.Font = new System.Drawing.Font("Segoe UI", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label6.Location = new System.Drawing.Point(76, 122);
-            this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(1003, 25);
-            this.label6.TabIndex = 7;
-            this.label6.Text = "W polu poniżej wpisz kilka uniwesalnych komentarzy. Takich które czasem umieszcza" +
-    "sz pod zdjęciami tych osób, które";
-            // 
-            // label5
-            // 
-            this.label5.AutoSize = true;
-            this.label5.Font = new System.Drawing.Font("Segoe UI", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label5.Location = new System.Drawing.Point(440, 48);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(271, 32);
-            this.label5.TabIndex = 6;
-            this.label5.Text = "Domyślne komentarze";
-            // 
-            // button2
-            // 
-            this.button2.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.button2.Location = new System.Drawing.Point(1012, 531);
-            this.button2.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(86, 33);
-            this.button2.TabIndex = 5;
-            this.button2.Text = "Dalej";
-            this.button2.UseVisualStyleBackColor = true;
-            this.button2.Click += new System.EventHandler(this.button2_Click);
-            // 
-            // panel_telegram_login
-            // 
-            this.panel_telegram_login.Controls.Add(this.button15);
-            this.panel_telegram_login.Controls.Add(this.label30);
-            this.panel_telegram_login.Controls.Add(this.textBox4);
-            this.panel_telegram_login.Controls.Add(this.label29);
-            this.panel_telegram_login.Controls.Add(this.label28);
-            this.panel_telegram_login.Controls.Add(this.button14);
-            this.panel_telegram_login.Controls.Add(this.textBox3);
-            this.panel_telegram_login.Controls.Add(this.textBox2);
-            this.panel_telegram_login.Controls.Add(this.label27);
-            this.panel_telegram_login.Controls.Add(this.label26);
-            this.panel_telegram_login.Controls.Add(this.label25);
-            this.panel_telegram_login.Controls.Add(this.label17);
-            this.panel_telegram_login.Controls.Add(this.label16);
-            this.panel_telegram_login.Controls.Add(this.button6);
-            this.panel_telegram_login.Controls.Add(this.textBox1);
-            this.panel_telegram_login.Controls.Add(this.label15);
-            this.panel_telegram_login.Controls.Add(this.label14);
-            this.panel_telegram_login.Controls.Add(this.button5);
-            this.panel_telegram_login.Location = new System.Drawing.Point(15, 6);
-            this.panel_telegram_login.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            this.panel_telegram_login.Name = "panel_telegram_login";
-            this.panel_telegram_login.Size = new System.Drawing.Size(1154, 577);
-            this.panel_telegram_login.TabIndex = 7;
-            this.panel_telegram_login.Visible = false;
-            // 
-            // button15
-            // 
-            this.button15.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.button15.Location = new System.Drawing.Point(706, 80);
-            this.button15.Name = "button15";
-            this.button15.Size = new System.Drawing.Size(158, 27);
-            this.button15.TabIndex = 23;
-            this.button15.Text = "Zapisz i wyślij kod";
-            this.button15.UseVisualStyleBackColor = true;
-            this.button15.Click += new System.EventHandler(this.button15_Click);
-            // 
-            // label30
-            // 
-            this.label30.AutoSize = true;
-            this.label30.Font = new System.Drawing.Font("Segoe UI", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label30.Location = new System.Drawing.Point(400, 84);
-            this.label30.Name = "label30";
-            this.label30.Size = new System.Drawing.Size(116, 20);
-            this.label30.TabIndex = 22;
-            this.label30.Text = "Numer telefonu:";
-            // 
-            // textBox4
-            // 
-            this.textBox4.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textBox4.Location = new System.Drawing.Point(522, 82);
-            this.textBox4.Name = "textBox4";
-            this.textBox4.Size = new System.Drawing.Size(178, 25);
-            this.textBox4.TabIndex = 21;
-            this.textBox4.KeyDown += new System.Windows.Forms.KeyEventHandler(this.textBox4_KeyDown);
-            // 
-            // label29
-            // 
-            this.label29.AutoSize = true;
-            this.label29.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label29.ForeColor = System.Drawing.Color.Red;
-            this.label29.Location = new System.Drawing.Point(478, 288);
-            this.label29.Name = "label29";
-            this.label29.Size = new System.Drawing.Size(250, 21);
-            this.label29.TabIndex = 20;
-            this.label29.Text = "Nieprawidłowy login lub hasło!";
-            this.label29.Visible = false;
-            // 
-            // label28
-            // 
-            this.label28.AutoSize = true;
-            this.label28.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label28.ForeColor = System.Drawing.Color.DarkOliveGreen;
-            this.label28.Location = new System.Drawing.Point(426, 280);
-            this.label28.Name = "label28";
-            this.label28.Size = new System.Drawing.Size(307, 21);
-            this.label28.TabIndex = 19;
-            this.label28.Text = "Pomyślnie zalogowano do Instagrama!";
-            this.label28.Visible = false;
-            // 
-            // button14
-            // 
-            this.button14.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.button14.Location = new System.Drawing.Point(716, 302);
-            this.button14.Name = "button14";
-            this.button14.Size = new System.Drawing.Size(75, 27);
-            this.button14.TabIndex = 18;
-            this.button14.Text = "Zaloguj";
-            this.button14.UseVisualStyleBackColor = true;
-            this.button14.Click += new System.EventHandler(this.button14_Click);
-            // 
-            // textBox3
-            // 
-            this.textBox3.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textBox3.Location = new System.Drawing.Point(522, 302);
-            this.textBox3.Name = "textBox3";
-            this.textBox3.PasswordChar = '*';
-            this.textBox3.Size = new System.Drawing.Size(178, 25);
-            this.textBox3.TabIndex = 17;
-            this.textBox3.KeyDown += new System.Windows.Forms.KeyEventHandler(this.textBox3_KeyDown);
-            // 
-            // textBox2
-            // 
-            this.textBox2.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textBox2.Location = new System.Drawing.Point(522, 266);
-            this.textBox2.Name = "textBox2";
-            this.textBox2.Size = new System.Drawing.Size(178, 25);
-            this.textBox2.TabIndex = 16;
-            this.textBox2.KeyDown += new System.Windows.Forms.KeyEventHandler(this.textBox2_KeyDown);
-            // 
-            // label27
-            // 
-            this.label27.AutoSize = true;
-            this.label27.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.label27.Location = new System.Drawing.Point(470, 305);
-            this.label27.Name = "label27";
-            this.label27.Size = new System.Drawing.Size(47, 19);
-            this.label27.TabIndex = 15;
-            this.label27.Text = "Hasło:";
-            // 
-            // label26
-            // 
-            this.label26.AutoSize = true;
-            this.label26.Font = new System.Drawing.Font("Segoe UI", 10F);
-            this.label26.Location = new System.Drawing.Point(470, 269);
-            this.label26.Name = "label26";
-            this.label26.Size = new System.Drawing.Size(46, 19);
-            this.label26.TabIndex = 14;
-            this.label26.Text = "Login:";
-            // 
-            // label25
-            // 
-            this.label25.AutoSize = true;
-            this.label25.Font = new System.Drawing.Font("Segoe UI", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label25.Location = new System.Drawing.Point(424, 200);
-            this.label25.Name = "label25";
-            this.label25.Size = new System.Drawing.Size(312, 32);
-            this.label25.TabIndex = 13;
-            this.label25.Text = "Logowanie do Instagrama";
-            // 
-            // label17
-            // 
-            this.label17.AutoSize = true;
-            this.label17.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label17.Location = new System.Drawing.Point(328, 423);
-            this.label17.Name = "label17";
-            this.label17.Size = new System.Drawing.Size(500, 17);
-            this.label17.TabIndex = 12;
-            this.label17.Text = "Kliknij dalej, aby wybrać grupy wsparcia spośród Twoich Telegramowych konwersacji" +
-    "";
-            this.label17.Visible = false;
-            // 
-            // label16
-            // 
-            this.label16.AutoSize = true;
-            this.label16.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label16.ForeColor = System.Drawing.Color.DarkOliveGreen;
-            this.label16.Location = new System.Drawing.Point(435, 96);
-            this.label16.Name = "label16";
-            this.label16.Size = new System.Drawing.Size(301, 21);
-            this.label16.TabIndex = 11;
-            this.label16.Text = "Pomyślnie zalogowano do Telegrama!";
-            this.label16.Visible = false;
-            // 
-            // button6
-            // 
-            this.button6.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.button6.Location = new System.Drawing.Point(706, 113);
-            this.button6.Name = "button6";
-            this.button6.Size = new System.Drawing.Size(75, 27);
-            this.button6.TabIndex = 10;
-            this.button6.Text = "Zapisz";
-            this.button6.UseVisualStyleBackColor = true;
-            this.button6.Visible = false;
-            this.button6.Click += new System.EventHandler(this.button6_Click);
-            // 
-            // textBox1
-            // 
-            this.textBox1.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.textBox1.Location = new System.Drawing.Point(522, 113);
-            this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(178, 25);
-            this.textBox1.TabIndex = 9;
-            this.textBox1.Visible = false;
-            this.textBox1.KeyDown += new System.Windows.Forms.KeyEventHandler(this.textBox1_KeyDown);
-            // 
-            // label15
-            // 
-            this.label15.AutoSize = true;
-            this.label15.Font = new System.Drawing.Font("Segoe UI", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label15.Location = new System.Drawing.Point(316, 115);
-            this.label15.Name = "label15";
-            this.label15.Size = new System.Drawing.Size(200, 20);
-            this.label15.TabIndex = 8;
-            this.label15.Text = "Kod wysłany przez Telegram:";
-            this.label15.Visible = false;
-            // 
-            // label14
-            // 
-            this.label14.AutoSize = true;
-            this.label14.Font = new System.Drawing.Font("Segoe UI", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label14.Location = new System.Drawing.Point(424, 25);
-            this.label14.Name = "label14";
-            this.label14.Size = new System.Drawing.Size(301, 32);
-            this.label14.TabIndex = 7;
-            this.label14.Text = "Logowanie do Telegrama";
-            // 
-            // button5
-            // 
-            this.button5.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.button5.Location = new System.Drawing.Point(1012, 531);
-            this.button5.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            this.button5.Name = "button5";
-            this.button5.Size = new System.Drawing.Size(86, 33);
-            this.button5.TabIndex = 5;
-            this.button5.Text = "Dalej";
-            this.button5.UseVisualStyleBackColor = true;
-            this.button5.Click += new System.EventHandler(this.button5_Click);
-            // 
-            // panel_telegram_chats
-            // 
-            this.panel_telegram_chats.Controls.Add(this.button7);
-            this.panel_telegram_chats.Controls.Add(this.label21);
-            this.panel_telegram_chats.Controls.Add(this.label18);
-            this.panel_telegram_chats.Location = new System.Drawing.Point(14, 15);
-            this.panel_telegram_chats.Name = "panel_telegram_chats";
-            this.panel_telegram_chats.Size = new System.Drawing.Size(1160, 577);
-            this.panel_telegram_chats.TabIndex = 8;
-            this.panel_telegram_chats.Visible = false;
-            // 
-            // button7
-            // 
-            this.button7.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.button7.Location = new System.Drawing.Point(1012, 531);
-            this.button7.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            this.button7.Name = "button7";
-            this.button7.Size = new System.Drawing.Size(86, 33);
-            this.button7.TabIndex = 6;
-            this.button7.Text = "Dalej";
-            this.button7.UseVisualStyleBackColor = true;
-            this.button7.Click += new System.EventHandler(this.button7_Click);
-            // 
-            // label21
-            // 
-            this.label21.AutoSize = true;
-            this.label21.Font = new System.Drawing.Font("Segoe UI", 9.5F);
-            this.label21.Location = new System.Drawing.Point(78, 122);
-            this.label21.Name = "label21";
-            this.label21.Size = new System.Drawing.Size(983, 17);
-            this.label21.TabIndex = 5;
-            this.label21.Text = "Na liście po lewej pokazane są Twoje wszystkie czaty na Telegramie. Wybierz spośr" +
-    "ód nich Twoje grupy wsparcia i używając strzałki w prawo przenieś je do prawej l" +
-    "isty.";
-            // 
-            // label18
-            // 
-            this.label18.AutoSize = true;
-            this.label18.Font = new System.Drawing.Font("Segoe UI", 16F, System.Drawing.FontStyle.Bold);
-            this.label18.Location = new System.Drawing.Point(476, 56);
-            this.label18.Name = "label18";
-            this.label18.Size = new System.Drawing.Size(175, 30);
-            this.label18.TabIndex = 0;
-            this.label18.Text = "Grupy wsparcia";
             // 
             // panel_liker_commenter
             // 
@@ -967,6 +495,7 @@ namespace IGTomesheqAutoLiker
             // panel_settings
             // 
             this.panel_settings.Controls.Add(this.panel_settings_support_groups);
+            this.panel_settings.Controls.Add(this.panel_settings_settings);
             this.panel_settings.Controls.Add(this.panel_choose_starting_date);
             this.panel_settings.Controls.Add(this.panel_settings_choose_support_groups);
             this.panel_settings.Controls.Add(this.panel_settings_instagram);
@@ -979,10 +508,115 @@ namespace IGTomesheqAutoLiker
             this.panel_settings.Size = new System.Drawing.Size(1154, 581);
             this.panel_settings.TabIndex = 11;
             // 
+            // panel_settings_settings
+            // 
+            this.panel_settings_settings.Controls.Add(this.label3);
+            this.panel_settings_settings.Controls.Add(this.label2);
+            this.panel_settings_settings.Controls.Add(this.textBox_max_time_betw_likes);
+            this.panel_settings_settings.Controls.Add(this.textBox_min_time_betw_likes);
+            this.panel_settings_settings.Controls.Add(this.textBox_likes_limit);
+            this.panel_settings_settings.Controls.Add(this.button_settings_save);
+            this.panel_settings_settings.Controls.Add(this.label_max_time_betw_likes);
+            this.panel_settings_settings.Controls.Add(this.label_min_time_betw_likes);
+            this.panel_settings_settings.Controls.Add(this.label_like_limit);
+            this.panel_settings_settings.Controls.Add(this.label1);
+            this.panel_settings_settings.Location = new System.Drawing.Point(60, 50);
+            this.panel_settings_settings.Name = "panel_settings_settings";
+            this.panel_settings_settings.Size = new System.Drawing.Size(600, 500);
+            this.panel_settings_settings.TabIndex = 33;
+            this.panel_settings_settings.Visible = false;
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(401, 167);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(45, 13);
+            this.label3.TabIndex = 10;
+            this.label3.Text = "sekund";
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(401, 133);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(45, 13);
+            this.label2.TabIndex = 9;
+            this.label2.Text = "sekund";
+            // 
+            // textBox_max_time_betw_likes
+            // 
+            this.textBox_max_time_betw_likes.Location = new System.Drawing.Point(300, 162);
+            this.textBox_max_time_betw_likes.Name = "textBox_max_time_betw_likes";
+            this.textBox_max_time_betw_likes.Size = new System.Drawing.Size(100, 22);
+            this.textBox_max_time_betw_likes.TabIndex = 8;
+            // 
+            // textBox_min_time_betw_likes
+            // 
+            this.textBox_min_time_betw_likes.Location = new System.Drawing.Point(300, 130);
+            this.textBox_min_time_betw_likes.Name = "textBox_min_time_betw_likes";
+            this.textBox_min_time_betw_likes.Size = new System.Drawing.Size(100, 22);
+            this.textBox_min_time_betw_likes.TabIndex = 7;
+            // 
+            // textBox_likes_limit
+            // 
+            this.textBox_likes_limit.Location = new System.Drawing.Point(300, 96);
+            this.textBox_likes_limit.Name = "textBox_likes_limit";
+            this.textBox_likes_limit.Size = new System.Drawing.Size(100, 22);
+            this.textBox_likes_limit.TabIndex = 6;
+            // 
+            // button_settings_save
+            // 
+            this.button_settings_save.Location = new System.Drawing.Point(486, 452);
+            this.button_settings_save.Name = "button_settings_save";
+            this.button_settings_save.Size = new System.Drawing.Size(88, 31);
+            this.button_settings_save.TabIndex = 5;
+            this.button_settings_save.Text = "Zapisz";
+            this.button_settings_save.UseVisualStyleBackColor = true;
+            this.button_settings_save.Click += new System.EventHandler(this.button_settings_save_Click);
+            // 
+            // label_max_time_betw_likes
+            // 
+            this.label_max_time_betw_likes.AutoSize = true;
+            this.label_max_time_betw_likes.Location = new System.Drawing.Point(142, 166);
+            this.label_max_time_betw_likes.Name = "label_max_time_betw_likes";
+            this.label_max_time_betw_likes.Size = new System.Drawing.Size(146, 13);
+            this.label_max_time_betw_likes.TabIndex = 4;
+            this.label_max_time_betw_likes.Text = "Max czas pomiędzy lajkami:";
+            // 
+            // label_min_time_betw_likes
+            // 
+            this.label_min_time_betw_likes.AutoSize = true;
+            this.label_min_time_betw_likes.Location = new System.Drawing.Point(142, 134);
+            this.label_min_time_betw_likes.Name = "label_min_time_betw_likes";
+            this.label_min_time_betw_likes.Size = new System.Drawing.Size(145, 13);
+            this.label_min_time_betw_likes.TabIndex = 3;
+            this.label_min_time_betw_likes.Text = "Min czas pomiędzy lajkami:";
+            // 
+            // label_like_limit
+            // 
+            this.label_like_limit.AutoSize = true;
+            this.label_like_limit.Location = new System.Drawing.Point(215, 102);
+            this.label_like_limit.Name = "label_like_limit";
+            this.label_like_limit.Size = new System.Drawing.Size(71, 13);
+            this.label_like_limit.TabIndex = 2;
+            this.label_like_limit.Text = "Limit lajków:";
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Font = new System.Drawing.Font("Segoe UI", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label1.ForeColor = System.Drawing.Color.DarkSlateGray;
+            this.label1.Location = new System.Drawing.Point(245, 34);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(128, 25);
+            this.label1.TabIndex = 1;
+            this.label1.Text = "USTAWIENIA";
+            // 
             // panel_settings_support_groups
             // 
             this.panel_settings_support_groups.Controls.Add(this.button21);
-            this.panel_settings_support_groups.Controls.Add(this.listBox2);
+            this.panel_settings_support_groups.Controls.Add(this.listView_2);
             this.panel_settings_support_groups.Controls.Add(this.label67);
             this.panel_settings_support_groups.Controls.Add(this.numericUpDown1);
             this.panel_settings_support_groups.Controls.Add(this.label66);
@@ -1013,14 +647,16 @@ namespace IGTomesheqAutoLiker
             this.button21.Visible = false;
             this.button21.Click += new System.EventHandler(this.button21_Click);
             // 
-            // listBox2
+            // listView_2
             // 
-            this.listBox2.FormattingEnabled = true;
-            this.listBox2.Location = new System.Drawing.Point(24, 85);
-            this.listBox2.Name = "listBox2";
-            this.listBox2.Size = new System.Drawing.Size(269, 368);
-            this.listBox2.TabIndex = 25;
-            this.listBox2.SelectedIndexChanged += new System.EventHandler(this.listBox2_SelectedIndexChanged);
+            this.listView_2.HideSelection = false;
+            this.listView_2.Location = new System.Drawing.Point(24, 85);
+            this.listView_2.MultiSelect = false;
+            this.listView_2.Name = "listView_2";
+            this.listView_2.Size = new System.Drawing.Size(269, 368);
+            this.listView_2.TabIndex = 25;
+            this.listView_2.UseCompatibleStateImageBehavior = false;
+            this.listView_2.View = System.Windows.Forms.View.List;
             // 
             // label67
             // 
@@ -1106,6 +742,7 @@ namespace IGTomesheqAutoLiker
             this.radioButton3.Text = "Dodane w ciągu ostatnich";
             this.radioButton3.UseVisualStyleBackColor = true;
             this.radioButton3.CheckedChanged += new System.EventHandler(this.radioButton3_CheckedChanged);
+            this.radioButton3.Click += new System.EventHandler(this.radioButton3_Click);
             // 
             // radioButton2
             // 
@@ -1118,6 +755,7 @@ namespace IGTomesheqAutoLiker
             this.radioButton2.Text = "Dodane po dacie wpisanej w kalendarzyku";
             this.radioButton2.UseVisualStyleBackColor = true;
             this.radioButton2.CheckedChanged += new System.EventHandler(this.radioButton2_CheckedChanged);
+            this.radioButton2.Click += new System.EventHandler(this.radioButton2_Click);
             // 
             // radioButton1
             // 
@@ -1130,6 +768,7 @@ namespace IGTomesheqAutoLiker
             this.radioButton1.Text = "Dodane po ostatnio skomentowanym poście";
             this.radioButton1.UseVisualStyleBackColor = true;
             this.radioButton1.CheckedChanged += new System.EventHandler(this.radioButton1_CheckedChanged);
+            this.radioButton1.Click += new System.EventHandler(this.radioButton1_Click);
             // 
             // label41
             // 
@@ -1576,7 +1215,6 @@ namespace IGTomesheqAutoLiker
             this.button3.TabIndex = 22;
             this.button3.Text = "Zapamiętaj komentarz";
             this.button3.UseVisualStyleBackColor = true;
-            this.button3.Click += new System.EventHandler(this.button3_Click);
             // 
             // richTextBox1
             // 
@@ -1600,7 +1238,6 @@ namespace IGTomesheqAutoLiker
             this.button4.TabIndex = 20;
             this.button4.Text = "Usuń komentarz";
             this.button4.UseVisualStyleBackColor = true;
-            this.button4.Click += new System.EventHandler(this.button4_Click);
             // 
             // label13
             // 
@@ -1790,6 +1427,7 @@ namespace IGTomesheqAutoLiker
             // panel_settings_menu
             // 
             this.panel_settings_menu.BackColor = System.Drawing.Color.Beige;
+            this.panel_settings_menu.Controls.Add(this.label_settings_menu_settings);
             this.panel_settings_menu.Controls.Add(this.label_settings_menu_default_comments);
             this.panel_settings_menu.Controls.Add(this.label_settings_menu_telegram);
             this.panel_settings_menu.Controls.Add(this.label_settings_menu_instagram);
@@ -1798,8 +1436,22 @@ namespace IGTomesheqAutoLiker
             this.panel_settings_menu.Controls.Add(this.label_settings_menu_choose_date);
             this.panel_settings_menu.Location = new System.Drawing.Point(732, 52);
             this.panel_settings_menu.Name = "panel_settings_menu";
-            this.panel_settings_menu.Size = new System.Drawing.Size(250, 324);
+            this.panel_settings_menu.Size = new System.Drawing.Size(250, 375);
             this.panel_settings_menu.TabIndex = 33;
+            // 
+            // label_settings_menu_settings
+            // 
+            this.label_settings_menu_settings.BackColor = System.Drawing.SystemColors.AppWorkspace;
+            this.label_settings_menu_settings.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.label_settings_menu_settings.Font = new System.Drawing.Font("Segoe UI Semibold", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label_settings_menu_settings.ForeColor = System.Drawing.Color.DarkBlue;
+            this.label_settings_menu_settings.Location = new System.Drawing.Point(1, 321);
+            this.label_settings_menu_settings.Name = "label_settings_menu_settings";
+            this.label_settings_menu_settings.Size = new System.Drawing.Size(248, 50);
+            this.label_settings_menu_settings.TabIndex = 6;
+            this.label_settings_menu_settings.Text = "USTAWIENIA";
+            this.label_settings_menu_settings.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.label_settings_menu_settings.Click += new System.EventHandler(this.label_settings_menu_settings_Click);
             // 
             // label_settings_menu_default_comments
             // 
@@ -1900,12 +1552,61 @@ namespace IGTomesheqAutoLiker
             // 
             this.pictureBox3.Image = global::IGTomesheq.Properties.Resources.ajax_loader_big;
             this.pictureBox3.InitialImage = global::IGTomesheq.Properties.Resources.ajax_loader_big;
-            this.pictureBox3.Location = new System.Drawing.Point(465, 161);
+            this.pictureBox3.Location = new System.Drawing.Point(150, 24);
             this.pictureBox3.Name = "pictureBox3";
             this.pictureBox3.Size = new System.Drawing.Size(100, 100);
             this.pictureBox3.TabIndex = 33;
             this.pictureBox3.TabStop = false;
             this.pictureBox3.Visible = false;
+            // 
+            // panel_please_wait
+            // 
+            this.panel_please_wait.BackColor = System.Drawing.SystemColors.InactiveCaption;
+            this.panel_please_wait.Controls.Add(this.label_progress);
+            this.panel_please_wait.Controls.Add(this.button_cancel);
+            this.panel_please_wait.Controls.Add(this.progressBar1);
+            this.panel_please_wait.Controls.Add(this.label_wait_info);
+            this.panel_please_wait.Controls.Add(this.pictureBox3);
+            this.panel_please_wait.Location = new System.Drawing.Point(400, 200);
+            this.panel_please_wait.Name = "panel_please_wait";
+            this.panel_please_wait.Size = new System.Drawing.Size(400, 240);
+            this.panel_please_wait.TabIndex = 34;
+            this.panel_please_wait.Visible = false;
+            // 
+            // label_progress
+            // 
+            this.label_progress.Location = new System.Drawing.Point(134, 175);
+            this.label_progress.Name = "label_progress";
+            this.label_progress.Size = new System.Drawing.Size(131, 22);
+            this.label_progress.TabIndex = 37;
+            this.label_progress.Text = "0/136 (0%)";
+            this.label_progress.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // button_cancel
+            // 
+            this.button_cancel.Font = new System.Drawing.Font("Segoe UI", 12F);
+            this.button_cancel.Location = new System.Drawing.Point(156, 201);
+            this.button_cancel.Name = "button_cancel";
+            this.button_cancel.Size = new System.Drawing.Size(89, 34);
+            this.button_cancel.TabIndex = 36;
+            this.button_cancel.Text = "Przerwij";
+            this.button_cancel.UseVisualStyleBackColor = true;
+            // 
+            // progressBar1
+            // 
+            this.progressBar1.Location = new System.Drawing.Point(40, 149);
+            this.progressBar1.Name = "progressBar1";
+            this.progressBar1.Size = new System.Drawing.Size(316, 23);
+            this.progressBar1.TabIndex = 35;
+            // 
+            // label_wait_info
+            // 
+            this.label_wait_info.Location = new System.Drawing.Point(41, 126);
+            this.label_wait_info.Name = "label_wait_info";
+            this.label_wait_info.Size = new System.Drawing.Size(316, 21);
+            this.label_wait_info.TabIndex = 34;
+            this.label_wait_info.Text = "Przygotowuję post...";
+            this.label_wait_info.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // Form1
             // 
@@ -1914,12 +1615,8 @@ namespace IGTomesheqAutoLiker
             this.ClientSize = new System.Drawing.Size(1184, 611);
             this.Controls.Add(this.panel_settings);
             this.Controls.Add(this.panel_liker_commenter);
-            this.Controls.Add(this.panel_telegram_login);
-            this.Controls.Add(this.panel_telegram_chats);
-            this.Controls.Add(this.panel_comments);
-            this.Controls.Add(this.pictureBox3);
+            this.Controls.Add(this.panel_please_wait);
             this.Controls.Add(this.statusStrip1);
-            this.Controls.Add(this.panel_hello);
             this.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
@@ -1928,15 +1625,6 @@ namespace IGTomesheqAutoLiker
             this.Name = "Form1";
             this.Text = "Tomesheq Instagram Auto Liker&Commenter";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.Form1_FormClosed);
-            this.panel_hello.ResumeLayout(false);
-            this.panel_hello.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
-            this.panel_comments.ResumeLayout(false);
-            this.panel_comments.PerformLayout();
-            this.panel_telegram_login.ResumeLayout(false);
-            this.panel_telegram_login.PerformLayout();
-            this.panel_telegram_chats.ResumeLayout(false);
-            this.panel_telegram_chats.PerformLayout();
             this.panel_liker_commenter.ResumeLayout(false);
             this.panel_liker_commenter.PerformLayout();
             this.groupBox3.ResumeLayout(false);
@@ -1947,6 +1635,8 @@ namespace IGTomesheqAutoLiker
             this.statusStrip1.ResumeLayout(false);
             this.statusStrip1.PerformLayout();
             this.panel_settings.ResumeLayout(false);
+            this.panel_settings_settings.ResumeLayout(false);
+            this.panel_settings_settings.PerformLayout();
             this.panel_settings_support_groups.ResumeLayout(false);
             this.panel_settings_support_groups.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDown1)).EndInit();
@@ -1981,6 +1671,7 @@ namespace IGTomesheqAutoLiker
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox5)).EndInit();
             this.panel_settings_menu.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox3)).EndInit();
+            this.panel_please_wait.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -2003,35 +1694,6 @@ namespace IGTomesheqAutoLiker
         }
 
         #endregion
-
-        private System.Windows.Forms.Panel panel_hello;
-        private System.Windows.Forms.PictureBox pictureBox1;
-        private System.Windows.Forms.Button button1;
-        private System.Windows.Forms.Label label4;
-        private System.Windows.Forms.Label label3;
-        private System.Windows.Forms.Label label2;
-        private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.Panel panel_comments;
-        private System.Windows.Forms.Button button2;
-        private System.Windows.Forms.Label label7;
-        private System.Windows.Forms.Label label6;
-        private System.Windows.Forms.Label label5;
-        private System.Windows.Forms.Label label8;
-        private System.Windows.Forms.Label label9;
-        private System.Windows.Forms.Label label11;
-        private System.Windows.Forms.Label label10;
-        private System.Windows.Forms.Panel panel_telegram_login;
-        private System.Windows.Forms.Button button5;
-        private System.Windows.Forms.Label label14;
-        private System.Windows.Forms.Button button6;
-        private System.Windows.Forms.TextBox textBox1;
-        private System.Windows.Forms.Label label15;
-        private System.Windows.Forms.Label label17;
-        private System.Windows.Forms.Label label16;
-        private System.Windows.Forms.Panel panel_telegram_chats;
-        private System.Windows.Forms.Label label18;
-        private System.Windows.Forms.Label label21;
-        private System.Windows.Forms.Button button7;
         private System.Windows.Forms.Panel panel_liker_commenter;
         private System.Windows.Forms.Button button10;
         private System.Windows.Forms.Button button12;
@@ -2040,17 +1702,6 @@ namespace IGTomesheqAutoLiker
         private System.Windows.Forms.Label label24;
         private System.Windows.Forms.Label label23;
         private System.Windows.Forms.ListBox listBox1;
-        private System.Windows.Forms.Label label29;
-        private System.Windows.Forms.Label label28;
-        private System.Windows.Forms.Button button14;
-        private System.Windows.Forms.TextBox textBox3;
-        private System.Windows.Forms.TextBox textBox2;
-        private System.Windows.Forms.Label label27;
-        private System.Windows.Forms.Label label26;
-        private System.Windows.Forms.Label label25;
-        private System.Windows.Forms.Button button15;
-        private System.Windows.Forms.Label label30;
-        private System.Windows.Forms.TextBox textBox4;
         private System.Windows.Forms.Label label33;
         private System.Windows.Forms.Label label32;
         private System.Windows.Forms.ComboBox comboBox1;
@@ -2154,8 +1805,25 @@ namespace IGTomesheqAutoLiker
         private Label label65;
         private Label label61;
         private Label label42;
-        private ListBox listBox2;
+        private ListView listView_2;
         private Button button21;
+        private Panel panel_please_wait;
+        private Label label_wait_info;
+        private Button button_cancel;
+        private ProgressBar progressBar1;
+        private Label label_progress;
+        private Label label_settings_menu_settings;
+        private Panel panel_settings_settings;
+        private Button button_settings_save;
+        private Label label_max_time_betw_likes;
+        private Label label_min_time_betw_likes;
+        private Label label_like_limit;
+        private Label label1;
+        private Label label3;
+        private Label label2;
+        private TextBox textBox_max_time_betw_likes;
+        private TextBox textBox_min_time_betw_likes;
+        private TextBox textBox_likes_limit;
     }
 }
 

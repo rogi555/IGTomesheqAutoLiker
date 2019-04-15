@@ -167,6 +167,56 @@ namespace IGTomesheqAutoLiker
             IResult<InstaMedia> post = await _instaApi.GetMediaByIdAsync(id);
             return post;
         }
+
+        public async static Task<IResult<InstaUserShortList>> GetFollowers()
+        {
+            return await _instaApi.GetCurrentUserFollowersAsync(PaginationParameters.MaxPagesToLoad(10));
+        }
+
+        public async static Task<List<InstaUserShort>> GetFollowersList(PaginationParameters parameters, List<InstaUserShort> followers)
+        {
+            if (followers == null)
+                followers = new List<InstaUserShort>();
+            // load more followers
+            Console.WriteLine($"Loaded so far: {followers.Count}, loading more");
+            var result = await _instaApi.GetCurrentUserFollowersAsync(parameters);
+
+            // merge results
+            if (result.Value != null)
+                followers = result.Value.Union(followers).ToList();
+            if (result.Succeeded)
+                return followers;
+
+            // prepare nex id
+            var nextId = result.Value?.NextId ?? parameters.NextId;
+
+            // setup some delay
+            var delay = TimeSpan.FromSeconds(new Random(DateTime.Now.Millisecond).Next(30, 60));
+            if (result.Info.ResponseType == ResponseType.RequestsLimit)
+                delay = TimeSpan.FromSeconds(new Random(DateTime.Now.Millisecond).Next(60, 180));
+            Console.WriteLine($"Not able to load full list of followers, retry in {delay.TotalSeconds} seconds");
+            await Task.Delay(delay);
+            return await GetFollowersList(parameters.StartFromId(nextId), followers);
+        }
+
+        public async static Task<InstaMediaList> GetMediaList(InstaUserShort user, PaginationParameters parameters)
+        {
+            var mediaList = new InstaMediaList();
+            var result = await _instaApi.GetUserMediaAsync(user.UserName, parameters);
+            var needRetry = !result.Succeeded;
+            var nextId = result.Value?.NextId ?? string.Empty;
+            if (result.Value != null)
+                mediaList.AddRange(result.Value);
+            var delay = TimeSpan.FromSeconds(10);
+            if (result.Info.ResponseType == ResponseType.RequestsLimit)
+                delay = TimeSpan.FromMinutes(3);
+            while (needRetry)
+            {
+                Console.WriteLine($"Not able to load full list of media, retry in {delay.TotalSeconds} seconds");
+                return await GetMediaList(user, PaginationParameters.MaxPagesToLoad(int.MaxValue).StartFromId(nextId));
+            }
+            return mediaList;
+        }
     }
 
     class InstagramProcessor

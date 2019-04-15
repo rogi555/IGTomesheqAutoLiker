@@ -19,34 +19,17 @@ using System.Net;
 using System.Web.Script.Serialization;
 using TLSharp.Core.Network;
 using System.Threading;
+using System.ComponentModel;
 
 namespace IGTomesheqAutoLiker
 {
     public partial class Form1 : Form
     {
-        // baza danych
-        //private SQLiteConnection m_dbConnection;
-        private string connectionString;
-
-        // Telegram
-        const int API_ID = 546804;
-        const string API_HASH = "da4ce7c1d67eb3a1b1e2274f32d08531";
-
-        TelegramClient client;
-        string code;
-        string hash;
-        string phone_number;
-        TeleSharp.TL.TLUser user;
-        FileSessionStore store;
-        TLDialogs dialogs;
-        List<TLChannel> channels;
-        List<TLChat> chats;
         List<SingleEmoji> complete_emojis;
         List<Label> emoji_labels;
 
         // ogolne
         int media_to_comment_counter;
-        long posts_newer_than_timestamp;
         const int MAX_PHOTO_WIDTH = 376;
         const int MAX_PHOTO_HEIGHT = 376;
 
@@ -54,62 +37,26 @@ namespace IGTomesheqAutoLiker
 
         List<SupportGroup> support_groups;
 
-        private List<Label> date_support_groups;
-        private List<Label> date_support_groups_last_post_dates;
-
         EmojisWindow ee;
-
-        string current_username;
 
         InitDataHolder data_holder;
         bool is_form_initialized;
 
-        public Form1()
-        {
-            InitializeComponent();
+        int total_likes_count;
 
-            // baza danych
-            connectionString = "Data Source=tomesheq_db.db;Version=3;";
-
-            // Telegram
-            code = "";
-            hash = "";
-
-            // ogolne
-            media_to_comment_counter = 0;
-            posts_newer_than_timestamp = 0;
-            support_group_index = -1;
-
-            support_groups = new List<SupportGroup>();
-
-            // utworzenie obiektu z klasami emoji
-            complete_emojis = new List<SingleEmoji>();
-            emoji_labels = new List<Label>();
-            ee = new EmojisWindow(this);
-
-            this.toolStripStatusLabel1.Text = "Program gotowy do działania! Kliknij dalej...";
-
-            current_username = "";
-
-            // umiejscowienie okna
-            this.CenterToScreen();
-
-            data_holder = new InitDataHolder();
-
-            is_form_initialized = false;
-        }     
+        BackgroundWorker load_single_post_worker;
+        BackgroundWorker like_single_post_worker;
+        BackgroundWorker comment_single_post_worker;
+        BackgroundWorker like_in_loop_worker;
+        BackgroundWorker comment_in_loop_worker;
         
         public Form1(InitDataHolder holder)
         {
             InitializeComponent();
             data_holder = holder;
 
-            // baza danych
-            connectionString = "Data Source=tomesheq_db.db;Version=3;";
-
             // ogolne
             media_to_comment_counter = 0;
-            posts_newer_than_timestamp = 0;
             support_group_index = -1;
 
             // utworzenie obiektu z klasami emoji
@@ -121,10 +68,12 @@ namespace IGTomesheqAutoLiker
 
             this.toolStripStatusLabel1.Text = "Program gotowy do działania! Kliknij dalej...";
 
-            current_username = "";
+            InitializeBackgrounndworkers();
 
             // umiejscowienie okna
             this.CenterToScreen();
+            is_form_initialized = false;
+            total_likes_count = 0;
         }
 
         public bool Initialize()
@@ -160,11 +109,160 @@ namespace IGTomesheqAutoLiker
                     // nie udalo sie pobrac danych z telegrama - co robic?!
                 }
 
+                InitSettingsPanel();
+
                 is_form_initialized = true; 
             }
             return true;
         }
 
+        private void InitializeBackgrounndworkers()
+        {
+            // inicjalizacja
+            load_single_post_worker = new BackgroundWorker();
+            like_single_post_worker = new BackgroundWorker();
+            comment_single_post_worker = new BackgroundWorker();
+            like_in_loop_worker = new BackgroundWorker();
+            comment_in_loop_worker = new BackgroundWorker();
+
+            // przypisanie metod
+            load_single_post_worker.DoWork += Load_single_post_worker_DoWork;
+            load_single_post_worker.RunWorkerCompleted += Load_single_post_worker_RunWorkerCompleted;
+            load_single_post_worker.ProgressChanged += Load_single_post_worker_ProgressChanged;
+
+            like_single_post_worker.DoWork += Like_single_post_worker_DoWork;
+            like_single_post_worker.RunWorkerCompleted += Like_single_post_worker_RunWorkerCompleted;
+            like_single_post_worker.ProgressChanged += Like_single_post_worker_ProgressChanged;
+
+            comment_single_post_worker.DoWork += Comment_single_post_worker_DoWork;
+            comment_single_post_worker.RunWorkerCompleted += Comment_single_post_worker_RunWorkerCompleted;
+            comment_single_post_worker.ProgressChanged += Comment_single_post_worker_ProgressChanged;
+
+            like_in_loop_worker.DoWork += Like_in_loop_worker_DoWork;
+            like_in_loop_worker.ProgressChanged += Like_in_loop_worker_ProgressChanged;
+            like_in_loop_worker.RunWorkerCompleted += Like_in_loop_worker_RunWorkerCompleted;
+
+            comment_in_loop_worker.DoWork += Comment_in_loop_worker_DoWork;
+            comment_in_loop_worker.ProgressChanged += Comment_in_loop_worker_ProgressChanged;
+            comment_in_loop_worker.RunWorkerCompleted += Comment_in_loop_worker_RunWorkerCompleted;
+        }
+
+        private void Comment_in_loop_worker_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void Comment_in_loop_worker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void Comment_in_loop_worker_DoWork(object sender, DoWorkEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void Like_in_loop_worker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void Like_in_loop_worker_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void Like_in_loop_worker_DoWork(object sender, DoWorkEventArgs e)
+        {
+            SupportGroup support_group = (SupportGroup)e.Argument;
+
+            
+        }
+
+        private void Comment_single_post_worker_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void Comment_single_post_worker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void Comment_single_post_worker_DoWork(object sender, DoWorkEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void Like_single_post_worker_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void Like_single_post_worker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void Like_single_post_worker_DoWork(object sender, DoWorkEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void Load_single_post_worker_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void Load_single_post_worker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void Load_single_post_worker_DoWork(object sender, DoWorkEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        private void PleaseWaitShowSinglePost()
+        {
+            // pokaz panel
+            this.panel_please_wait.Show();
+
+            // pokaz w labelu, ze laduje post
+            this.label_wait_info.Text = "Przygotowuję post...";
+
+            // ukryj label_progress - w tym przypadku nie jest potrzebny
+            this.label_progress.Hide();
+        }
+
+        private void PleaseWaitLikeInLoop(SupportGroup support_group)
+        {
+            // pokaz panel
+            this.panel_please_wait.Show();
+
+            // pokaz w labelu, ze laduje post
+            this.label_wait_info.Text = $"Lajkuje wszystkie posty z grupy {support_group.Name}";
+
+            // ukryj label_progress - w tym przypadku nie jest potrzebny
+            this.label_progress.Show();
+            this.label_progress.Text = SetupProgressLabel(0, support_group.MessagesWithInstaPosts.Count);
+
+            // uruchom backgroundworker
+            like_in_loop_worker.RunWorkerAsync(support_group);
+        }
+
+        // Zwraca tekst do labela z progresem likowania/komentowania
+        private string SetupProgressLabel(int current_index, int no_of_posts)
+        {
+            int percent = (int)(((double)current_index / (double)no_of_posts) * 100);
+            string ret = "";
+            ret = $"{current_index}/{no_of_posts} ({percent}%)";
+
+            return ret;
+        }
+
+        // pobiera domyslne komentarze do listy do wyswietlenia
         private bool InitDefaultCommentsList(List<DefaultComment> default_comments)
         {
             try
@@ -181,6 +279,7 @@ namespace IGTomesheqAutoLiker
             }
         }
 
+        // inicjalizuje panel grup wsparcia
         private bool InitSupportGroupsPanel(List<TLChannel> channels, List<TLChat> chats, List<SupportGroup> initial_support_groups)
         {
             try
@@ -197,10 +296,14 @@ namespace IGTomesheqAutoLiker
                 {
                     listView2.Items.Remove(listView2.FindItemWithText(group.Name));
                     listView3.Items.Add(group.Name);
-                    listBox2.Items.Add(group.Name);
+                    listView_2.Items.Add(group.Name);
+                    if(group.Settings.OnlyLike)
+                    {
+                        listView_2.Items[listView_2.Items.Count - 1].BackColor = Color.Aqua;
+                    }
                     support_groups.Add(group);
                 }
-                listBox2.SelectedIndex = 0;
+
                 return true;
             }
             catch (Exception ex)
@@ -209,6 +312,15 @@ namespace IGTomesheqAutoLiker
             }
         }
 
+        // inicjalizuje panel ustawien
+        private void InitSettingsPanel()
+        {
+            textBox_likes_limit.Text = data_holder.likes_limit.ToString();
+            textBox_min_time_betw_likes.Text = data_holder.min_time_betw_likes.ToString();
+            textBox_max_time_betw_likes.Text = data_holder.max_time_betw_likes.ToString();
+        }
+
+        // odpowiada za wyswietlanie okienka z zarzadzaniem kontem inagrama
         private void SetUpTelegramPanel(InitDataHolder.ShowTelegramPanelWith show_option)
         {
             // panel6 -> panel z labelem z info o nieudanym logowaniu
@@ -255,6 +367,7 @@ namespace IGTomesheqAutoLiker
             }
         }
 
+        // odpowiada za wyswietlanie okienka z zarzadzaniem kontem telegrama
         private void SetUpInstagramPanel(InitDataHolder.ShowInstagramPanelWith show_option)
         {
             // panel1 -> panel loginu i hasła w panelu insta
@@ -303,243 +416,35 @@ namespace IGTomesheqAutoLiker
             }
         }
 
-        /* --- SCREEN POWITALNY --- */
-        // button dalej na screen1 (powitanie)
-        private void button1_Click(object sender, EventArgs e)
-        {
-            this.panel_hello.Hide();
-            this.panel_comments.Show();
-
-            // zainicjuj formularz danymi
-            init_comments_screen();
-
-            // wyswietl podpowiedz na toolStripLabel
-            this.toolStripStatusLabel1.Text = "Zarządzaj domyślnymi komentarzami. Gdy gotowe, kliknij dalej...";
-        }
-        /* --- |SCREEN POWITALNY| --- */
-
-        /* --- SCREEN Z DOMYŚLNYMI KOMENTARZAMI --- */
-        private void init_comments_screen()
-        {
-            using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
-            {
-                // odczytaj z bazy danych dostepne komentarze
-                m_dbConnection.Open();
-                string sql = "SELECT * FROM default_comments";
-                SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
-                SQLiteDataReader reader = command.ExecuteReader();
-                while (reader.Read())
-                {
-                    listView1.Items.Add(reader["comment"].ToString());
-                    //MessageBox.Show(reader["comment"].ToString());
-                }
-
-                // przy okazji zapisz do bazy API ID i API Hash i phone_number pusty
-                // sprawdz czy juz nie ma wpisu
-
-                sql = "SELECT * FROM telegram_data";
-                command = new SQLiteCommand(sql, m_dbConnection);
-                reader = command.ExecuteReader();
-
-                // jesli nie ma to zrob nowy
-                if (!reader.HasRows)
-                {
-                    sql = $"INSERT INTO telegram_data (api_id, api_hash, phone_number) VALUES ({API_ID}, '{API_HASH}', '')";
-                    command = new SQLiteCommand(sql, m_dbConnection);
-                    command.ExecuteNonQuery(); // nic nie zwraca
-                }
-                m_dbConnection.Close();
-            }
-        }
-
-        // button dalej na screenie z domyslnymi komentarzami
-        private async void button2_Click(object sender, EventArgs e)
-        {
-            this.panel_comments.Hide();
-            this.panel_telegram_login.Show();
-            this.button5.Enabled = false;
-
-            // inicjalizacja okna telegrama
-            this.toolStripStatusLabel1.Text = "Trwa inicjalizacja Telegrama...";
-            if(await init_telegram())
-            {
-                // inicjalizacja okna instagrama
-                this.toolStripStatusLabel1.Text = "Trwa inicjalizacja Instagrama...";
-
-                if (await init_instagram())
-                {
-                    // wyswietl info
-                    this.toolStripStatusLabel1.Text = "Gotowe! Kliknij dalej...";
-                    this.button5.Enabled = true;
-                }
-                else
-                {
-                    // Logowanie do Instagrama nieudane - spróbuj jeszcze raz...
-                    this.toolStripStatusLabel1.Text = "Logowanie do Instagrama nieudane - wprowadź dane i kliknij Zaloguj...";
-                }
-            }
-            else
-            {
-                // Logowanie do Telegrama nieudane - spróbuj jeszcze raz...
-                this.toolStripStatusLabel1.Text = "Logowanie do Telegrama nieudane - spróbuj jeszcze raz...";
-            }
-        }
-
-        // button zapisywania komentarza
-        private void button3_Click(object sender, EventArgs e)
-        {
-            // jesli pole jest puste, to nic nie dodawaj
-            if (richTextBox1.Text.Length == 0)
-                return;
-            // dodaj komentarz do listy
-            listView1.Items.Add(new ListViewItem(richTextBox1.Text.ToString()));
-            // dodaj komentarz do bazy danych
-            using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
-            {
-                m_dbConnection.Open();
-                string sql = $"INSERT INTO default_comments (id_comment, comment, used_automatically) VALUES (NULL, '{richTextBox1.Text.ToString()}', 0)";
-                SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
-                command.ExecuteNonQuery(); // nic nie zwraca
-                m_dbConnection.Close(); 
-            }
-            // wyczysc richtextbox
-            richTextBox1.Text = "";
-        }
-
-        // button do usuniecia niechcianego komentarza z listView1
-        private void button4_Click(object sender, EventArgs e)
-        {
-            // jesli nic nie zaznaczono to nic nie rob
-            if (listView1.SelectedIndices.Count == 0)
-                return;
-            // usun zaznaczony komentarz z bazy danych
-            using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
-            {
-                m_dbConnection.Open();
-                string sql = $"DELETE FROM default_comments WHERE comment='{listView1.SelectedItems[0].Text}'";
-                SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
-                command.ExecuteNonQuery(); // nic nie zwraca
-                m_dbConnection.Close(); 
-            }
-            // usun zaznaczony komentarz z listy
-            listView1.SelectedItems[0].Remove();
-        }
-        /* --- |SCREEN Z DOMYŚLNYMI KOMENTARZAMI| --- */
-
-        /* --- SCREEN Z LOGOWANIEM DO TELEGRAMA I INSTAGRAMA --- */
-        private async Task<bool> init_telegram()
-        {
-            // inicjalizuje polaczenie telegramowe
-            bool connection_succesfull = false;
-            int connection_attemps_counter = 0;
-
-            while (!connection_succesfull && connection_attemps_counter < 3)
-            {
-                try
-                {
-                    store = new FileSessionStore();
-                    client = new TelegramClient(API_ID, API_HASH, store);
-                    await client.ConnectAsync();
-                    connection_succesfull = true;
-                }
-                catch (Exception ex)
-                {
-                    connection_attemps_counter++;
-                    MessageBox.Show("Próba zalogowania nr " + connection_attemps_counter.ToString() + " nieudana... Poniżej komunikat błędu, kliknij OK, aby spróbować ponownie.\n" + ex.Message.ToString());
-                } 
-            }
-            if (client.IsUserAuthorized())
-            {
-                // ukryj pola do wpisania numeru telefonu
-                // label30 -> label numer telefonu
-                // textbox4 -> textbox z nuemrem telefonu
-                // button15 -> button zapisz numer i wyslij kod
-                label30.Hide();
-                textBox4.Hide();
-                button15.Hide();
-
-                // ukryj pola do wpisania kodu
-                // label15 -> label kod z telegrama
-                // textbox1 -> textbox do wpisania kod z instagrama
-                // button6 -> button zapisania kodu telegrama
-                label15.Hide();
-                textBox1.Hide();
-                button6.Hide();
-
-                // pokaz labele z info, ze logowanie pomyslne
-                label16.Show();
-                label17.Show();
-
-                try
-                {
-                    // pobierz channele
-                    GetAllTelegramChannelsAndChats();
-                    return true;
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Problem z pobieraniem channeli!\n" + ex.Message.ToString());
-                    return false;
-                }
-            }
-            return false;
-        }
-
-        private async Task GetAllTelegramChannelsAndChats()
-        {
-            // pobiera wszystkie chaty uzytkownika
-            dialogs = (TLDialogs)await data_holder.client.GetUserDialogsAsync();
-            try
-            {
-                channels = dialogs.Chats
-                        .OfType<TLChannel>()
-                        .ToList();
-                chats = dialogs.Chats
-                        .OfType<TLChat>()
-                        .ToList();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Błąd podczas pobierania danych z Telegrama:\n" + ex.Message.ToString());
-            }
-        }
-
         // button zapisz kod potwierdzajacy od Telegrama
         private async void button6_Click(object sender, EventArgs e)
         {
             // informuje uzytkownika co sie dzieje
             this.toolStripStatusLabel1.Text = "Trwa potwierdzanie otrzymanego kodu...";
             // jesli nie wpisano kodu, nic nie rob
-            if (textBox1.Text.Length == 0)
-                return;
+            // if (textBox1.Text.Length == 0)
+            //    return;
             // jesli kod poprawny (?) to zapisz go
-            code = textBox1.Text;
+            //code = textBox1.Text;
 
             // dodaj do bazy danych
-            using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
+            using (SQLiteConnection m_dbConnection = new SQLiteConnection(data_holder.connectionString))
             {
                 m_dbConnection.Open();
-                string sql = $"UPDATE telegram_data SET phone_number = '{phone_number}' WHERE phone_number = ''";
+                string sql = $"UPDATE telegram_data SET phone_number = '{data_holder.phone_number}' WHERE phone_number = ''";
                 SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
                 command.ExecuteNonQuery(); // nic nie zwraca
                 m_dbConnection.Close(); 
             }
 
-            // ukryj pola do wpisania kodu
-            textBox1.Hide();
-            label15.Hide();
-            button6.Hide();
-            // debug purposes
-            //MessageBox.Show("Kod: " + code);
-            // wyslij do Telegrama kod
-            user = await client.MakeAuthAsync(phone_number, hash, code);
+
+            data_holder.user = await data_holder.client.MakeAuthAsync(data_holder.phone_number, data_holder.hash, data_holder.code);
             // wyswietl komunikat, gdy logowanie przebieglo pomyslnie
-            if (user.Id > 0)
+            if (data_holder.user.Id > 0)
             {
                 // informacja o pomyslnym zalogowaniu do telegrama
                 this.toolStripStatusLabel1.Text = "Pomyslnie zalogowano do telegrama!";
-                label16.Show();
-                label17.Show();
+                
             }
         }
 
@@ -547,7 +452,7 @@ namespace IGTomesheqAutoLiker
         private async void button15_Click(object sender, EventArgs e)
         {
             // zapisz nr telefonu w bazie danych
-            if (textBox4.Text.Length == 9)
+            /*if (textBox4.Text.Length == 9)
             {
                 this.phone_number = "48";
                 this.phone_number = this.phone_number.Insert(2, textBox4.Text);
@@ -560,345 +465,16 @@ namespace IGTomesheqAutoLiker
             {
                 MessageBox.Show("Nr telefonu powinien miec długość 11 znaków i zaczynać się od 48");
                 return;
-            }
+            }*/
 
             // jesli nr telefonu jest poprawny to go pokaz
             //MessageBox.Show("Nr telefonu: " + this.phone_number);
 
             // wyslij kod telegrama
-            hash = await client.SendCodeRequestAsync(this.phone_number);
-
-            // label30 -> label numer telefonu
-            // textbox4 -> textbox z nuemrem telefonu
-            // button15 -> button zapisz numer i wyslij kod
-            // wszystkie je schowac
-            label30.Hide();
-            textBox4.Hide();
-            button15.Hide();
-
-            // label15 -> label kod z telegrama
-            // textbox1 -> textbox do wpisania kod z instagrama
-            // button6 -> button zapisania kodu telegrama
-            // wszystkie je pokazac
-            label15.Show();
-            textBox1.Show();
-            button6.Show();
+            data_holder.hash = await data_holder.client.SendCodeRequestAsync(data_holder.phone_number);
 
             // informacja o oczekiwaniu na kod z Telegrama
-            this.toolStripStatusLabel1.Text = $"Na konto Telegram przypisane do numeru {this.phone_number} został wysłany kod potwierdzający - wpisz go w polu powyżej";
-        }
-
-        private async Task<bool> init_instagram()
-        {
-            string login = "";
-            string password = "";
-            string sql = $"SELECT * FROM instagram_data LIMIT 1";
-            try
-            {
-                using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
-                {
-                    m_dbConnection.Open();
-                    SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
-                    SQLiteDataReader reader = command.ExecuteReader();
-                    if (reader.HasRows)
-                    {
-                        // schowanie pol do wpisania danych
-                        label26.Hide();
-                        label27.Hide();
-                        textBox2.Hide();
-                        textBox3.Hide();
-                        button14.Hide();
-                        button5.Enabled = false;
-
-                        while (reader.Read())
-                        {
-                            login = reader["login"].ToString();
-                            password = reader["password"].ToString();
-                        }
-                    }
-                    m_dbConnection.Close(); 
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Bład podczas sprawdzania loginu w bazie danych:\n" + ex.Message.ToString());
-            }
-
-            if((login.Length > 0) && (password.Length > 0))
-            {
-                /*Action<object> LoginToInsta;
-                LoginToInsta = TryInstaLogin;
-                InstaLoginData login_data = new InstaLoginData(login, password);
-
-                Task task = new Task(TryInstaLogin, login_data);*/
-
-                IGProc.login = login;
-                IGProc.password = password;
-                await IGProc.Login(login, password);
-            }
-
-            if(IGProc.IsUserAuthenticated())
-            {
-                // schowanie pol do wpisania danych
-                label26.Hide();
-                label27.Hide();
-                textBox2.Hide();
-                textBox3.Hide();
-                //button5.Enabled = true;
-
-                // pokaz labele informacyjne
-                label28.Show();
-                label29.Hide();
-
-                button14.Show();
-                button14.Text = "Wyloguj";
-
-                var post = await IGProc.GetInstaPost(await IGProc.GetMediaIdFromUrl("https://www.instagram.com/p/Bmbo7pNnMcs/"));
-                return true;
-            }
-            else
-            {
-                // pokaz dane do logowania ponownie
-                label26.Show();
-                label27.Show();
-                textBox2.Show();
-                textBox3.Show();
-                button14.Show();
-                //button5.Enabled = true;
-
-                // pokaz labele informacyjne
-                label29.Hide();
-                label28.Hide();
-
-                return false;
-            }
-        }
-
-        // button logowania do insta
-        private async void button14_Click(object sender, EventArgs e)
-        {
-            if (!IGProc.IsUserAuthenticated())
-            {
-                if ((textBox2.Text.Length > 0) && (textBox3.Text.Length > 0))
-                {
-                    // informacja o logowaniu do instagrama
-                    this.toolStripStatusLabel1.Text = $"Witaj {textBox2.Text}! Trwa logowanie do Instagrama...";
-
-                    textBox2.Enabled = false;
-                    textBox3.Enabled = false;
-                    button14.Enabled = false;
-                    //MessageBox.Show($"login: {textBox2.Text}\npassword: {textBox3.Text}");
-                    await IGProc.Login(textBox2.Text, textBox3.Text);
-                    if (IGProc.IsUserAuthenticated())
-                    {
-                        using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
-                        {
-                            m_dbConnection.Open();
-                            string sql = $"SELECT * FROM instagram_data WHERE login = '{textBox2.Text}' AND password = '{textBox3.Text}'";
-                            SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
-                            SQLiteDataReader reader = command.ExecuteReader();
-                            if (reader.HasRows)
-                            {
-                                // wszystko OK - nic nie rob
-                            }
-                            else
-                            {
-                                // nie ma takiego loginu w bazie - zapisz go
-                                IGProc.login = textBox2.Text;
-                                IGProc.password = textBox3.Text;
-                                sql = $"INSERT INTO instagram_data (login, password) VALUES ('{textBox2.Text}', '{textBox3.Text}')";
-                                command = new SQLiteCommand(sql, m_dbConnection);
-                                command.ExecuteNonQuery();
-                            }
-                            m_dbConnection.Close();
-                        }
-
-                        // schowanie pol do wpisania danych
-                        label26.Hide();
-                        label27.Hide();
-                        textBox2.Hide();
-                        textBox3.Hide();
-                        //button14.Hide();
-
-                        // pokaz labele informacyjne
-                        label28.Show();
-                        label29.Hide();
-
-                        textBox2.Enabled = true;
-                        textBox3.Enabled = true;
-                        button14.Enabled = true;
-                        button14.Text = "Wyloguj";
-                        this.button5.Enabled = true;
-                        // informacja o logowaniu do instagrama
-                        this.toolStripStatusLabel1.Text = $"Gotowe! Kliknij dalej...";
-                    }
-                    else
-                    {
-                        textBox2.Enabled = true;
-                        textBox3.Enabled = true;
-                        button14.Enabled = true;
-
-                        // informacja o logowaniu do instagrama
-                        this.toolStripStatusLabel1.Text = $"Logowanie nieudane! Spróbuj ponownie...";
-
-                        // pokaz dane do logowania ponownie
-                        label26.Hide();
-                        label27.Hide();
-                        textBox2.Hide();
-                        textBox3.Hide();
-                        button14.Hide();
-
-                        // pokaz labele informacyjne
-                        label29.Show();
-                        label28.Hide();
-                    }
-                }
-            }
-            else
-            {
-                string login = IGProc.login;
-                string password = IGProc.password;
-
-                // informacja o logowaniu do instagrama
-                this.toolStripStatusLabel1.Text = $"Wylogowuję konto {login} z Instagrama...";
-
-                textBox2.Enabled = false;
-                textBox3.Enabled = false;
-                button14.Enabled = false;
-
-                // usun dane konto z bazy danych
-                if (await IGProc.Logout())
-                {
-                    // usun wpis dot uzytkownika z bazy danych
-                    using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
-                    {
-                        m_dbConnection.Open();
-                        string sql = $"DELETE FROM instagram_data WHERE login = '{login}' AND password = '{password}'";
-                        SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
-                        command.ExecuteNonQuery(); // nic nie zwraca
-                        m_dbConnection.Close(); 
-                    }
-
-                    MessageBox.Show("Wylogowano - aby zalogować się na nowo, uruchom ponownie aplikację");
-
-                    Application.Exit();
-                }
-                else
-                {
-                    // informacja o logowaniu do instagrama
-                    this.toolStripStatusLabel1.Text = $"Wylogowanie {login} z Instagrama nie powiodło się...";
-                    MessageBox.Show("Wylogowanie nie powiodło się...");
-                }
-            }
-            /*else
-            {
-                await IGProc.Login("martha_farewell", "rooney892");
-            }*/
-        }
-
-        /* Po tej metodzie w channels zostają tylko grupy wsparcia - inne channele zostają z nich usunięte */
-        private void FilterTelegramChannels(bool init_filtering)
-        {
-            // Usuwa z listy pobranej z Telegrama te channele, ktore nie zostaly wybrane jako grupy wsparcia
-            if (channels != null)
-            {
-                try
-                {
-                    // dodaj do listy wszystkie chaty
-                    int channel_index = 0;
-                    List<int> indicies_to_be_deleted = new List<int>();
-                    foreach (TLChannel channel in channels)
-                    {
-                        bool exists = false;
-                        foreach (ListViewItem it in listView3.Items)
-                        {
-                            if (channel.Title.ToString() == it.Text)
-                            {
-                                exists = true;
-                            }
-                        }
-                        if (!exists)
-                        {
-                            if (init_filtering)
-                            {
-                                listView2.Items.Add(channel.Title.ToString()); 
-                            }
-                            // zapamietaj, ze ten channel nalezy usunac z listy [LIFO, zeby indeksy nie przeskakiwaly po usunieciu]
-                            indicies_to_be_deleted.Insert(0, channel_index);
-                        }
-                        channel_index++;
-                    }
-
-                    if (!init_filtering)
-                    {
-                        // usuwanie nieuzywanych channeli z pamieci [LIFO]
-                        foreach (int index in indicies_to_be_deleted)
-                        {
-                            channels.RemoveAt(index);
-                        } 
-                    }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("foreach channels " + ex.Message.ToString());
-                }
-            }
-            else
-            {
-                MessageBox.Show("channels == null");
-            }
-        }
-
-        /* Po tej metodzie w chats zostają tylko grupy wsparcia - inne chaty zostają z nich usunięte */
-        private void FilterTelegramChats(bool init_filtering)
-        {
-            if (chats != null)
-            {
-                try
-                {
-                    // dodaj do listy wszystkie chaty
-                    int chat_index = 0;
-                    List<int> indicies_to_be_deleted = new List<int>();
-                    foreach (TLChat chat in chats)
-                    {
-                        bool exists = false;
-                        foreach (ListViewItem it in listView3.Items)
-                        {
-                            if (chat.Title.ToString() == it.Text)
-                            {
-                                exists = true;
-                            }
-                        }
-                        if (!exists)
-                        {
-                            if (init_filtering)
-                            {
-                                listView2.Items.Add(chat.Title.ToString()); 
-                            }
-                            // zapamietaj, ze ten channel nalezy usunac z listy [LIFO, zeby indeksy nie przeskakiwaly po usunieciu]
-                            indicies_to_be_deleted.Insert(0, chat_index);
-                        }
-                        chat_index++;
-                    }
-
-                    // usuwanie nieuzywanych channeli z pamieci [LIFO]
-                    if (!init_filtering)
-                    {
-                        foreach (int index in indicies_to_be_deleted)
-                        {
-                            chats.RemoveAt(index);
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("foreach chats " + ex.Message.ToString());
-                }
-            }
-            else
-            {
-                MessageBox.Show("chats == null");
-            }
+            this.toolStripStatusLabel1.Text = $"Na konto Telegram przypisane do numeru {data_holder.phone_number} został wysłany kod potwierdzający - wpisz go w polu powyżej";
         }
 
         // sprawdza czy zapamiętana w DB grupa wsparcia faktycznie istnieje w Telegramie
@@ -907,14 +483,14 @@ namespace IGTomesheqAutoLiker
             foreach (ListViewItem item in listView3.Items)
             {
                 bool exists = false;
-                foreach (var channel in channels)
+                foreach (var channel in data_holder.channels)
                 {
                     if (channel.Title == item.Text)
                     {
                         exists = true;
                     }
                 }
-                foreach (var chat in chats)
+                foreach (var chat in data_holder.chats)
                 {
                     if (chat.Title == item.Text)
                     {
@@ -926,7 +502,7 @@ namespace IGTomesheqAutoLiker
                 {
                     MessageBox.Show($"Wygląda na to, że nie należysz już do grupy wsparcia \"{item.Text}\".\nUsuwam tę grupę z listy");
                     listView3.Items.Remove(item);
-                    using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
+                    using (SQLiteConnection m_dbConnection = new SQLiteConnection(data_holder.connectionString))
                     {
                         m_dbConnection.Open();
                         string sql = $"DELETE FROM support_groups WHERE group_name = '{item.Text}'";
@@ -938,206 +514,7 @@ namespace IGTomesheqAutoLiker
             }
         }
 
-        // button dalej na screenie z logowaniem do telegrama
-        private void button5_Click(object sender, EventArgs e)
-        {
-            // dodaj grupy wsparcia do drugiej listy
-            using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
-            {
-                m_dbConnection.Open();
-                string sql = "SELECT * FROM support_groups";
-                SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
-                SQLiteDataReader reader = command.ExecuteReader();
-                while (reader.Read())
-                {
-                    listView3.Items.Add(reader["group_name"].ToString());
-                    //MessageBox.Show(reader["group_name"].ToString());
-                }
-                m_dbConnection.Close(); 
-            }
-
-            // usuwa z pamieci channele i chaty nie bedace grupami wsparcia
-            this.toolStripStatusLabel1.Text = "Filtrowanie chatów Telegrama...";
-            FilterTelegramChannels(true/*it is initial filtering*/);
-            FilterTelegramChats(true/*it is initial filtering*/);
-            CheckIfSupportGroupsExist();
-
-            panel_telegram_login.Hide();
-            panel_telegram_chats.Show();
-
-            // pokaz info
-            this.toolStripStatusLabel1.Text = "Zarządzaj grupami wsparcia! Gdy gotowe, kliknij dalej...";
-        }
-
-        /* --- |SCREEN Z LOGOWANIEM DO TELEGRAMA I INSTAGRAMA| --- */
-
         /* --- SCREEN Z GRUPAMI WSPARCIA TELEGRAMA --- */
-
-        // button dalej na screenie z grupami wsparcia telegrama
-        private void button7_Click(object sender, EventArgs e)
-        {
-            if(listView3.Items.Count == 0)
-            {
-                MessageBox.Show("Hola hola! Wybierz choć jedną grupę wsparcia i kliknij dalej");
-                return;
-            }
-
-            panel_telegram_chats.Hide();
-
-            // usuwa z pamieci channele i chaty nie bedace grupami wsparcia
-            this.toolStripStatusLabel1.Text = "Ponowne filtrowanie chatów Telegrama...";
-            this.Refresh();
-            FilterTelegramChannels(false/*it is NOT initial filtering*/);
-            FilterTelegramChats(false/*it is NOT initial filtering*/);
-
-            // inicjalizacja kolejnego ekranu
-            //InitChooseDate();
-            panel_settings.Show();
-
-            //InitLikeCommenterPanel(/*true*/);
-            //panel_liker_commenter.Show();
-
-            //MessageBox.Show("Przynajmniej jedna z grup wsparcia nie została jeszcze ani razu skomentowana - nad listą grup wsparcia pojawił się kalendarzyk z przyciskiem szukaj. Wybierz datę i godzinę od której mają zostać pobrane posty i kliknij szukaj.");
-            this.toolStripStatusLabel1.Text = "Gotowe! Wybierz datę, od której chcesz przeszukać grupy wsparcia - zostaną znalezione linki dodane po tej dacie...";
-            this.Refresh();
-        }
-
-        /* Po tej metodzie w support_gourps[i].GroupMessages są już tylko wiadomości zawierające linki do zdjęć */
-        private async Task GetTelegramChannelsMessages(long timestamp)
-        {
-            this.Refresh();
-            if (channels != null)
-            {
-                foreach (var channel in channels)
-                {
-                    this.toolStripStatusLabel1.Text = "Szukam linków w grupie " + channel.Title + "...";
-                    this.Refresh();
-                    List<TLMessage> TLmessages = new List<TLMessage>();
-                    
-                    if (channel.AccessHash != null)
-                    {
-                        // tworzy obiekty klasy SupportGroup dla kazdej grupy wsparcia
-                        support_groups.Add(new SupportGroup(channel.Title));
-                        // sprawdza jaka wiadomosc z czatu byla obsluzona (like & comment) jako ostatnia
-                        long last_done_msg_timestamp = support_groups.Last().GetLastDoneMessageDate();
-                        if(last_done_msg_timestamp <= 0)
-                        {
-                            last_done_msg_timestamp = timestamp;
-                        }
-                        //MessageBox.Show("Pobieram wiadomości młodsze niż: " + UnixTimeStampToDateTime(last_done_msg_timestamp).ToLongTimeString() + " " + last_done_msg_timestamp.ToString());
-                        // pobiera zbior wiadomosci dla danego kanalu
-                        try
-                        {
-                            var peer = new TLInputPeerChannel() { ChannelId = channel.Id, AccessHash = (long)channel.AccessHash.Value };
-                            var msgs = await data_holder.client.GetHistoryAsync(peer, 0, 0, 100);
-                            if (msgs is TLChannelMessages)
-                            {
-                                var messag = msgs as TLChannelMessages;
-                                //MessageBox.Show("Liczba wiadomości w channelu " + channel.Title + " = " + messag.Count.ToString());
-                                if (messag.Count <= 100)
-                                {
-                                    var messages = messag.Messages;
-
-                                    foreach (var message in messages)
-                                    {
-                                        if (message is TLMessage)
-                                        {
-                                            var m = message as TLMessage;
-                                            // sprawdzenie czy ta wiadomość już była
-                                            if (m.Date <= last_done_msg_timestamp)
-                                            {
-                                                System.Diagnostics.Debug.Write("\n||| " + channel.Title + ": " + TLmessages.Count.ToString() + " wiadomosci pobrano!|||\n");
-                                                break;
-                                            }
-                                            TLmessages.Add(m);
-                                        }
-                                        else if (message is TLMessageService)
-                                        {
-                                            var m1 = message as TLMessageService;
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    bool done = false;
-                                    int total = 0;
-                                    while (/*(total < 500) && */!done) // tymczasowo - sprawdzac date wiadomosci
-                                    {
-                                        var messa = msgs as TLChannelMessages;
-                                        var messages = messa.Messages;
-
-                                        foreach (var message in messages)
-                                        {
-                                            if (message is TLMessage)
-                                            {
-                                                var m = message as TLMessage;
-                                                // sprawdzenie czy ta wiadomość już była
-                                                if (m.Date <= last_done_msg_timestamp)
-                                                {
-                                                    done = true;
-                                                    System.Diagnostics.Debug.Write("\n||| " + channel.Title + ": " + TLmessages.Count.ToString() + " wiadomosci pobrano!|||\n");
-                                                    break;
-                                                }
-                                                ++total;
-                                                TLmessages.Add(m);
-                                            }
-                                            else if (message is TLMessageService)
-                                            {
-                                                var mess = message as TLMessageService;
-                                                ++total;
-                                                done = mess.Action is TLMessageActionChatCreate;
-                                                if (done)
-                                                {
-                                                    System.Diagnostics.Debug.Write("\n||| " + channel.Title + ": " + TLmessages.Count.ToString() + " wiadomosci pobrano!|||\n");
-                                                    break;
-                                                }
-                                                else
-                                                    continue;
-                                            }
-                                        }
-
-                                        //MessageBox.Show("Pobrano już " + total.ToString() + " wiadomości dla dialoga " + channel.Title);
-                                        // jesli done = true, czyli znaleziono juz wiadomosci starsze niz data graniczna, nie pobieraj wiecej wiadomosci
-                                        if (!done)
-                                        {
-                                            try
-                                            {
-                                                msgs = await data_holder.client.GetHistoryAsync(peer, total, 0, 100);
-                                            }
-                                            catch (FloodException ex)
-                                            {
-                                                int seconds_to_wait = (int)ex.TimeToWait.TotalSeconds;
-                                                for (int i = 0; i < seconds_to_wait; i++)
-                                                {
-                                                    this.toolStripStatusLabel1.Text = "Próbujemy pobrać zbyt wiele wiadomości w zbyt krótkim czasie - Telegram się broni... Czekam " + (seconds_to_wait - i).ToString() + " sekund...";
-                                                    this.Refresh();
-                                                    Thread.Sleep(1000);
-                                                }
-                                                this.toolStripStatusLabel1.Text = "Szukam dalej linków w grupie " + channel.Title + "...";
-                                                this.Refresh();
-                                                try
-                                                {
-                                                    msgs = await data_holder.client.GetHistoryAsync(peer, total, 0, 100);
-                                                }
-                                                catch (FloodException)
-                                                {
-                                                    MessageBox.Show("Telegram znowu się broni... Poczekaj cierpliwie :(");
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            MessageBox.Show("Wystąpił błąd podczas pobierania wiadomości! Problem spowodowany jest przez niedziałające serwery Telegrama - aplikacja zostanie zamknięta. Uruchom ją ponownie i spróbuj jeszcze raz\n" + ex.Message.ToString());
-                        }
-                        support_groups.Last().AddAndFilterMessages(TLmessages);
-                    }
-                }
-            }
-        }
 
         private async Task<List<TLMessage>> GetTelegramMessagesFromChannel(SupportGroup support_group)
         {
@@ -1163,32 +540,265 @@ namespace IGTomesheqAutoLiker
                 case StartingDateMethod.LastXHours:
                     download_timestamp = ToUnixTimestamp(DateTime.Now.Subtract(TimeSpan.FromHours(support_group.Settings.LastHours)));
                     break;
+
+                case StartingDateMethod.NotInitialized:
+                    download_timestamp = support_group.Settings.CalendarDateTimestamp;
+                    break;
             }
 
             if (download_timestamp > 0)
             {
-                if (channels != null)
+                if (data_holder.channels != null)
                 {
-                    TLChannel channel = channels.Where(x => x.Title == support_group.Name).FirstOrDefault();
-
-                    if (channel != null)
+                    if (data_holder.channels.Where(x => x.Title == support_group.Name).Count() > 0)
                     {
-                        if (channel.AccessHash != null)
-                        {
-                            // pobiera zbior wiadomosci dla danego kanalu
-                            try
-                            {
-                                var peer = new TLInputPeerChannel() { ChannelId = channel.Id, AccessHash = (long)channel.AccessHash.Value };
-                                var msgs = await data_holder.client.GetHistoryAsync(peer, 0, 0, 100);
-                                if (msgs is TLChannelMessages)
-                                {
-                                    var messag = msgs as TLChannelMessages;
-                                    //MessageBox.Show("Liczba wiadomości w channelu " + channel.Title + " = " + messag.Count.ToString());
-                                    if (messag.Count <= 100)
-                                    {
-                                        var messages = messag.Messages;
+                        TLChannel channel = data_holder.channels.Where(x => x.Title == support_group.Name).First();
 
-                                        foreach (var message in messages)
+                        if (channel != null)
+                        {
+                            if (channel.AccessHash != null)
+                            {
+                                // pobiera zbior wiadomosci dla danego kanalu
+                                try
+                                {
+                                    var peer = new TLInputPeerChannel() { ChannelId = channel.Id, AccessHash = (long)channel.AccessHash.Value };
+                                    var msgs = await data_holder.client.GetHistoryAsync(peer, 0, 0, 100);
+                                    if (msgs is TLChannelMessages)
+                                    {
+                                        var messag = msgs as TLChannelMessages;
+                                        //MessageBox.Show("Liczba wiadomości w channelu " + channel.Title + " = " + messag.Count.ToString());
+                                        if (messag.Count <= 100)
+                                        {
+                                            var messages = messag.Messages;
+
+                                            foreach (var message in messages)
+                                            {
+                                                if (message is TLMessage)
+                                                {
+                                                    var m = message as TLMessage;
+                                                    // sprawdzenie czy ta wiadomość już była
+                                                    if (m.Date <= download_timestamp)
+                                                    {
+                                                        System.Diagnostics.Debug.Write("\n||| " + channel.Title + ": " + TLmessages.Count.ToString() + " wiadomosci pobrano!|||\n");
+                                                        break;
+                                                    }
+                                                    TLmessages.Add(m);
+                                                }
+                                                else if (message is TLMessageService)
+                                                {
+                                                    var m1 = message as TLMessageService;
+                                                }
+                                            }
+                                        }
+                                        else
+                                        {
+                                            bool done = false;
+                                            int total = 0;
+                                            while (/*(total < 500) && */!done) // tymczasowo - sprawdzac date wiadomosci
+                                            {
+                                                var messa = msgs as TLChannelMessages;
+                                                var messages = messa.Messages;
+
+                                                foreach (var message in messages)
+                                                {
+                                                    if (message is TLMessage)
+                                                    {
+                                                        var m = message as TLMessage;
+                                                        // sprawdzenie czy ta wiadomość już była
+                                                        if (m.Date <= download_timestamp)
+                                                        {
+                                                            done = true;
+                                                            System.Diagnostics.Debug.Write("\n||| " + channel.Title + ": " + TLmessages.Count.ToString() + " wiadomosci pobrano!|||\n");
+                                                            break;
+                                                        }
+                                                        ++total;
+                                                        TLmessages.Add(m);
+                                                    }
+                                                    else if (message is TLMessageService)
+                                                    {
+                                                        var mess = message as TLMessageService;
+                                                        ++total;
+                                                        done = mess.Action is TLMessageActionChatCreate;
+                                                        if (done)
+                                                        {
+                                                            System.Diagnostics.Debug.Write("\n||| " + channel.Title + ": " + TLmessages.Count.ToString() + " wiadomosci pobrano!|||\n");
+                                                            break;
+                                                        }
+                                                        else
+                                                            continue;
+                                                    }
+                                                }
+
+                                                //MessageBox.Show("Pobrano już " + total.ToString() + " wiadomości dla dialoga " + channel.Title);
+                                                // jesli done = true, czyli znaleziono juz wiadomosci starsze niz data graniczna, nie pobieraj wiecej wiadomosci
+                                                if (!done)
+                                                {
+                                                    try
+                                                    {
+                                                        msgs = await data_holder.client.GetHistoryAsync(peer, total, 0, 100);
+                                                    }
+                                                    catch (FloodException ex)
+                                                    {
+                                                        int seconds_to_wait = (int)ex.TimeToWait.TotalSeconds;
+                                                        for (int i = 0; i < seconds_to_wait; i++)
+                                                        {
+                                                            this.toolStripStatusLabel1.Text = "Próbujemy pobrać zbyt wiele wiadomości w zbyt krótkim czasie - Telegram się broni... Czekam " + (seconds_to_wait - i).ToString() + " sekund...";
+                                                            this.Refresh();
+                                                            Thread.Sleep(1000);
+                                                        }
+                                                        this.toolStripStatusLabel1.Text = "Szukam dalej linków w grupie " + channel.Title + "...";
+                                                        this.Refresh();
+                                                        try
+                                                        {
+                                                            msgs = await data_holder.client.GetHistoryAsync(peer, total, 0, 100);
+                                                        }
+                                                        catch (FloodException)
+                                                        {
+                                                            MessageBox.Show("Telegram znowu się broni... Poczekaj cierpliwie :(");
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                catch (Exception ex)
+                                {
+                                    MessageBox.Show("Wystąpił błąd podczas pobierania wiadomości! Problem spowodowany jest przez niedziałające serwery Telegrama - aplikacja zostanie zamknięta. Uruchom ją ponownie i spróbuj jeszcze raz\n" + ex.Message.ToString());
+                                }
+                            }
+                        }
+                        else // sprawdza chaty, jesli nie znalazlo w channelach
+                        {
+                            if (data_holder.chats != null)
+                            {
+                                if (data_holder.chats.Where(x => x.Title == support_group.Name).Count() > 0)
+                                {
+                                    TLChat chat = data_holder.chats.Where(x => x.Title == support_group.Name).First();
+
+                                    if (chat != null)
+                                    {
+                                        // pobierz wiadomosci dla danego chatu
+                                        var peer = new TLInputPeerChat() { ChatId = chat.Id };
+                                        TLAbsMessages msgs = await data_holder.client.GetHistoryAsync(peer, 0, -1, 100);
+
+                                        if (msgs is TLMessages)
+                                        {
+                                            var messages = msgs as TLMessages;
+
+                                            foreach (var message in messages.Messages)
+                                            {
+                                                if (message is TLMessage)
+                                                {
+                                                    var m = message as TLMessage;
+                                                    // sprawdzenie czy ta wiadomość już była
+                                                    if (m.Date <= download_timestamp)
+                                                    {
+                                                        System.Diagnostics.Debug.Write("\n||| " + chat.Title + ": " + TLmessages.Count.ToString() + " wiadomosci pobrano!|||\n");
+                                                        break;
+                                                    }
+                                                    TLmessages.Add(m);
+                                                }
+                                                else if (message is TLMessageService)
+                                                {
+                                                    var m1 = message as TLMessageService;
+                                                }
+                                            }
+                                        }
+                                        else if (msgs is TLMessagesSlice)
+                                        {
+                                            bool done = false;
+                                            int total = 0;
+                                            while (!done/* && (total < 500)*/)
+                                            {
+                                                var messages = msgs as TLMessagesSlice;
+
+                                                foreach (var message in messages.Messages)
+                                                {
+                                                    if (message is TLMessage)
+                                                    {
+                                                        var m = message as TLMessage;
+                                                        // sprawdzenie czy ta wiadomość już była
+                                                        if (m.Date <= download_timestamp)
+                                                        {
+                                                            done = true;
+                                                            System.Diagnostics.Debug.Write("\n||| " + chat.Title + ": " + TLmessages.Count.ToString() + " wiadomosci pobrano!|||\n");
+                                                            break;
+                                                        }
+                                                        ++total;
+                                                        TLmessages.Add(message as TLMessage);
+                                                    }
+                                                    else if (message is TLMessageService)
+                                                    {
+                                                        var mess = message as TLMessageService;
+                                                        ++total;
+                                                        done = mess.Action is TLMessageActionChatCreate;
+                                                        if (done)
+                                                        {
+                                                            System.Diagnostics.Debug.Write("\n||| " + chat.Title + ": " + TLmessages.Count.ToString() + " wiadomosci pobrano!|||\n");
+                                                            break;
+                                                        }
+                                                        else
+                                                            continue;
+                                                    }
+                                                }
+
+                                                // jesli done = true, czyli znaleziono juz wiadomosci starsze niz data graniczna, nie pobieraj wiecej wiadomosci
+                                                if (!done)
+                                                {
+                                                    try
+                                                    {
+                                                        msgs = await data_holder.client.GetHistoryAsync(peer, total, 0, 0);
+                                                    }
+                                                    catch (FloodException ex)
+                                                    {
+                                                        int seconds_to_wait = (int)ex.TimeToWait.TotalSeconds;
+                                                        MessageBox.Show("Próbujemy pobrać zbyt wiele wiadomości w zbyt krótkim czasie - Telegram się przed tym broni i nie udostępni wiadomości przez " + seconds_to_wait.ToString() + " sekund. Poczekaj cierpliwie i nic nie rób, a aplikacja sama wznowi działanie.");
+                                                        this.toolStripStatusLabel1.Text = "Telegram się broni... Czekam " + seconds_to_wait.ToString() + " sekund...";
+                                                        this.Refresh();
+                                                        Thread.Sleep((seconds_to_wait + 1) * 1000);
+                                                        this.toolStripStatusLabel1.Text = "Szukam dalej linków w grupie " + chat.Title + "...";
+                                                        this.Refresh();
+                                                        try
+                                                        {
+                                                            msgs = await data_holder.client.GetHistoryAsync(peer, total, 0, 100);
+                                                        }
+                                                        catch (FloodException)
+                                                        {
+                                                            MessageBox.Show("Telegram znowu się wyjebał... (Chaty)");
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    return TLmessages;
+                                }
+                            }
+                        } 
+                    }
+                    else
+                    {
+                        if (data_holder.chats != null)
+                        {
+                            if (data_holder.chats.Where(x => x.Title == support_group.Name).Count() > 0)
+                            {
+                                TLChat chat = data_holder.chats.Where(x => x.Title == support_group.Name).First();
+
+                                if (chat != null)
+                                {
+                                    // pobierz wiadomosci dla danego chatu
+                                    var peer = new TLInputPeerChat() { ChatId = chat.Id };
+                                    TLAbsMessages msgs = await data_holder.client.GetHistoryAsync(peer, 0, -1, 100);
+
+                                    if (msgs is TLMessages)
+                                    {
+                                        var messages = msgs as TLMessages;
+
+                                        foreach (var message in messages.Messages)
                                         {
                                             if (message is TLMessage)
                                             {
@@ -1196,7 +806,7 @@ namespace IGTomesheqAutoLiker
                                                 // sprawdzenie czy ta wiadomość już była
                                                 if (m.Date <= download_timestamp)
                                                 {
-                                                    System.Diagnostics.Debug.Write("\n||| " + channel.Title + ": " + TLmessages.Count.ToString() + " wiadomosci pobrano!|||\n");
+                                                    System.Diagnostics.Debug.Write("\n||| " + chat.Title + ": " + TLmessages.Count.ToString() + " wiadomosci pobrano!|||\n");
                                                     break;
                                                 }
                                                 TLmessages.Add(m);
@@ -1207,16 +817,15 @@ namespace IGTomesheqAutoLiker
                                             }
                                         }
                                     }
-                                    else
+                                    else if (msgs is TLMessagesSlice)
                                     {
                                         bool done = false;
                                         int total = 0;
-                                        while (/*(total < 500) && */!done) // tymczasowo - sprawdzac date wiadomosci
+                                        while (!done/* && (total < 500)*/)
                                         {
-                                            var messa = msgs as TLChannelMessages;
-                                            var messages = messa.Messages;
+                                            var messages = msgs as TLMessagesSlice;
 
-                                            foreach (var message in messages)
+                                            foreach (var message in messages.Messages)
                                             {
                                                 if (message is TLMessage)
                                                 {
@@ -1225,11 +834,11 @@ namespace IGTomesheqAutoLiker
                                                     if (m.Date <= download_timestamp)
                                                     {
                                                         done = true;
-                                                        System.Diagnostics.Debug.Write("\n||| " + channel.Title + ": " + TLmessages.Count.ToString() + " wiadomosci pobrano!|||\n");
+                                                        System.Diagnostics.Debug.Write("\n||| " + chat.Title + ": " + TLmessages.Count.ToString() + " wiadomosci pobrano!|||\n");
                                                         break;
                                                     }
                                                     ++total;
-                                                    TLmessages.Add(m);
+                                                    TLmessages.Add(message as TLMessage);
                                                 }
                                                 else if (message is TLMessageService)
                                                 {
@@ -1238,7 +847,7 @@ namespace IGTomesheqAutoLiker
                                                     done = mess.Action is TLMessageActionChatCreate;
                                                     if (done)
                                                     {
-                                                        System.Diagnostics.Debug.Write("\n||| " + channel.Title + ": " + TLmessages.Count.ToString() + " wiadomosci pobrano!|||\n");
+                                                        System.Diagnostics.Debug.Write("\n||| " + chat.Title + ": " + TLmessages.Count.ToString() + " wiadomosci pobrano!|||\n");
                                                         break;
                                                     }
                                                     else
@@ -1246,24 +855,21 @@ namespace IGTomesheqAutoLiker
                                                 }
                                             }
 
-                                            //MessageBox.Show("Pobrano już " + total.ToString() + " wiadomości dla dialoga " + channel.Title);
                                             // jesli done = true, czyli znaleziono juz wiadomosci starsze niz data graniczna, nie pobieraj wiecej wiadomosci
                                             if (!done)
                                             {
                                                 try
                                                 {
-                                                    msgs = await data_holder.client.GetHistoryAsync(peer, total, 0, 100);
+                                                    msgs = await data_holder.client.GetHistoryAsync(peer, total, 0, 0);
                                                 }
                                                 catch (FloodException ex)
                                                 {
                                                     int seconds_to_wait = (int)ex.TimeToWait.TotalSeconds;
-                                                    for (int i = 0; i < seconds_to_wait; i++)
-                                                    {
-                                                        this.toolStripStatusLabel1.Text = "Próbujemy pobrać zbyt wiele wiadomości w zbyt krótkim czasie - Telegram się broni... Czekam " + (seconds_to_wait - i).ToString() + " sekund...";
-                                                        this.Refresh();
-                                                        Thread.Sleep(1000);
-                                                    }
-                                                    this.toolStripStatusLabel1.Text = "Szukam dalej linków w grupie " + channel.Title + "...";
+                                                    MessageBox.Show("Próbujemy pobrać zbyt wiele wiadomości w zbyt krótkim czasie - Telegram się przed tym broni i nie udostępni wiadomości przez " + seconds_to_wait.ToString() + " sekund. Poczekaj cierpliwie i nic nie rób, a aplikacja sama wznowi działanie.");
+                                                    this.toolStripStatusLabel1.Text = "Telegram się broni... Czekam " + seconds_to_wait.ToString() + " sekund...";
+                                                    this.Refresh();
+                                                    Thread.Sleep((seconds_to_wait + 1) * 1000);
+                                                    this.toolStripStatusLabel1.Text = "Szukam dalej linków w grupie " + chat.Title + "...";
                                                     this.Refresh();
                                                     try
                                                     {
@@ -1271,7 +877,7 @@ namespace IGTomesheqAutoLiker
                                                     }
                                                     catch (FloodException)
                                                     {
-                                                        MessageBox.Show("Telegram znowu się broni... Poczekaj cierpliwie :(");
+                                                        MessageBox.Show("Telegram znowu się wyjebał... (Chaty)");
                                                     }
                                                 }
                                             }
@@ -1279,113 +885,9 @@ namespace IGTomesheqAutoLiker
                                     }
                                 }
                             }
-                            catch (Exception ex)
+                            else
                             {
-                                MessageBox.Show("Wystąpił błąd podczas pobierania wiadomości! Problem spowodowany jest przez niedziałające serwery Telegrama - aplikacja zostanie zamknięta. Uruchom ją ponownie i spróbuj jeszcze raz\n" + ex.Message.ToString());
-                            }
-                        }
-                    }
-                    else // sprawdza chaty, jesli nie znalazlo w channelach
-                    {
-                        if (chats != null)
-                        {
-                            TLChat chat = chats.Where(x => x.Title == support_group.Name).First();
-
-                            if (chat != null)
-                            {
-                                // pobierz wiadomosci dla danego chatu
-                                var peer = new TLInputPeerChat() { ChatId = chat.Id };
-                                TLAbsMessages msgs = await data_holder.client.GetHistoryAsync(peer, 0, -1, 100);
-
-                                if (msgs is TLMessages)
-                                {
-                                    var messages = msgs as TLMessages;
-
-                                    foreach (var message in messages.Messages)
-                                    {
-                                        if (message is TLMessage)
-                                        {
-                                            var m = message as TLMessage;
-                                            // sprawdzenie czy ta wiadomość już była
-                                            if (m.Date <= download_timestamp)
-                                            {
-                                                System.Diagnostics.Debug.Write("\n||| " + chat.Title + ": " + TLmessages.Count.ToString() + " wiadomosci pobrano!|||\n");
-                                                break;
-                                            }
-                                            TLmessages.Add(m);
-                                        }
-                                        else if (message is TLMessageService)
-                                        {
-                                            var m1 = message as TLMessageService;
-                                        }
-                                    }
-                                }
-                                else if (msgs is TLMessagesSlice)
-                                {
-                                    bool done = false;
-                                    int total = 0;
-                                    while (!done/* && (total < 500)*/)
-                                    {
-                                        var messages = msgs as TLMessagesSlice;
-
-                                        foreach (var message in messages.Messages)
-                                        {
-                                            if (message is TLMessage)
-                                            {
-                                                var m = message as TLMessage;
-                                                // sprawdzenie czy ta wiadomość już była
-                                                if (m.Date <= download_timestamp)
-                                                {
-                                                    done = true;
-                                                    System.Diagnostics.Debug.Write("\n||| " + chat.Title + ": " + TLmessages.Count.ToString() + " wiadomosci pobrano!|||\n");
-                                                    break;
-                                                }
-                                                ++total;
-                                                TLmessages.Add(message as TLMessage);
-                                            }
-                                            else if (message is TLMessageService)
-                                            {
-                                                var mess = message as TLMessageService;
-                                                ++total;
-                                                done = mess.Action is TLMessageActionChatCreate;
-                                                if (done)
-                                                {
-                                                    System.Diagnostics.Debug.Write("\n||| " + chat.Title + ": " + TLmessages.Count.ToString() + " wiadomosci pobrano!|||\n");
-                                                    break;
-                                                }
-                                                else
-                                                    continue;
-                                            }
-                                        }
-
-                                        // jesli done = true, czyli znaleziono juz wiadomosci starsze niz data graniczna, nie pobieraj wiecej wiadomosci
-                                        if (!done)
-                                        {
-                                            try
-                                            {
-                                                msgs = await data_holder.client.GetHistoryAsync(peer, total, 0, 0);
-                                            }
-                                            catch (FloodException ex)
-                                            {
-                                                int seconds_to_wait = (int)ex.TimeToWait.TotalSeconds;
-                                                MessageBox.Show("Próbujemy pobrać zbyt wiele wiadomości w zbyt krótkim czasie - Telegram się przed tym broni i nie udostępni wiadomości przez " + seconds_to_wait.ToString() + " sekund. Poczekaj cierpliwie i nic nie rób, a aplikacja sama wznowi działanie.");
-                                                this.toolStripStatusLabel1.Text = "Telegram się broni... Czekam " + seconds_to_wait.ToString() + " sekund...";
-                                                this.Refresh();
-                                                Thread.Sleep((seconds_to_wait + 1) * 1000);
-                                                this.toolStripStatusLabel1.Text = "Szukam dalej linków w grupie " + chat.Title + "...";
-                                                this.Refresh();
-                                                try
-                                                {
-                                                    msgs = await data_holder.client.GetHistoryAsync(peer, total, 0, 100);
-                                                }
-                                                catch (FloodException)
-                                                {
-                                                    MessageBox.Show("Telegram znowu się wyjebał... (Chaty)");
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
+                                return TLmessages;
                             }
                         }
                     }
@@ -1393,131 +895,6 @@ namespace IGTomesheqAutoLiker
             }
 
             return TLmessages;
-        }
-
-        /* Po tej metodzie w support_gourps[i].GroupMessages są już tylko wiadomości zawierające linki do zdjęć */
-        private async Task GetTelegramChatsMessages(long timestamp)
-        {
-            if (chats != null)
-            {
-                foreach (var chat in chats)
-                {
-                    this.toolStripStatusLabel1.Text = "Szukam linków w grupie " + chat.Title + "...";
-                    this.Refresh();
-                    List<TLMessage> TLmessages = new List<TLMessage>();
-                    try
-                    {
-                        // tworzy obiekty klasy SupportGroup dla kazdej grupy wsparcia
-                        support_groups.Add(new SupportGroup(chat.Title));
-
-                        // sprawdza jaka wiadomosc z czatu byla obsluzona (like & comment) jako ostatnia
-                        long last_done_msg_timestamp = support_groups.Last().GetLastDoneMessageDate();
-                        if (last_done_msg_timestamp <= 0)
-                        {
-                            last_done_msg_timestamp = timestamp;
-                        }
-
-                        // pobierz wiadomosci dla danego chatu
-                        var peer = new TLInputPeerChat() { ChatId = chat.Id };
-                        TLAbsMessages msgs = await data_holder.client.GetHistoryAsync(peer, 0, -1, 100);
-
-                        if (msgs is TLMessages)
-                        {
-                            var messages = msgs as TLMessages;
-
-                            foreach (var message in messages.Messages)
-                            {
-                                if (message is TLMessage)
-                                {
-                                    var m = message as TLMessage;
-                                    // sprawdzenie czy ta wiadomość już była
-                                    if (m.Date <= last_done_msg_timestamp)
-                                    {
-                                        System.Diagnostics.Debug.Write("\n||| " + chat.Title + ": " + TLmessages.Count.ToString() + " wiadomosci pobrano!|||\n");
-                                        break;
-                                    }
-                                    TLmessages.Add(m);
-                                }
-                                else if (message is TLMessageService)
-                                {
-                                    var m1 = message as TLMessageService;
-                                }
-                            }
-                        }
-                        else if (msgs is TLMessagesSlice)
-                        {
-                            bool done = false;
-                            int total = 0;
-                            while (!done/* && (total < 500)*/)
-                            {
-                                var messages = msgs as TLMessagesSlice;
-
-                                foreach (var message in messages.Messages)
-                                {
-                                    if (message is TLMessage)
-                                    {
-                                        var m = message as TLMessage;
-                                        // sprawdzenie czy ta wiadomość już była
-                                        if (m.Date <= last_done_msg_timestamp)
-                                        {
-                                            done = true;
-                                            System.Diagnostics.Debug.Write("\n||| " + chat.Title + ": " + TLmessages.Count.ToString() + " wiadomosci pobrano!|||\n");
-                                            break;
-                                        }
-                                        ++total;
-                                        TLmessages.Add(message as TLMessage);
-                                    }
-                                    else if (message is TLMessageService)
-                                    {
-                                        var mess = message as TLMessageService;
-                                        ++total;
-                                        done = mess.Action is TLMessageActionChatCreate;
-                                        if (done)
-                                        {
-                                            System.Diagnostics.Debug.Write("\n||| " + chat.Title + ": " + TLmessages.Count.ToString() + " wiadomosci pobrano!|||\n");
-                                            break;
-                                        }
-                                        else
-                                            continue;
-                                    }
-                                }
-
-                                // jesli done = true, czyli znaleziono juz wiadomosci starsze niz data graniczna, nie pobieraj wiecej wiadomosci
-                                if (!done)
-                                {
-                                    try
-                                    {
-                                        msgs = await data_holder.client.GetHistoryAsync(peer, total, 0, 0);
-                                    }
-                                    catch (FloodException ex)
-                                    {
-                                        int seconds_to_wait = (int)ex.TimeToWait.TotalSeconds;
-                                        MessageBox.Show("Próbujemy pobrać zbyt wiele wiadomości w zbyt krótkim czasie - Telegram się przed tym broni i nie udostępni wiadomości przez " + seconds_to_wait.ToString() + " sekund. Poczekaj cierpliwie i nic nie rób, a aplikacja sama wznowi działanie.");
-                                        this.toolStripStatusLabel1.Text = "Telegram się broni... Czekam " + seconds_to_wait.ToString() + " sekund...";
-                                        this.Refresh();
-                                        Thread.Sleep((seconds_to_wait + 1) * 1000);
-                                        this.toolStripStatusLabel1.Text = "Szukam dalej linków w grupie " + chat.Title + "...";
-                                        this.Refresh();
-                                        try
-                                        {
-                                            msgs = await data_holder.client.GetHistoryAsync(peer, total, 0, 100);
-                                        }
-                                        catch (FloodException)
-                                        {
-                                            MessageBox.Show("Telegram znowu się wyjebał... (Chaty)");
-                                        }
-                                    } 
-                                }
-                            }
-                        }
-                        support_groups.Last().AddAndFilterMessages(TLmessages);
-                    }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show("Wystąpił błąd podczas pobierania wiadomości!\n" + ex.Message.ToString());
-                    }
-                }
-            }
         }
 
         /* TA METODA BEDZIE USUNIETA */
@@ -1608,7 +985,7 @@ namespace IGTomesheqAutoLiker
                             // probuje pobrac zdjecie z serwera
                             try
                             {
-                                resFile = await client.GetFile(new TLInputFileLocation
+                                resFile = await data_holder.client.GetFile(new TLInputFileLocation
                                 {
                                     LocalId = file_location.LocalId,
                                     Secret = file_location.Secret,
@@ -1836,11 +1213,16 @@ namespace IGTomesheqAutoLiker
             {
                 // wyswietl na liscie grup wsparcia w panelu wyboru grup
                 listView3.Items.Add(listView2.SelectedItems[0].Text);
-                listBox2.Items.Add(listView2.SelectedItems[0].Text);
+                listView_2.Items.Add(listView2.SelectedItems[0].Text);
+                var tmp = support_groups.Where(x => x.Name == listView2.SelectedItems[0].Text).FirstOrDefault();
+                if (tmp.Settings.OnlyLike)
+                {
+                    listView_2.Items[listView_2.Items.Count - 1].BackColor = Color.Aqua;
+                }
                 support_groups.Add(new SupportGroup(listView2.SelectedItems[0].Text));
 
                 // dodaj do bazy danych
-                using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
+                using (SQLiteConnection m_dbConnection = new SQLiteConnection(data_holder.connectionString))
                 {
                     m_dbConnection.Open();
                     string sql = $"INSERT INTO support_groups (id_group, group_name, only_likes, last_done_msg, last_hours, last_done_msg_author, starting_date_method) VALUES (NULL, '{listView2.SelectedItems[0].Text}', 0, 0, 0, '', 0)";
@@ -1865,7 +1247,7 @@ namespace IGTomesheqAutoLiker
             {
                 listView2.Items.Add(listView3.SelectedItems[0].Text);
 
-                using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
+                using (SQLiteConnection m_dbConnection = new SQLiteConnection(data_holder.connectionString))
                 {
                     m_dbConnection.Open();
                     string sql = $"DELETE FROM support_groups WHERE group_name = '{listView3.SelectedItems[0].Text}'";
@@ -1874,9 +1256,10 @@ namespace IGTomesheqAutoLiker
                     m_dbConnection.Close(); 
                 }
 
-                int tmp1 = listBox2.Items.IndexOf(listView3.SelectedItems[0].Text);
+                var tmp_listview_item = listView_2.Items.Find(listView3.SelectedItems[0].Text, false);
+                int tmp1 = listView_2.Items.IndexOf(tmp_listview_item[0]);
                 int tmp2 = support_groups.FindIndex(x => x.Name == listView3.SelectedItems[0].Text);
-                listBox2.Items.RemoveAt(tmp1);
+                listView_2.Items.RemoveAt(tmp1);
                 support_groups.RemoveAt(tmp2);
                 listView3.SelectedItems[0].Remove();
             }
@@ -1892,6 +1275,27 @@ namespace IGTomesheqAutoLiker
             // schowaj biezacy panel
             panel_settings.Hide();
 
+            // posortowanie grup wsparcia
+            List<SupportGroup> only_like_groups = new List<SupportGroup>();
+            List<int> indicies_to_remove = new List<int>();
+            for(int i = 0; i < support_groups.Count; i++)
+            {
+                if(support_groups[i].Settings.OnlyLike)
+                {
+                    only_like_groups.Add(support_groups[i]);
+                    indicies_to_remove.Add(i);
+                }
+            }
+            
+            // usuniecie tylko like
+            for(int i = (indicies_to_remove.Count - 1); i >= 0; i--)
+            {
+                support_groups.Remove(support_groups[indicies_to_remove[i]]);
+            }
+
+            // dodanie tylko like jeszcze raz, tym razem na poczatku
+            support_groups.InsertRange(0, only_like_groups);
+
             // dla kazdej grupy wsparcia, dla ktorej zostalo wybrane ustawienie "data z kalendarzyka" przepisuje date z kalendarza
             AssignCalendarDateToSupportGroups(dateTimePicker1.Value);
 
@@ -1899,11 +1303,9 @@ namespace IGTomesheqAutoLiker
             this.toolStripStatusLabel1.Text = "Zaczynam szukanie linków w Telegramie!";
             this.Refresh();
 
-            // pobiera chaty i channele
-            await GetAllTelegramChannelsAndChats();
             // filtrowanie 
-            //FilterTelegramChannels(false);
-            //FilterTelegramChats(false);
+            // FilterTelegramChannels(false);
+            // FilterTelegramChats(false);
             
             // pobiera wiadomosci z dialogow
             foreach(var group in support_groups)
@@ -1945,65 +1347,6 @@ namespace IGTomesheqAutoLiker
             panel_liker_commenter.Show();
         }
 
-        private void InitChooseDate()
-        {
-            // zainicjuj labele
-            date_support_groups = new List<Label>();
-            date_support_groups_last_post_dates = new List<Label>();
-
-            // pobierz liste grup wsparcia
-            using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
-            {
-                m_dbConnection.Open();
-                string sql = "SELECT * FROM support_groups";
-                SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
-                SQLiteDataReader reader = command.ExecuteReader();
-
-                //MessageBox.Show("Przynajmniej jedna z grup wsparcia nie została jeszcze ani razu skomentowana - w panelu po lewej jest kalendarzyk. Wybierz datę i godzinę od której mają zostać pobrane posty i kliknij dalej.");
-                m_dbConnection.Close();
-            }
-        }
-
-        private void CreateDateLabels(int row_nr, string support_group, int last_commented_post)
-        {
-            /*
-             *  private List<Label> date_support_groups;
-             *  private List<Label> date_support_groups_last_post_dates;
-             */
-
-            // labele z nazwami grup
-            Label tmp_group_name = new Label();
-            //tmp_group_name.Font = new System.Drawing.Font("Microsoft Sans Serif", 16F);
-            tmp_group_name.Location = new System.Drawing.Point(25, 70 + (row_nr * 20));
-            tmp_group_name.Name = "label_support_group_" + row_nr.ToString();
-            //tmp_group_name.Size = new System.Drawing.Size(25, 25);
-            tmp_group_name.TabIndex = 0;
-            tmp_group_name.Text = support_group;
-            //tmp_group_name.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            date_support_groups.Add(tmp_group_name);
-
-            // labele z nazwami grup
-            Label tmp_group_date = new Label();
-            //tmp_group_name.Font = new System.Drawing.Font("Microsoft Sans Serif", 16F);
-            tmp_group_date.Location = new System.Drawing.Point(276, 70 + (row_nr * 20));
-            tmp_group_date.Name = "label_support_group_date_" + row_nr.ToString();
-            //tmp_group_name.Size = new System.Drawing.Size(25, 25);
-            tmp_group_date.TabIndex = 0;
-            if(last_commented_post > 0)
-            {
-                tmp_group_date.Text = UnixTimeStampToDateTime(last_commented_post).ToString("dd-MM-yyyy HH:mm");
-            }
-            else
-            {
-                tmp_group_date.Text = "Jeszcze nigdy";
-            }
-            //tmp_group_name.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            date_support_groups_last_post_dates.Add(tmp_group_date);
-
-            //groupBox5.Controls.Add(date_support_groups.Last());
-            //groupBox5.Controls.Add(date_support_groups_last_post_dates.Last());
-        }
-
         /* --- |SCREEN WYBORU DATY| --- */
 
         /* --- SCREEN LAJKOWANIA ZDJEC --- */
@@ -2013,14 +1356,14 @@ namespace IGTomesheqAutoLiker
             // pokaz ile zdjec wymaga skomentowania
             label24.Text = media_to_comment_counter.ToString();
 
-            // wypelnij danymi liste grup wsparcia
+            // wypelnij danymi liste grup wsparcia typu "tylko like"
             foreach(var group in support_groups)
             {
                 listBox1.Items.Add(group.Name);
             }
 
             // wypelnij combobox komentarzy komentarzami z bazy danych
-            using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
+            using (SQLiteConnection m_dbConnection = new SQLiteConnection(data_holder.connectionString))
             {
                 m_dbConnection.Open();
                 string sql = "SELECT * FROM default_comments";
@@ -2051,26 +1394,12 @@ namespace IGTomesheqAutoLiker
 
             emoji_labels.Add(more_label);
             this.panel_liker_commenter.Controls.Add(emoji_labels.Last());
-
-            // jesli jest taka potrzeba - pokaz kalendarzyk
-            /*if (show_calendar)
-            {
-                dateTimePicker1.Show();
-                button17.Show();
-            }
-            else
-            {
-                dateTimePicker1.Hide();
-                button17.Hide();
-            }*/
-
-            // pobierz wszystkie zdjecia do skomentowania
-
         }
 
+        // uaktualnia najbardziej popularne emojis na panelu liker komenter
         private void UpdateMostPopularEmojis()
         {
-            using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
+            using (SQLiteConnection m_dbConnection = new SQLiteConnection(data_holder.connectionString))
             {
                 m_dbConnection.Open();
                 string sql = $"SELECT * FROM emojis ORDER BY times_used DESC, id ASC LIMIT 8";
@@ -2098,7 +1427,7 @@ namespace IGTomesheqAutoLiker
         {
             var selectionIndex = richTextBox2.SelectionStart;
             richTextBox2.Text = richTextBox2.Text.Insert(selectionIndex, emoji);
-            textBox1.SelectionStart = selectionIndex + emoji.Length;
+            richTextBox2.SelectionStart = selectionIndex + emoji.Length;
             UpdateMostPopularEmojis();
         }
 
@@ -2138,7 +1467,7 @@ namespace IGTomesheqAutoLiker
             UpdateEmojiUsed(complete_emojis.Where(x => x.label_name == tmp.Name).FirstOrDefault().emoticon);
             var selectionIndex = richTextBox2.SelectionStart;
             richTextBox2.Text = richTextBox2.Text.Insert(selectionIndex, complete_emojis.Where(x => x.label_name == tmp.Name).FirstOrDefault().emoticon);
-            textBox1.SelectionStart = selectionIndex + complete_emojis.Where(x => x.label_name == tmp.Name).FirstOrDefault().emoticon.Length;
+            richTextBox2.SelectionStart = selectionIndex + complete_emojis.Where(x => x.label_name == tmp.Name).FirstOrDefault().emoticon.Length;
             UpdateMostPopularEmojis();
             //MessageBox.Show("Kliknieto " + complete_emojis.Where(x => x.label_name == tmp.Name).FirstOrDefault().emoticon);
         }
@@ -2146,7 +1475,7 @@ namespace IGTomesheqAutoLiker
         // zapisuje w bazie danych, ze dana emoji zostala uzyta
         private void UpdateEmojiUsed(string emoji)
         {
-            using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
+            using (SQLiteConnection m_dbConnection = new SQLiteConnection(data_holder.connectionString))
             {
                 m_dbConnection.Open();
                 string sql = $"SELECT * FROM emojis WHERE emoji = '{emoji}'";
@@ -2186,91 +1515,9 @@ namespace IGTomesheqAutoLiker
             return unixTimestamp;
         }
 
-        // DO USUNIECIA
-        private void ResizePictureBoxForPhoto(string file_path)
-        {
-            //MessageBox.Show("Resize: " + file_path);
-
-            int photo_width = 0;
-            int photo_height = 0;
-
-            try
-            {
-                Image img = Image.FromFile(file_path);
-                photo_width = img.Width;
-                photo_height = img.Height;
-                img.Dispose();
-                img = null;
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Błąd przy sprawdzaniu rozdzielczości obrazka:\n" + ex.Message.ToString());
-                return;
-            }
-
-            // to ustawic we wlasciwosciach
-            pictureBox2.SizeMode = PictureBoxSizeMode.StretchImage;
-
-            int new_photo_width = photo_width;
-            int new_photo_height = photo_height;
-            double resize_factor = 1.0;
-
-            // jesli zdjecie za szerokie
-            if (photo_width > MAX_PHOTO_WIDTH)
-            {
-                // przeskalowuje, aby calosc zachowala proporcje
-                resize_factor = (double)MAX_PHOTO_WIDTH / (double)photo_width;
-                new_photo_width = MAX_PHOTO_WIDTH;
-                new_photo_height = (int)((double)photo_height * (double)resize_factor);
-
-                // jesli nowa wysokosc (po przeskalowaniu aby szerokosc pasowala) nadal jest za duza, to jeszcze raz skaluje
-                // tym razem wysokosc
-                if (new_photo_height > MAX_PHOTO_HEIGHT)
-                {
-                    resize_factor = (double)MAX_PHOTO_HEIGHT / (double)photo_height;
-                    new_photo_height = MAX_PHOTO_HEIGHT;
-                    new_photo_width = (int)((double)photo_width * (double)resize_factor);
-                }
-            }
-            // jesli szerokosc okej
-            else
-            {
-                // sprawdza wysokosc - jesli za wysokie
-                if (photo_height > MAX_PHOTO_HEIGHT)
-                {
-                    // przeskalowuje na podstawie wysokosci
-                    resize_factor = (double)MAX_PHOTO_HEIGHT / (double)photo_height;
-                    new_photo_height = MAX_PHOTO_HEIGHT;
-                    new_photo_width = (int)((double)photo_width * (double)resize_factor);
-                }
-            }
-
-            pictureBox2.Width = new_photo_width;
-            pictureBox2.Height = new_photo_height;
-        }
-
         // DO POPRAWKI
         private void ResizePictureBoxForPhoto(int photo_width, int photo_height)
         {
-            //MessageBox.Show("Resize: " + file_path);
-
-            /*int photo_width = 0;
-            int photo_height = 0;
-
-            try
-            {
-                Image img = Image.FromFile(file_path);
-                photo_width = img.Width;
-                photo_height = img.Height;
-                img.Dispose();
-                img = null;
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Błąd przy sprawdzaniu rozdzielczości obrazka:\n" + ex.Message.ToString());
-                return;
-            }*/
-
             // to ustawic we wlasciwosciach
             pictureBox2.SizeMode = PictureBoxSizeMode.StretchImage;
 
@@ -2364,6 +1611,7 @@ namespace IGTomesheqAutoLiker
                         }
                         // polajkuj post
                         await IGProc.Like(support_groups[this.support_group_index].MessagesWithInstaPosts[current_message_index].InstagramPost.InstaPost.InstaIdentifier);
+                        total_likes_count++;
                     }
                     catch (Exception ex)
                     {
@@ -2373,7 +1621,7 @@ namespace IGTomesheqAutoLiker
                         // rozmroź UI
                         DefrostUI();
                         // zwróć false, żeby z miejsca wywołania mogło kolejny raz wywołać tę funkcję
-                        return false;
+                        return true;
                     }
                 }
 
@@ -2491,6 +1739,9 @@ namespace IGTomesheqAutoLiker
                     await IGProc.Like(tmp_post.Value.InstaIdentifier);
                     // zwieksz indeks wiadomosci
                     support_groups[this.support_group_index].IncrementMessageIndex();
+                    total_likes_count++;
+                    // zapisz w bazie danych, kiedy ostatnio polajkowano posta w tej grupie
+                    support_groups[this.support_group_index].UpdateLastDoneMessage(ToUnixTimestamp(DateTime.Now));
                     // rozmroź UI
                     DefrostUI();
                     // liczba postow w grupie
@@ -2498,8 +1749,13 @@ namespace IGTomesheqAutoLiker
                 }
                 catch(Exception ex)
                 {
+                    System.Diagnostics.Debug.WriteLine($"Błąd podczas likownaia: {ex.Message}");
                     support_groups[this.support_group_index].IncrementMessageIndex();
-                    return false;
+                    // rozmroź UI
+                    DefrostUI();
+                    // liczba postow w grupie
+                    label39.Text = support_groups[this.support_group_index].GetPostsToDoCounter();
+                    return true;
                 }
             }
             // gdy w tej grupie wsparcia nie ma wgl postów (i nie było)
@@ -2622,7 +1878,27 @@ namespace IGTomesheqAutoLiker
                 this.support_group_index = listBox1.SelectedIndex;
                 if (support_groups[support_group_index].Settings.OnlyLike)
                 {
-                    while(await OnlyLikePost());
+                    //PleaseWaitLikeInLoop(support_groups[support_group_index]);
+
+                    // lajkuje w petli wszystkie posty
+                    while(await OnlyLikePost())
+                    {
+                        if(total_likes_count > data_holder.likes_limit)
+                        {
+                            MessageBox.Show("Osiągnięto limit lajków (1000) - przerywam lajkowanie");
+                            break;
+                        }
+                        Random random = new Random();
+                        int wait_t = random.Next(data_holder.min_time_betw_likes, data_holder.max_time_betw_likes);
+                        toolStripStatusLabel1.Text = $"Czekam {wait_t} sekund...";
+                        Thread.Sleep(wait_t * 1000);
+                    }
+
+                    // po skonczonym likowaniu przechodzi do kolejnej grupy
+                    if((listBox1.SelectedIndex + 1) < listBox1.Items.Count)
+                    {
+                        listBox1.SelectedIndex++;
+                    }
                 }
                 else
                 {
@@ -2691,6 +1967,28 @@ namespace IGTomesheqAutoLiker
                     break;
             }
         }
+
+        // zmieniono zaznaczenie, że ta grupa wsparcia jest typu "Tylko like"
+        private void checkBox1_CheckedChanged(object sender, EventArgs e)
+        {
+            int index = support_groups.FindIndex(x => x.Name == listView_2.SelectedItems[0].Text);
+            support_groups[index].Settings.OnlyLike = checkBox1.Checked;
+            // zmiana koloru grupy na liscie
+            //var tmp = listView_2.Items.Find(support_groups[index].Name, false);
+            if(checkBox1.Checked)
+            {
+                //listView_2.Items[listView_2.Items.IndexOf(tmp[0])].BackColor = Color.Aqua;
+                listView2.SelectedItems[0].BackColor = Color.Aqua;
+            }
+            else
+            {
+                //listView_2.Items[listView_2.Items.IndexOf(tmp[0])].BackColor = Color.Transparent;
+                listView2.SelectedItems[0].BackColor = Color.Transparent;
+            }
+            button21.Show();
+        }
+
+
         /* --- |SCREEN LAJKOWANIA ZDJEC| --- */
 
         private async void Form1_FormClosed(object sender, FormClosedEventArgs e)
@@ -2741,7 +2039,7 @@ namespace IGTomesheqAutoLiker
         {
             if (e.KeyCode == Keys.Enter)
             {
-                button15.PerformClick();
+                //button15.PerformClick();
             }
         }
 
@@ -2750,7 +2048,7 @@ namespace IGTomesheqAutoLiker
         {
             if (e.KeyCode == Keys.Enter)
             {
-                button6.PerformClick();
+                //button6.PerformClick();
             }
         }
 
@@ -2759,7 +2057,7 @@ namespace IGTomesheqAutoLiker
         {
             if (e.KeyCode == Keys.Enter)
             {
-                button14.PerformClick();
+                //button14.PerformClick();
             }
         }
 
@@ -2768,7 +2066,7 @@ namespace IGTomesheqAutoLiker
         {
             if (e.KeyCode == Keys.Enter)
             {
-                button14.PerformClick();
+                //button14.PerformClick();
             }
         }
 
@@ -2816,18 +2114,6 @@ namespace IGTomesheqAutoLiker
             // nothing...
         }
 
-        private void pictureBox_settings_menu_Click(object sender, EventArgs e)
-        {
-            if(panel_settings_menu.Visible)
-            {
-                panel_settings_menu.Hide();
-            }
-            else
-            {
-                panel_settings_menu.Show();
-            }
-        }
-
         private void label_settings_menu_choose_date_Click(object sender, EventArgs e)
         {
             HideAllSettingsPanels();
@@ -2872,6 +2158,13 @@ namespace IGTomesheqAutoLiker
             label_settings_menu_default_comments.BackColor = System.Drawing.Color.DarkSalmon;
         }
 
+        private void label_settings_menu_settings_Click(object sender, EventArgs e)
+        {
+            HideAllSettingsPanels();
+            panel_settings_settings.Show();
+            label_settings_menu_settings.BackColor = System.Drawing.Color.DarkSalmon;
+        }
+
         private void HideAllSettingsPanels()
         {
             // ukryj wszystkie panele
@@ -2881,6 +2174,7 @@ namespace IGTomesheqAutoLiker
             panel_settings_support_groups.Hide();
             panel_settings_telegram.Hide();
             panel_choose_starting_date.Hide();
+            panel_settings_settings.Hide();
 
             // pokoloruj tło wszystkich labeli w menu na szaro
             label_settings_menu_choose_date.BackColor = System.Drawing.SystemColors.AppWorkspace;
@@ -2889,6 +2183,7 @@ namespace IGTomesheqAutoLiker
             label_settings_menu_instagram.BackColor = System.Drawing.SystemColors.AppWorkspace;
             label_settings_menu_support_groups.BackColor = System.Drawing.SystemColors.AppWorkspace;
             label_settings_menu_telegram.BackColor = System.Drawing.SystemColors.AppWorkspace;
+            label_settings_menu_settings.BackColor = System.Drawing.SystemColors.AppWorkspace;
         }
 
         // button wyloguj z konta insta
@@ -2907,7 +2202,7 @@ namespace IGTomesheqAutoLiker
                 if (await IGProc.Logout())
                 {
                     // usun wpis dot uzytkownika z bazy danych
-                    using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
+                    using (SQLiteConnection m_dbConnection = new SQLiteConnection(data_holder.connectionString))
                     {
                         m_dbConnection.Open();
                         string sql = $"DELETE FROM instagram_data WHERE login = '{login}' AND password = '{password}'";
@@ -2935,13 +2230,13 @@ namespace IGTomesheqAutoLiker
                 if ((textBox5.Text.Length > 0) && (textBox6.Text.Length > 0))
                 {
                     // informacja o logowaniu do instagrama
-                    this.toolStripStatusLabel1.Text = $"Witaj {textBox2.Text}! Trwa logowanie do Instagrama...";
+                    this.toolStripStatusLabel1.Text = $"Witaj {textBox5.Text}! Trwa logowanie do Instagrama...";
 
                     //MessageBox.Show($"login: {textBox2.Text}\npassword: {textBox3.Text}");
                     await IGProc.Login(textBox5.Text, textBox6.Text);
                     if (IGProc.IsUserAuthenticated())
                     {
-                        using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
+                        using (SQLiteConnection m_dbConnection = new SQLiteConnection(data_holder.connectionString))
                         {
                             m_dbConnection.Open();
                             string sql = $"SELECT * FROM instagram_data WHERE login = '{textBox5.Text}' AND password = '{textBox6.Text}'";
@@ -2994,78 +2289,92 @@ namespace IGTomesheqAutoLiker
             }
         }
 
-        // zmieniono zaznaczenie, że ta grupa wsparcia jest typu "Tylko like"
-        private void checkBox1_CheckedChanged(object sender, EventArgs e)
-        {
-            int index = support_groups.FindIndex(x => x.Name == listBox2.SelectedItem.ToString());
-            support_groups[index].Settings.OnlyLike = checkBox1.Checked;
-            button21.Show();
-        }
-
         // zaznaczono "po ostatnio skomentowanym poście"
-        private void radioButton1_CheckedChanged(object sender, EventArgs e)
+        private void radioButton1_Click(object sender, EventArgs e)
         {
             // odznacz pozostałe radiobutton
             if (radioButton1.Checked)
             {
                 radioButton2.Checked = false;
-                radioButton3.Checked = false; 
+                radioButton3.Checked = false;
             }
 
             // zmien metode pobierania daty w ustawieniach grupy
-            int selected_group_index = support_groups.FindIndex(x => x.Name == listBox2.SelectedItem.ToString());
+            int selected_group_index = support_groups.FindIndex(x => x.Name == listView_2.SelectedItems[0].Text);
             support_groups[selected_group_index].Settings.StartingDateMethod = StartingDateMethod.LastPost;
 
             // wyswietl przycisk zapisu zmian
             button21.Show();
+            // zablokuj liste grup wsparcia do momentu zapisania zmian
+            listView_2.Enabled = false;
         }
 
         // zaznaczono "po dacie wpisanej w kalendarzyku"
-        private void radioButton2_CheckedChanged(object sender, EventArgs e)
+        private void radioButton2_Click(object sender, EventArgs e)
         {
             // odznacz pozostałe radiobutton
             if (radioButton2.Checked)
             {
                 radioButton1.Checked = false;
-                radioButton3.Checked = false; 
+                radioButton3.Checked = false;
             }
 
             // zmien metode pobierania daty w ustawieniach grupy
-            int selected_group_index = support_groups.FindIndex(x => x.Name == listBox2.SelectedItem.ToString());
+            int selected_group_index = support_groups.FindIndex(x => x.Name == listView_2.SelectedItems[0].Text);
             support_groups[selected_group_index].Settings.StartingDateMethod = StartingDateMethod.ChosenFromCalendar;
 
             // wyswietl przycisk zapisu zmian
             button21.Show();
+            // zablokuj liste grup wsparcia do momentu zapisania zmian
+            listView_2.Enabled = false;
         }
 
         // zaznaczono "dodane w ciągu ostatnich x godzin"
-        private void radioButton3_CheckedChanged(object sender, EventArgs e)
+        private void radioButton3_Click(object sender, EventArgs e)
         {
             // odznacz pozostałe radiobutton
             if (radioButton3.Checked)
             {
                 radioButton1.Checked = false;
-                radioButton2.Checked = false; 
+                radioButton2.Checked = false;
             }
 
             // zmien metode pobierania daty w ustawieniach grupy
-            int selected_group_index = support_groups.FindIndex(x => x.Name == listBox2.SelectedItem.ToString());
+            int selected_group_index = support_groups.FindIndex(x => x.Name == listView_2.SelectedItems[0].Text);
             support_groups[selected_group_index].Settings.StartingDateMethod = StartingDateMethod.LastXHours;
 
             // wyswietl przycisk zapisu zmian
             button21.Show();
+            // zablokuj liste grup wsparcia do momentu zapisania zmian
+            listView_2.Enabled = false;
+        }
+        
+        private void radioButton1_CheckedChanged(object sender, EventArgs e)
+        {
+            // !!!
+        }
+
+        
+        private void radioButton2_CheckedChanged(object sender, EventArgs e)
+        {
+            // !!!
+        }
+
+        
+        private void radioButton3_CheckedChanged(object sender, EventArgs e)
+        {
+            // !!!
         }
 
         // zaznacza radioButton3
         private void numericUpDown1_Click(object sender, EventArgs e)
         {
-            int selected_group_index = support_groups.FindIndex(x => x.Name == listBox2.SelectedItem.ToString());
+            int selected_group_index = support_groups.FindIndex(x => x.Name == listView_2.SelectedItems[0].Text);
             support_groups[selected_group_index].Settings.LastHours = Decimal.ToInt32(numericUpDown1.Value);
-        }
-
-        public void GetDataForSupportGroupSettingsPanel()
-        {
-
+            // wyswietl przycisk zapisu zmian
+            button21.Show();
+            // zablokuj liste grup wsparcia do momentu zapisania zmian
+            listView_2.Enabled = false;
         }
 
         // wybrano grupe wsparcia na liscie w panelu z ustawieniami grup
@@ -3073,16 +2382,15 @@ namespace IGTomesheqAutoLiker
         {
             int index = 0;
             
-                if (listBox2.SelectedIndex > -1)
-                {
-                    index = support_groups.FindIndex(x => x.Name == listBox2.SelectedItem.ToString());
-                    SetUpSupportGroupsSettingsPanel(index);  
-                }
-                else
-                {
-                    SetUpSupportGroupsSettingsPanel(-1);
-                }
-            
+            if (listView_2.SelectedIndices[0] > -1)
+            {
+                index = support_groups.FindIndex(x => x.Name == listView_2.SelectedItems[0].Text);
+                SetUpSupportGroupsSettingsPanel(index);  
+            }
+            else
+            {
+                SetUpSupportGroupsSettingsPanel(-1);
+            }
         }
 
         // po wybraniu grupy wsparcia, wypelnia panel ustawien tej grupy odpowiednimi danymi
@@ -3129,7 +2437,7 @@ namespace IGTomesheqAutoLiker
                     default:
                         // nothing
                         radioButton1.Checked = false;
-                        radioButton2.Checked = false;
+                        radioButton2.Checked = true;
                         radioButton3.Checked = false;
                         break;
                 }
@@ -3165,7 +2473,7 @@ namespace IGTomesheqAutoLiker
 
         private string GetDateLastCommentedPost()
         {
-            int selected_group_index = support_groups.FindIndex(x => x.Name == listBox2.SelectedItem.ToString());
+            int selected_group_index = support_groups.FindIndex(x => x.Name == listView_2.SelectedItems[0].Text);
             long timestamp = support_groups[selected_group_index].Settings.LastCommentedPostTimestamp;
             string my_format = "";
 
@@ -3243,6 +2551,7 @@ namespace IGTomesheqAutoLiker
             string my_format = "";
 
             // jesli istnieje wartosc
+            /// !!! dodać sprawdzanie czy data jest bardzo bliska aktualnej godzinie i wyswietlic powiadomienie
             if (timestamp > 0)
             {
                 DateTime dt = UnixTimeStampToDateTime(timestamp);
@@ -3300,7 +2609,7 @@ namespace IGTomesheqAutoLiker
         // zmieniono liczbę godzin do przeszukania wiadomości (o ile godzin od teraz się cofnąć)
         private void numericUpDown1_ValueChanged(object sender, EventArgs e)
         {
-            int selected_group_index = support_groups.FindIndex(x => x.Name == listBox2.SelectedItem.ToString());
+            int selected_group_index = support_groups.FindIndex(x => x.Name == listView_2.SelectedItems[0].Text);
             Double hours_value = Decimal.ToDouble(numericUpDown1.Value);
             support_groups[selected_group_index].Settings.LastHours = (int)hours_value;
             support_groups[selected_group_index].Settings.LastHoursTimestamp = ToUnixTimestamp(DateTime.Now.AddHours(hours_value)); // to raczej niepotrzebne
@@ -3313,10 +2622,12 @@ namespace IGTomesheqAutoLiker
         // zapisz ustawienia grupy wsparcia do bazy danych
         private void button21_Click(object sender, EventArgs e)
         {
-            int selected_group_index = support_groups.FindIndex(x => x.Name == listBox2.SelectedItem.ToString());
+            int selected_group_index = support_groups.FindIndex(x => x.Name == listView_2.SelectedItems[0].Text);
             support_groups[selected_group_index].Settings.LastHours = Decimal.ToInt32(numericUpDown1.Value);
             support_groups[selected_group_index].Settings.SaveGroupSettingsToDB();
             button21.Hide();
+            // zablokuj liste grup wsparcia do momentu zapisania zmian
+            listView_2.Enabled = true;
         }
 
         // zapisuje datę z kalendarzyka tylko do grup wsparcia, ktore maja wybrana te opcje
@@ -3354,6 +2665,22 @@ namespace IGTomesheqAutoLiker
             radioButton1.Checked = false;
             radioButton2.Checked = false;
             radioButton3.Checked = true;
+        }
+
+        private void button_settings_save_Click(object sender, EventArgs e)
+        {
+            Int32.TryParse(textBox_likes_limit.Text, out data_holder.likes_limit);
+            Int32.TryParse(textBox_min_time_betw_likes.Text, out data_holder.min_time_betw_likes);
+            Int32.TryParse(textBox_max_time_betw_likes.Text, out data_holder.max_time_betw_likes);
+
+            using (SQLiteConnection m_dbConnection = new SQLiteConnection(data_holder.connectionString))
+            {
+                m_dbConnection.Open();
+                string sql = $"UPDATE settings SET min_time_betw_likes = '{data_holder.min_time_betw_likes}', max_time_betw_likes = '{data_holder.max_time_betw_likes}', likes_limit = '{data_holder.likes_limit}'";
+                SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+                command.ExecuteNonQuery(); // nic nie zwraca
+                m_dbConnection.Close();
+            }
         }
     }
 }

@@ -8,11 +8,11 @@ using System.Windows.Forms;
 
 namespace IGTomesheqAutoLiker
 {
-    class MyApplicationContext : ApplicationContext
+    public class MyApplicationContext : ApplicationContext
     {
         Form1 main_form;
         SplashScreen splash_screen;
-        InitDataHolder InitData;
+        public InitDataHolder InitData;
 
         public MyApplicationContext()
         {
@@ -20,7 +20,7 @@ namespace IGTomesheqAutoLiker
             InitData = new InitDataHolder();
 
             // tworzy splash screena
-            splash_screen = new SplashScreen(InitData);
+            splash_screen = new SplashScreen(this);
             splash_screen.FormClosing += Splash_screen_FormClosing;
             splash_screen.FormClosed += Splash_screen_FormClosed;
             splash_screen.Activated += Splash_screen_Activated;
@@ -32,7 +32,22 @@ namespace IGTomesheqAutoLiker
 
         private async void Splash_screen_Activated(object sender, EventArgs e)
         {
-            InitData = await splash_screen.InitializeAppData();
+            //splash_screen.BackgroundWorker.RunWorkerAsync();
+
+            bool ok = false;
+            while (!ok)
+            {
+                try
+                {
+                    InitData = await splash_screen.InitializeAppData();
+                    ok = true;
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine(ex.Message);
+                } 
+            }
+
             // zamyka splash screena - zostanie pokazany glowny formularz
             splash_screen.Close();
         }

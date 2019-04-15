@@ -1,4 +1,6 @@
-﻿using System;
+﻿using InstaSharper.Classes;
+using InstaSharper.Classes.Models;
+using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Linq;
@@ -35,16 +37,70 @@ namespace IGTomesheqAutoLiker
 
         public ShowInstagramPanelWith InstaLoginStatus;
 
+        public bool telegram_ok;
+        public bool instagram_ok;
+        public bool default_comments_ok;
+        public bool support_groups_ok;
+        public bool db_support_groups_ok;
+
+        public int likes_limit;
+        public int min_time_betw_likes;
+        public int max_time_betw_likes;
+
         public InitDataHolder()
         {
             // baza danych
             connectionString = "Data Source=tomesheq_db.db;Version=3;";
 
+            // flagi
+            telegram_ok = false;
+            instagram_ok = false;
+            default_comments_ok = false;
+            support_groups_ok = false;
+            db_support_groups_ok = false;
+
             default_comments = new List<DefaultComment>();
             initial_support_groups = new List<SupportGroup>();
-            store = new FileSessionStore();
+
+            bool ok = false;
+            int attemps_counter = 0;
+            while (!ok && attemps_counter < 3)
+            {
+                try
+                {
+                    store = new FileSessionStore();
+                    ok = true;
+                }
+                catch (Exception ex)
+                {
+                    attemps_counter++;
+                    System.Diagnostics.Debug.Write(ex.Message);
+                } 
+            }
+
+            InitSettings();
 
             InstaLoginStatus = ShowInstagramPanelWith.InsertLoginData;
+        }
+
+        public void InitSettings()
+        {
+            using (SQLiteConnection m_dbConnection = new SQLiteConnection(this.connectionString))
+            {
+                m_dbConnection.Open();
+                string sql = $"SELECT * FROM settings";
+                SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+                SQLiteDataReader reader = command.ExecuteReader();
+                if (reader.HasRows)
+                {
+                    reader.Read();
+                    // wszystko OK - nic nie rob
+                    min_time_betw_likes = reader.GetInt32(0);
+                    max_time_betw_likes = reader.GetInt32(1);
+                    likes_limit = reader.GetInt32(2);
+                }
+                m_dbConnection.Close();
+            }
         }
 
         public async Task<bool> InitTelegram()
@@ -70,8 +126,10 @@ namespace IGTomesheqAutoLiker
             }
             if (client.IsUserAuthorized())
             {
+                telegram_ok = true;
                 return true;
             }
+
             return false;
         }
 
@@ -162,6 +220,7 @@ namespace IGTomesheqAutoLiker
 
             if (IGProc.IsUserAuthenticated())
             {
+                instagram_ok = true;
                 return true;
                 // uzytkownik zalogowany - wszystko ok
             }
@@ -170,6 +229,34 @@ namespace IGTomesheqAutoLiker
                 return false;
                 // bedzie trzeba zalogowac sie ponownie
             }
+        }
+
+        public async Task GetBagdadFollowers()
+        {
+            List<InstaUserShort> followers = new List<InstaUserShort>();
+            followers = await IGProc.GetFollowersList(PaginationParameters.Empty, null);
+
+            List<InstaUserShort> bagdad_users = new List<InstaUserShort>();
+            foreach(var user in followers)
+            {
+                List<InstaMedia> media = await IGProc.GetMediaList(user, PaginationParameters.Empty);
+                bool is_from_bagdad = false;
+                foreach(var post in media)
+                {
+                    if (post.Location.City == "Bagdad" || post.Location.City == "Baghdad")
+                    {
+                        is_from_bagdad = true;
+                    }
+                }
+
+                if(is_from_bagdad)
+                {
+                    bagdad_users.Add(user);
+                }
+            }
+
+            System.Diagnostics.Debug.WriteLine(bagdad_users.Count.ToString());
+            return;
         }
 
         public bool GetSupportGroups()
@@ -194,6 +281,7 @@ namespace IGTomesheqAutoLiker
                     }
                     m_dbConnection.Close();
                 }
+                db_support_groups_ok = true;
                 return true;
             }
             catch (Exception ex)
@@ -222,6 +310,7 @@ namespace IGTomesheqAutoLiker
                     }
                     m_dbConnection.Close();
                 }
+                default_comments_ok = true;
                 return true;
             }
             catch (Exception ex)
