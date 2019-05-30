@@ -7,12 +7,6 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
-using System.Net.Http;
-using System.Web;
-using Microsoft.Scripting.Hosting;
-using IronPython;
-using IronPython.Hosting;
-using IronPython.Modules;
 using InstaSharper.API;
 using InstaSharper.Classes;
 using InstaSharper.API.Builder;
@@ -29,6 +23,8 @@ namespace IGTomesheqAutoLiker
 
         public static string login;
         public static string password;
+        public static InstaUserShortList followers;
+        public static InstaUserShortList following;
 
         // po podaniu adresu postu na insta - znajduje ID postu
         public async static Task<string> GetMediaIdFromUrl(string url)
@@ -39,11 +35,12 @@ namespace IGTomesheqAutoLiker
         }
 
         // loguje użytkownika do instagrama
-        public async static Task<InstaLoginResult> Login(string username, string password)
+        public async static Task<IResult<InstaLoginResult>> Login(string username, string password)
         {
             // przechowuje wyniki zapytan
             IResult<InstaLoginResult> logInResult;
-            InstaLoginResult ret;
+
+            //InstaLoginResult ret;
 
             // ustawienie loginu i hasla
             var userSession = new UserSessionData
@@ -66,27 +63,54 @@ namespace IGTomesheqAutoLiker
                 // login
                 Console.WriteLine($"Logging in as {userSession.UserName}");
                 logInResult = await _instaApi.LoginAsync();
-                ret = logInResult.Value;
                 if (logInResult.Value == InstaLoginResult.ChallengeRequired)
                 {
                     login = username;
-                    var lola = await _instaApi.ResetChallenge();
-                    var res = await _instaApi.ChooseVerifyMethod(1);
+                    var a1 = await _instaApi.ResetChallenge();
+                    var a2 = await _instaApi.GetVerifyStep();
+                    var a3 = await _instaApi.ChooseVerifyMethod(1);
+
+                    // zwraca wartosc
+                    return logInResult;
+
                 }
                 if (!logInResult.Succeeded)
                 {
                     Console.WriteLine($"Unable to login: {logInResult.Info.Message}");
-                    ret = InstaLoginResult.Exception;
+                    return logInResult;
+                    //logInResult = InstaLoginResult.Exception;
                 }
+                return logInResult;
             }
             else // jesli juz zalogowany
             {
-                login = username;
-                ret = InstaLoginResult.Success;
-            }
+                IResult<bool> logout_res;
+                logout_res = await _instaApi.LogoutAsync();
 
-            // zwraca wartosc
-            return ret;
+                //if(logout_res.Value)
+                //{
+                    logInResult = await _instaApi.LoginAsync();
+                    if (logInResult.Value == InstaLoginResult.ChallengeRequired)
+                    {
+                        login = username;
+                        var a1 = await _instaApi.ResetChallenge();
+                        var a2 = await _instaApi.GetVerifyStep();
+                        var a3 = await _instaApi.ChooseVerifyMethod(1);
+
+                        // zwraca wartosc
+                        return logInResult;
+                    }
+                    if (!logInResult.Succeeded)
+                    {
+                        Console.WriteLine($"Unable to login: {logInResult.Info.Message}");
+                        return logInResult;
+                        //logInResult = InstaLoginResult.Exception;
+                    }
+
+                return logInResult;
+                //}
+                //ret = InstaLoginResult.Success;
+            }
         }
 
         public async static Task<bool> FindMyComment(string post_id, string current_username)
@@ -137,6 +161,16 @@ namespace IGTomesheqAutoLiker
             await _instaApi.CommentMediaAsync(post_id, comment_text);
         }
 
+        public async static Task Follow(long userId)
+        {
+            await _instaApi.FollowUserAsync(userId);
+        }
+
+        public async static Task Unfollow(long userId)
+        {
+            await _instaApi.UnFollowUserAsync(userId);
+        }
+
         public static bool IsUserAuthenticated()
         {
             if (_instaApi != null)
@@ -162,12 +196,20 @@ namespace IGTomesheqAutoLiker
             return res.Value;
         }
 
+        public async static Task<IResult<InstaLoginTwoFactorResult>> TwoFactorLogin(string code)
+        {
+            IResult<InstaLoginTwoFactorResult> res;
+            res = await _instaApi.TwoFactorLoginAsync(code);
+            return res;
+        }
+
         public async static Task<IResult<InstaMedia>> GetInstaPost(string id)
         {
             IResult<InstaMedia> post = await _instaApi.GetMediaByIdAsync(id);
             return post;
         }
 
+        // Not used...
         public async static Task<IResult<InstaUserShortList>> GetFollowers()
         {
             return await _instaApi.GetCurrentUserFollowersAsync(PaginationParameters.MaxPagesToLoad(10));
@@ -191,10 +233,10 @@ namespace IGTomesheqAutoLiker
             var nextId = result.Value?.NextId ?? parameters.NextId;
 
             // setup some delay
-            var delay = TimeSpan.FromSeconds(new Random(DateTime.Now.Millisecond).Next(30, 60));
+            var delay = TimeSpan.FromSeconds(new Random(DateTime.Now.Millisecond).Next(10, 20));
             if (result.Info.ResponseType == ResponseType.RequestsLimit)
-                delay = TimeSpan.FromSeconds(new Random(DateTime.Now.Millisecond).Next(60, 180));
-            Console.WriteLine($"Not able to load full list of followers, retry in {delay.TotalSeconds} seconds");
+                delay = TimeSpan.FromSeconds(new Random(DateTime.Now.Millisecond).Next(10, 20));
+            System.Diagnostics.Debug.WriteLine($"Not able to load full list of followers, retry in {delay.TotalSeconds} seconds");
             await Task.Delay(delay);
             return await GetFollowersList(parameters.StartFromId(nextId), followers);
         }
@@ -216,6 +258,42 @@ namespace IGTomesheqAutoLiker
                 return await GetMediaList(user, PaginationParameters.MaxPagesToLoad(int.MaxValue).StartFromId(nextId));
             }
             return mediaList;
+        }
+
+        public async static Task<int> GetFollowersCount()
+        {
+            IResult<InstaUserShortList> users = await _instaApi.GetCurrentUserFollowersAsync(PaginationParameters.Empty);
+            followers = users.Value;
+            int a = users.Value.Count();
+            return a;
+        }
+
+        public async static Task<int> GetFollowingCount()
+        {
+            IResult<InstaCurrentUser> user = await _instaApi.GetCurrentUserAsync();
+            IResult<InstaUserShortList> users = await _instaApi.GetUserFollowingAsync(user.Value.UserName, PaginationParameters.Empty);
+            following = users.Value;
+            int a = users.Value.Count();
+            return a;
+        }
+
+        public async static Task<InstaUserShortList> GetWhoDoesntFollowYou()
+        {
+            InstaUserShortList bad_users_list = new InstaUserShortList();
+            IResult<InstaCurrentUser> user = await _instaApi.GetCurrentUserAsync();
+            // IResult<InstaUserShortList> users = await _instaApi.GetUserFollowingAsync(user.Value.UserName, PaginationParameters.Empty);
+
+            foreach(var following_usr in following)
+            {
+                //System.Diagnostics.Debug.WriteLine(following_usr.ProfilePicture);
+                List<InstaUserShort> usr = followers.Where(x => x.UserName == following_usr.UserName).ToList();
+                if (usr.Count <= 0)
+                {
+                    bad_users_list.Add(following_usr);
+                }
+            }
+
+            return bad_users_list;
         }
     }
 

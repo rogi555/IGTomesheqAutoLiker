@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data.SQLite;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Data.SQLite;
 
 namespace IGTomesheqAutoLiker
 {
@@ -20,6 +15,7 @@ namespace IGTomesheqAutoLiker
         public StartingDateMethod StartingDateMethod;
         public int LastHours;
         public string LastCommentedPostAuthor;
+        public bool SkipThisTime;
 
         // DB
         private string connectionString;
@@ -35,6 +31,7 @@ namespace IGTomesheqAutoLiker
             LastHoursTimestamp = 0;
             LastHours = 0;
             StartingDateMethod = StartingDateMethod.ChosenFromCalendar;
+            SkipThisTime = false;
         }
 
         public SupportGroupSettings(SupportGroup parent, StartingDateMethod method, bool only_like, long timestamp_value, int last_hours, string last_post_author)
@@ -50,6 +47,7 @@ namespace IGTomesheqAutoLiker
             LastHoursTimestamp = 0;
             LastHours = last_hours;
             StartingDateMethod = method;
+            SkipThisTime = false;
         }
 
         public bool SaveGroupSettingsToDB()

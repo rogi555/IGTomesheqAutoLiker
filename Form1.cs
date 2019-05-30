@@ -3,23 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
 using System.Data.SQLite;
-using TLSharp.Core;
 using TeleSharp.TL.Messages;
 using TeleSharp.TL;
 using System.Threading.Tasks;
 using IGTomesheq;
-using InstaSharper.API;
 using InstaSharper.Classes;
-using InstaSharper.API.Builder;
-using InstaSharper.Logger;
 using System.Drawing;
 using System.IO;
 using InstaSharper.Classes.Models;
 using System.Net;
 using System.Web.Script.Serialization;
 using TLSharp.Core.Network;
-using System.Threading;
-using System.ComponentModel;
+using InstaSharper.Classes.ResponseWrappers;
 
 namespace IGTomesheqAutoLiker
 {
@@ -28,28 +23,36 @@ namespace IGTomesheqAutoLiker
         List<SingleEmoji> complete_emojis;
         List<Label> emoji_labels;
 
-        // ogolne
         int media_to_comment_counter;
         const int MAX_PHOTO_WIDTH = 376;
         const int MAX_PHOTO_HEIGHT = 376;
 
         int support_group_index;
 
-        List<SupportGroup> support_groups;
+        List<SupportGroup> all_support_groups;
+        List<SupportGroup> comment_support_groups;
 
         EmojisWindow ee;
 
         InitDataHolder data_holder;
         bool is_form_initialized;
 
-        int total_likes_count;
+        int total_posts_liked;
+        int total_posts_to_like;
+        bool last_like_skipped; // jesli z jakiegos powodu, ostatniego postu nie trzeba bylo likowac
 
-        BackgroundWorker load_single_post_worker;
-        BackgroundWorker like_single_post_worker;
-        BackgroundWorker comment_single_post_worker;
-        BackgroundWorker like_in_loop_worker;
-        BackgroundWorker comment_in_loop_worker;
-        
+        // dla listBox2 z nazwami grup wsparcia
+        //global brushes with ordinary/selected colors
+        private SolidBrush backgroundBrushSelected = new SolidBrush(Color.FromKnownColor(KnownColor.Highlight));
+        private SolidBrush backgroundBrushOnlyLike = new SolidBrush(Color.Aqua);
+        private SolidBrush backgroundBrush = new SolidBrush(Color.White);
+
+        List<Panel> followers_panels;
+        List<Label> followers_labels;
+        List<InstaFollower> insta_bad_followers;
+        int followers_page;
+        bool followers_manager_initialized;
+
         public Form1(InitDataHolder holder)
         {
             InitializeComponent();
@@ -58,22 +61,26 @@ namespace IGTomesheqAutoLiker
             // ogolne
             media_to_comment_counter = 0;
             support_group_index = -1;
+            followers_page = 1;
 
             // utworzenie obiektu z klasami emoji
             complete_emojis = new List<SingleEmoji>();
             emoji_labels = new List<Label>();
             ee = new EmojisWindow(this);
 
-            support_groups = new List<SupportGroup>();
+            all_support_groups = new List<SupportGroup>();
+            comment_support_groups = new List<SupportGroup>();
 
             this.toolStripStatusLabel1.Text = "Program gotowy do działania! Kliknij dalej...";
 
-            InitializeBackgrounndworkers();
+            followers_manager_initialized = false;
 
             // umiejscowienie okna
             this.CenterToScreen();
             is_form_initialized = false;
-            total_likes_count = 0;
+            total_posts_liked = 0;
+            total_posts_to_like = 0;
+            last_like_skipped = false;
         }
 
         public bool Initialize()
@@ -81,7 +88,7 @@ namespace IGTomesheqAutoLiker
             if (!is_form_initialized)
             {
                 // telegram
-                if (data_holder.client.IsUserAuthorized())
+                if (data_holder.client.IsUserAuthorized() && data_holder.telegram_ok && data_holder.telegram_channels_and_chats_ok)
                 {
                     SetUpTelegramPanel(InitDataHolder.ShowTelegramPanelWith.LoginSuccess);
                 }
@@ -91,7 +98,7 @@ namespace IGTomesheqAutoLiker
                 }
 
                 // instagram
-                SetUpInstagramPanel(data_holder.InstaLoginStatus);
+                SetUpInstagramPanel(data_holder.InstaLoginStatus);              
 
                 // domyślne komentarze
                 if (data_holder.default_comments.Count > 0)
@@ -103,125 +110,201 @@ namespace IGTomesheqAutoLiker
                 if ((data_holder.channels != null) && (data_holder.chats != null))
                 {
                     InitSupportGroupsPanel(data_holder.channels, data_holder.chats, data_holder.initial_support_groups);
+                    CheckIfSupportGroupsExist();
                 }
                 else
                 {
                     // nie udalo sie pobrac danych z telegrama - co robic?!
                 }
 
+                if(listBox2.SelectedIndex == -1)
+                {
+                    SetUpSupportGroupsSettingsPanel(-1);
+                }
+
                 InitSettingsPanel();
 
-                is_form_initialized = true; 
+                HideAllSettingsPanels(true); // wywolanie z true, zeby zaznaczyc, ze to inicjalizacja
+
+                is_form_initialized = true;
             }
             return true;
         }
 
-        private void InitializeBackgrounndworkers()
+        private void ResetAllBadFollowersPanels(List<InstaFollower> bad_followers)
         {
-            // inicjalizacja
-            load_single_post_worker = new BackgroundWorker();
-            like_single_post_worker = new BackgroundWorker();
-            comment_single_post_worker = new BackgroundWorker();
-            like_in_loop_worker = new BackgroundWorker();
-            comment_in_loop_worker = new BackgroundWorker();
-
-            // przypisanie metod
-            load_single_post_worker.DoWork += Load_single_post_worker_DoWork;
-            load_single_post_worker.RunWorkerCompleted += Load_single_post_worker_RunWorkerCompleted;
-            load_single_post_worker.ProgressChanged += Load_single_post_worker_ProgressChanged;
-
-            like_single_post_worker.DoWork += Like_single_post_worker_DoWork;
-            like_single_post_worker.RunWorkerCompleted += Like_single_post_worker_RunWorkerCompleted;
-            like_single_post_worker.ProgressChanged += Like_single_post_worker_ProgressChanged;
-
-            comment_single_post_worker.DoWork += Comment_single_post_worker_DoWork;
-            comment_single_post_worker.RunWorkerCompleted += Comment_single_post_worker_RunWorkerCompleted;
-            comment_single_post_worker.ProgressChanged += Comment_single_post_worker_ProgressChanged;
-
-            like_in_loop_worker.DoWork += Like_in_loop_worker_DoWork;
-            like_in_loop_worker.ProgressChanged += Like_in_loop_worker_ProgressChanged;
-            like_in_loop_worker.RunWorkerCompleted += Like_in_loop_worker_RunWorkerCompleted;
-
-            comment_in_loop_worker.DoWork += Comment_in_loop_worker_DoWork;
-            comment_in_loop_worker.ProgressChanged += Comment_in_loop_worker_ProgressChanged;
-            comment_in_loop_worker.RunWorkerCompleted += Comment_in_loop_worker_RunWorkerCompleted;
+            foreach(var bad_follower in bad_followers)
+            {
+                bad_follower.SetPanelNr(-1);
+            }
         }
 
-        private void Comment_in_loop_worker_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        private void SetBadFollowersPanelNumbers(int page, List<InstaFollower> bad_followers)
         {
-            throw new NotImplementedException();
+            int i_panels = 0; // zawsze 0-39
+            int i_bad_followers = (page - 1) * 40;
+
+            for (int i = 0; i < bad_followers.Count; i++)
+            {
+                // gdy i nalezy do strony
+                if (i >= ((page - 1) * 40) && (i < (page) * 40))
+                {
+                    // ustaw numer panela na odpowiedni
+                    bad_followers[i].SetPanelNr(i_panels);
+
+                    // zwieksz numer
+                    i_panels++; 
+                }
+                else
+                {
+                    // ustaw numer panela na pusty
+                    bad_followers[i].SetPanelNr(-1);
+                }
+            }
         }
 
-        private void Comment_in_loop_worker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        private async Task GenerateBadFollowersList(List<InstaUserShort> bad_followers)
         {
-            throw new NotImplementedException();
+            // utworz liste
+            insta_bad_followers = new List<InstaFollower>();
+
+            // dla kazdego uzytkownika, ktorego followujesz, a on cb nie
+            foreach (InstaUserShort bad_follower in bad_followers)
+            {
+                // sprawdz w bazie danych czy juz ta osoba istnieje
+                using (SQLiteConnection m_dbConnection = new SQLiteConnection(data_holder.connectionString))
+                {
+                    m_dbConnection.Open();
+
+                    string sql = $"SELECT * FROM instagram_followers WHERE user_name = '{bad_follower.UserName}' AND status <> 0";
+                    SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+                    SQLiteDataReader reader = command.ExecuteReader();
+
+                    if (reader.HasRows)
+                    {
+                        // odczytaj
+                        reader.Read();
+                        // dodaj do listy
+                        insta_bad_followers.Add(new InstaFollower(data_holder, await DownloadPhotoFromUrl(bad_follower.ProfilePicture), bad_follower.UserName, bad_follower.Pk, (FollowerState)reader.GetInt32(2)));
+                    }
+                    else
+                    {
+                        // dodaj do listy
+                        insta_bad_followers.Add(new InstaFollower(data_holder, await DownloadPhotoFromUrl(bad_follower.ProfilePicture), bad_follower.UserName, bad_follower.Pk));
+
+                        // dodaj do bazy danych
+                        sql = $"INSERT INTO instagram_followers (id, user_name, status) VALUES (NULL, '{bad_follower.UserName}', 1)";
+                        command = new SQLiteCommand(sql, m_dbConnection);
+                        command.ExecuteNonQuery(); // nic nie zwraca
+                    }
+
+                    m_dbConnection.Close();
+                }
+            }
         }
 
-        private void Comment_in_loop_worker_DoWork(object sender, DoWorkEventArgs e)
+        private void CreateEmptyFollowersPanels()
         {
-            throw new NotImplementedException();
+            followers_panels = new List<Panel>();
+            followers_labels = new List<Label>();
+
+            // panele w rzedzie
+            for(int i = 0; i < 4; i++)
+            {
+                // panele w kolumnie
+                for(int j = 0; j < 10; j++)
+                {
+                    int element_nr = i * 10 + j;
+
+                    Label new_label = new Label();
+                    new_label.BackColor = System.Drawing.Color.White;
+                    new_label.Location = new System.Drawing.Point(3, 84);
+                    new_label.Name = "label_"+element_nr.ToString();
+                    new_label.Size = new System.Drawing.Size(92, 13);
+                    //new_label.TabIndex = 8;
+                    new_label.Text = "...";
+                    new_label.TextAlign = ContentAlignment.MiddleCenter;
+
+                    followers_labels.Add(new_label);
+
+                    Panel new_panel = new Panel();
+                    //this.panel10.BackgroundImage = global::IGTomesheq.Properties.Resources.Instagram_icon;
+                    //this.panel10.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
+                    new_panel.BackColor = Color.White;
+                    new_panel.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+                    new_panel.Controls.Add(followers_labels.Last());
+                    new_panel.Location = new System.Drawing.Point(48 + j*105, 135 + i*103);
+                    new_panel.Name = "panel_"+element_nr.ToString();
+                    new_panel.Size = new System.Drawing.Size(100, 100);
+
+                    new_panel.Click += new System.EventHandler(this.follower_panel_Click);
+                    new_panel.Paint += new System.Windows.Forms.PaintEventHandler(this.follower_panel_Paint);
+
+                    //System.Diagnostics.Debug.WriteLine(element_nr.ToString()+"/n");
+
+                    followers_panels.Add(new_panel);
+
+                    panel_followers_manager.Controls.Add(followers_panels.Last());
+                }
+            }
         }
 
-        private void Like_in_loop_worker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        private void CreateBadFollowerPanel(int page, List<InstaFollower> users)
         {
-            throw new NotImplementedException();
+            int i_panel = 0;
+
+            for (int i = 0; i < users.Count; i++)
+            {
+                if (i >= ((page - 1) * 40) && (i < (page * 40)))
+                {
+                    // jesli numer kafelka nie jest wiekszy niz liczba uzytkownikow
+                    if (users.Count > i_panel)
+                    {
+                        if (users[i] != null)
+                        {
+                            // znajduje panel odpowiedzialny za tego followersa
+                            //Control ctr = this.Controls.Find(users[i].panel_name, true).FirstOrDefault();
+                            Control ctr_panel = this.Controls.Find("panel_"+i_panel.ToString(), true).FirstOrDefault();
+                            if (ctr_panel != null)
+                            {
+                                ctr_panel.Show();
+                                ctr_panel.BackgroundImage = users[i].profile_pic;
+                                ctr_panel.BackgroundImageLayout = ImageLayout.Zoom;
+
+                                // znajduje label odpowiedzialny za tego followersa
+                                //ctr = this.Controls.Find(users[i].label_name, true).FirstOrDefault();
+                                Control ctr_label = this.Controls.Find("label_" + i_panel.ToString(), true).FirstOrDefault();
+                                if (ctr_label != null)
+                                {
+                                    ctr_label.Text = users[i].user_name;
+                                }
+
+                                ctr_panel.Refresh();
+                            }
+                        }
+                    }
+                    i_panel++;
+                }
+            }
+
+            // jesli nie wszystkie panele dostaly zdjecie, ukryj przycisk przewijania dalej
+            if(i_panel < 39)
+            {
+                panel_right_arrow.Hide();
+            }
         }
 
-        private void Like_in_loop_worker_ProgressChanged(object sender, ProgressChangedEventArgs e)
+        private void HideAllTiles()
         {
-            throw new NotImplementedException();
-        }
+            for (int i = 0; i < 40; i++)
+            {
+                Control ctr = this.Controls.Find("panel_" + i.ToString(), true).FirstOrDefault();
 
-        private void Like_in_loop_worker_DoWork(object sender, DoWorkEventArgs e)
-        {
-            SupportGroup support_group = (SupportGroup)e.Argument;
-
-            
-        }
-
-        private void Comment_single_post_worker_ProgressChanged(object sender, ProgressChangedEventArgs e)
-        {
-            throw new NotImplementedException();
-        }
-
-        private void Comment_single_post_worker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
-        {
-            throw new NotImplementedException();
-        }
-
-        private void Comment_single_post_worker_DoWork(object sender, DoWorkEventArgs e)
-        {
-            throw new NotImplementedException();
-        }
-
-        private void Like_single_post_worker_ProgressChanged(object sender, ProgressChangedEventArgs e)
-        {
-            throw new NotImplementedException();
-        }
-
-        private void Like_single_post_worker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
-        {
-            throw new NotImplementedException();
-        }
-
-        private void Like_single_post_worker_DoWork(object sender, DoWorkEventArgs e)
-        {
-            throw new NotImplementedException();
-        }
-
-        private void Load_single_post_worker_ProgressChanged(object sender, ProgressChangedEventArgs e)
-        {
-            throw new NotImplementedException();
-        }
-
-        private void Load_single_post_worker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
-        {
-            throw new NotImplementedException();
-        }
-
-        private void Load_single_post_worker_DoWork(object sender, DoWorkEventArgs e)
-        {
-            throw new NotImplementedException();
+                if(ctr != null)
+                {
+                    ctr.Hide();
+                }
+            }
         }
 
         private void PleaseWaitShowSinglePost()
@@ -247,9 +330,6 @@ namespace IGTomesheqAutoLiker
             // ukryj label_progress - w tym przypadku nie jest potrzebny
             this.label_progress.Show();
             this.label_progress.Text = SetupProgressLabel(0, support_group.MessagesWithInstaPosts.Count);
-
-            // uruchom backgroundworker
-            like_in_loop_worker.RunWorkerAsync(support_group);
         }
 
         // Zwraca tekst do labela z progresem likowania/komentowania
@@ -275,6 +355,7 @@ namespace IGTomesheqAutoLiker
             }
             catch(Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine("\n" + ex.Message);
                 return false;
             }
         }
@@ -296,18 +377,19 @@ namespace IGTomesheqAutoLiker
                 {
                     listView2.Items.Remove(listView2.FindItemWithText(group.Name));
                     listView3.Items.Add(group.Name);
-                    listView_2.Items.Add(group.Name);
+                    listBox2.Items.Add(group.Name);
                     if(group.Settings.OnlyLike)
                     {
-                        listView_2.Items[listView_2.Items.Count - 1].BackColor = Color.Aqua;
+                        //listBox2.Items[listBox2.Items.Count - 1].BackColor = Color.Aqua;
                     }
-                    support_groups.Add(group);
+                    all_support_groups.Add(group);
                 }
 
                 return true;
             }
             catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine("\n" + ex.Message);
                 return false;
             }
         }
@@ -318,6 +400,7 @@ namespace IGTomesheqAutoLiker
             textBox_likes_limit.Text = data_holder.likes_limit.ToString();
             textBox_min_time_betw_likes.Text = data_holder.min_time_betw_likes.ToString();
             textBox_max_time_betw_likes.Text = data_holder.max_time_betw_likes.ToString();
+            textBox_keep_old_entries.Text = data_holder.keep_old_entries.ToString();
         }
 
         // odpowiada za wyswietlanie okienka z zarzadzaniem kontem inagrama
@@ -378,40 +461,54 @@ namespace IGTomesheqAutoLiker
             switch (show_option)
             {
                 case InitDataHolder.ShowInstagramPanelWith.InsertLoginData:
-                    panel1.Show();
-                    panel2.Hide();
-                    panel7.Hide();
-                    panel8.Hide();
+                    panel_insta_login_data.Show();
+                    panel_insta_challenge_code.Hide();
+                    panel_insta_login_success.Hide();
+                    panel_insta_2FactAuth.Hide();
+                    panel_insta_login_failed_info.Hide();
                     break;
 
                 case InitDataHolder.ShowInstagramPanelWith.InsertSecurityCode:
                     label62.Text = $"Witaj @{IGProc.login}!";
-                    panel1.Hide();
-                    panel2.Show();
-                    panel7.Hide();
-                    panel8.Hide();
+                    panel_insta_login_data.Hide();
+                    panel_insta_challenge_code.Show();
+                    panel_insta_login_success.Hide();
+                    panel_insta_2FactAuth.Hide();
+                    panel_insta_login_failed_info.Hide();
                     break;
 
                 case InitDataHolder.ShowInstagramPanelWith.LoginFailed:
-                    panel1.Show();
-                    panel2.Hide();
-                    panel7.Hide();
-                    panel8.Show();
+                    panel_insta_login_data.Show();
+                    panel_insta_challenge_code.Hide();
+                    panel_insta_login_success.Hide();
+                    panel_insta_2FactAuth.Hide();
+                    panel_insta_login_failed_info.Show();
                     break;
 
                 case InitDataHolder.ShowInstagramPanelWith.LoginSuccess:
                     label56.Text = $"Witaj @{IGProc.login}!";
-                    panel1.Hide();
-                    panel2.Hide();
-                    panel7.Show();
-                    panel8.Hide();
+                    panel_insta_login_data.Hide();
+                    panel_insta_challenge_code.Hide();
+                    panel_insta_login_success.Show();
+                    panel_insta_2FactAuth.Hide();
+                    panel_insta_login_failed_info.Hide();
+                    break;
+
+                case InitDataHolder.ShowInstagramPanelWith.Insert2FactCode:
+                    label_insta_2FactAuth_welcome.Text = $"Witaj @{IGProc.login}!";
+                    panel_insta_login_data.Hide();
+                    panel_insta_challenge_code.Hide();
+                    panel_insta_2FactAuth.Show();
+                    panel_insta_login_success.Hide();
+                    panel_insta_login_failed_info.Hide();
                     break;
 
                 default:
-                    panel1.Show();
-                    panel2.Hide();
-                    panel7.Hide();
-                    panel8.Hide();
+                    panel_insta_login_data.Show();
+                    panel_insta_challenge_code.Hide();
+                    panel_insta_login_success.Hide();
+                    panel_insta_login_failed_info.Hide();
+                    panel_insta_2FactAuth.Hide();
                     break;
             }
         }
@@ -500,8 +597,15 @@ namespace IGTomesheqAutoLiker
 
                 if (!exists)
                 {
-                    MessageBox.Show($"Wygląda na to, że nie należysz już do grupy wsparcia \"{item.Text}\".\nUsuwam tę grupę z listy");
+                    MessageBox.Show($"Wygląda na to, że nie należysz już do grupy wsparcia \"{item.Text}\".\nUsuwam tę grupę z listy. Aby zarządzać grupami wsparcia wybierz w menu \"WYBÓR GRUP WSPARCIA\"");
                     listView3.Items.Remove(item);
+                    for (int i = 0; i < listBox2.Items.Count; i++)
+                    {
+                        if (listBox2.Items[i].ToString() == item.Text)
+                        {
+                            listBox2.Items.RemoveAt(i);
+                        }
+                    }
                     using (SQLiteConnection m_dbConnection = new SQLiteConnection(data_holder.connectionString))
                     {
                         m_dbConnection.Open();
@@ -639,12 +743,12 @@ namespace IGTomesheqAutoLiker
                                                     }
                                                     catch (FloodException ex)
                                                     {
-                                                        int seconds_to_wait = (int)ex.TimeToWait.TotalSeconds;
+                                                        int seconds_to_wait = (int)ex.TimeToWait.TotalSeconds + 1;
                                                         for (int i = 0; i < seconds_to_wait; i++)
                                                         {
                                                             this.toolStripStatusLabel1.Text = "Próbujemy pobrać zbyt wiele wiadomości w zbyt krótkim czasie - Telegram się broni... Czekam " + (seconds_to_wait - i).ToString() + " sekund...";
                                                             this.Refresh();
-                                                            Thread.Sleep(1000);
+                                                            await Wait1Second();
                                                         }
                                                         this.toolStripStatusLabel1.Text = "Szukam dalej linków w grupie " + channel.Title + "...";
                                                         this.Refresh();
@@ -756,7 +860,12 @@ namespace IGTomesheqAutoLiker
                                                         MessageBox.Show("Próbujemy pobrać zbyt wiele wiadomości w zbyt krótkim czasie - Telegram się przed tym broni i nie udostępni wiadomości przez " + seconds_to_wait.ToString() + " sekund. Poczekaj cierpliwie i nic nie rób, a aplikacja sama wznowi działanie.");
                                                         this.toolStripStatusLabel1.Text = "Telegram się broni... Czekam " + seconds_to_wait.ToString() + " sekund...";
                                                         this.Refresh();
-                                                        Thread.Sleep((seconds_to_wait + 1) * 1000);
+                                                        while (seconds_to_wait > 0)
+                                                        {
+                                                            toolStripStatusLabel1.Text = $"Telegram się broni... Czekam " + seconds_to_wait.ToString() + " sekund...";
+                                                            await Wait1Second();
+                                                            seconds_to_wait--;
+                                                        }
                                                         this.toolStripStatusLabel1.Text = "Szukam dalej linków w grupie " + chat.Title + "...";
                                                         this.Refresh();
                                                         try
@@ -775,6 +884,7 @@ namespace IGTomesheqAutoLiker
                                 }
                                 else
                                 {
+                                    TLmessages = TLmessages.OrderBy(x => x.Date).ToList();
                                     return TLmessages;
                                 }
                             }
@@ -868,7 +978,12 @@ namespace IGTomesheqAutoLiker
                                                     MessageBox.Show("Próbujemy pobrać zbyt wiele wiadomości w zbyt krótkim czasie - Telegram się przed tym broni i nie udostępni wiadomości przez " + seconds_to_wait.ToString() + " sekund. Poczekaj cierpliwie i nic nie rób, a aplikacja sama wznowi działanie.");
                                                     this.toolStripStatusLabel1.Text = "Telegram się broni... Czekam " + seconds_to_wait.ToString() + " sekund...";
                                                     this.Refresh();
-                                                    Thread.Sleep((seconds_to_wait + 1) * 1000);
+                                                    while (seconds_to_wait > 0)
+                                                    {
+                                                        toolStripStatusLabel1.Text = $"Telegram się broni... Czekam " + seconds_to_wait.ToString() + " sekund...";
+                                                        await Wait1Second();
+                                                        seconds_to_wait--;
+                                                    }
                                                     this.toolStripStatusLabel1.Text = "Szukam dalej linków w grupie " + chat.Title + "...";
                                                     this.Refresh();
                                                     try
@@ -887,6 +1002,7 @@ namespace IGTomesheqAutoLiker
                             }
                             else
                             {
+                                TLmessages = TLmessages.OrderBy(x => x.Date).ToList();
                                 return TLmessages;
                             }
                         }
@@ -894,6 +1010,7 @@ namespace IGTomesheqAutoLiker
                 } 
             }
 
+            TLmessages = TLmessages.OrderBy(x => x.Date).ToList();
             return TLmessages;
         }
 
@@ -904,14 +1021,14 @@ namespace IGTomesheqAutoLiker
             {
                 try
                 {
-                    if (support_groups != null)
+                    if (all_support_groups != null)
                     {
-                        if (support_groups[support_group_index].areThereAnyMessages())
+                        if (all_support_groups[support_group_index].areThereAnyMessages())
                         {
                             // pobiera obrazek z wiadomości Telegrama
                             string base64img = "";
 
-                            base64img = await DownloadPhotoFromTelegramWebPageMessage(support_groups[support_group_index].MessagesWithInstaPosts[msg_index].TelegramMessage);
+                            base64img = await DownloadPhotoFromTelegramWebPageMessage(all_support_groups[support_group_index].MessagesWithInstaPosts[msg_index].TelegramMessage);
 
                             // sprawdza czy nie wystąpił błąd przy pobieraniu
                             if (base64img.Contains("Ta wiadomość") || base64img.Contains("Nie udało"))
@@ -1137,13 +1254,13 @@ namespace IGTomesheqAutoLiker
             }
         }
 
-        private Image DownloadPhotoFromUrl(string url)
+        private async Task<Image> DownloadPhotoFromUrl(string url)
         {
             try
             {
                 var request = WebRequest.Create(url);
 
-                using (var response = request.GetResponse())
+                using (var response = await request.GetResponseAsync())
                 using (var stream = response.GetResponseStream())
                 {
                     try
@@ -1213,13 +1330,10 @@ namespace IGTomesheqAutoLiker
             {
                 // wyswietl na liscie grup wsparcia w panelu wyboru grup
                 listView3.Items.Add(listView2.SelectedItems[0].Text);
-                listView_2.Items.Add(listView2.SelectedItems[0].Text);
-                var tmp = support_groups.Where(x => x.Name == listView2.SelectedItems[0].Text).FirstOrDefault();
-                if (tmp.Settings.OnlyLike)
-                {
-                    listView_2.Items[listView_2.Items.Count - 1].BackColor = Color.Aqua;
-                }
-                support_groups.Add(new SupportGroup(listView2.SelectedItems[0].Text));
+                listBox2.Items.Add(listView2.SelectedItems[0].Text);
+
+                // dodaj grupe wsparcia w logice
+                all_support_groups.Add(new SupportGroup(listView2.SelectedItems[0].Text));
 
                 // dodaj do bazy danych
                 using (SQLiteConnection m_dbConnection = new SQLiteConnection(data_holder.connectionString))
@@ -1230,9 +1344,6 @@ namespace IGTomesheqAutoLiker
                     command.ExecuteNonQuery(); // nic nie zwraca
                     m_dbConnection.Close(); 
                 }
-
-                // dodaj do listy grup wsparcia w logice programu
-                support_groups.Add(new SupportGroup(listView2.SelectedItems[0].Text));
 
                 // usun ze starej listy
                 listView2.SelectedItems[0].Remove();
@@ -1256,11 +1367,11 @@ namespace IGTomesheqAutoLiker
                     m_dbConnection.Close(); 
                 }
 
-                var tmp_listview_item = listView_2.Items.Find(listView3.SelectedItems[0].Text, false);
-                int tmp1 = listView_2.Items.IndexOf(tmp_listview_item[0]);
-                int tmp2 = support_groups.FindIndex(x => x.Name == listView3.SelectedItems[0].Text);
-                listView_2.Items.RemoveAt(tmp1);
-                support_groups.RemoveAt(tmp2);
+                //var tmp_listview_item = listBox2.Items.Find(listView3.SelectedItems[0].Text, false);
+                int tmp1 = listBox2.Items.IndexOf(listView3.SelectedItems[0].Text);
+                int tmp2 = all_support_groups.FindIndex(x => x.Name == listView3.SelectedItems[0].Text);
+                listBox2.Items.RemoveAt(tmp1);
+                all_support_groups.RemoveAt(tmp2);
                 listView3.SelectedItems[0].Remove();
             }
         }
@@ -1272,29 +1383,30 @@ namespace IGTomesheqAutoLiker
         // button dalej na ekranie z wyborem daty granicznej postu
         private async void button13_Click(object sender, EventArgs e)
         {
-            // schowaj biezacy panel
+            // sprawdza czy jest zalogowany do wszystkich portali - jesli nie, nie pozwoli przejsc do likowania
+            if(data_holder.instagram_ok == false || data_holder.telegram_ok == false || data_holder.telegram_channels_and_chats_ok == false || all_support_groups.Count == 0)
+            {
+                MessageBox.Show("Nie mogę rozpocząć lajkowania - za mało danych... Sprawdź czy:\n1. Jesteś zalogowany do Instagrama\n2. Jesteś zalogowany do Telegrama\n3. Wybrałeś co najmniej jedną grupę wsparcia\nPo poprawnym zalogowaniu i wybraniu grup wsparcia kliknij przycisk Dalej ponownie.");
+                return;
+            }
+
+            // ukrywa biezacy 
             panel_settings.Hide();
 
-            // posortowanie grup wsparcia
-            List<SupportGroup> only_like_groups = new List<SupportGroup>();
-            List<int> indicies_to_remove = new List<int>();
-            for(int i = 0; i < support_groups.Count; i++)
-            {
-                if(support_groups[i].Settings.OnlyLike)
-                {
-                    only_like_groups.Add(support_groups[i]);
-                    indicies_to_remove.Add(i);
-                }
-            }
-            
-            // usuniecie tylko like
-            for(int i = (indicies_to_remove.Count - 1); i >= 0; i--)
-            {
-                support_groups.Remove(support_groups[indicies_to_remove[i]]);
-            }
+            // ukrywa przycisk przejdz dalej do komentowania
+            panel_liker_button_go_on.Show();
 
-            // dodanie tylko like jeszcze raz, tym razem na poczatku
-            support_groups.InsertRange(0, only_like_groups);
+            // pokazuje panel likera
+            panel_liker.Show();
+
+            // sortuje grupy wsparcia
+            all_support_groups = all_support_groups.OrderByDescending(x => x.Settings.OnlyLike).ToList();
+
+            // wyswietla grupy wsparcia na liscie
+            foreach(SupportGroup group in all_support_groups)
+            {
+                AddSupportGroupLabel(group);
+            }
 
             // dla kazdej grupy wsparcia, dla ktorej zostalo wybrane ustawienie "data z kalendarzyka" przepisuje date z kalendarza
             AssignCalendarDateToSupportGroups(dateTimePicker1.Value);
@@ -1303,48 +1415,93 @@ namespace IGTomesheqAutoLiker
             this.toolStripStatusLabel1.Text = "Zaczynam szukanie linków w Telegramie!";
             this.Refresh();
 
-            // filtrowanie 
-            // FilterTelegramChannels(false);
-            // FilterTelegramChats(false);
-            
             // pobiera wiadomosci z dialogow
-            foreach(var group in support_groups)
+            foreach (var group in all_support_groups)
             {
-                group.AddAndFilterMessages(await GetTelegramMessagesFromChannel(group));
+                if (!group.Settings.SkipThisTime)
+                {
+                    ActivateSupportGroupLabel(group);
+                    var tmp = await GetTelegramMessagesFromChannel(group);
+                    group.AddAndFilterMessages(tmp);
+                    UpdateSupportGroupLabel(group, group.MessagesWithInstaPosts.Count);
+                    total_posts_to_like += group.MessagesWithInstaPosts.Count;
+                    DeactivateSupportGroupLabel(group); 
+                }
             }
 
-            // pobranie wiadomosci ze wszystkich chatow
-            this.toolStripStatusLabel1.Text = "Zakończono szukanie linków w Telegramie!";
-            this.Refresh();
-
-            this.toolStripStatusLabel1.Text = "Zaczynam pobieranie postów z Instagrama!";
-            this.Refresh();
-            //DownloadPhotosFromTelegramDialogs();
-            //await DownloadPhotoFromSupportGroupMessages(current_support_group, 0);
-            this.toolStripStatusLabel1.Text = "Gotowe! Posty zostały pobrane - możesz teraz komentować!";
-
-            // zainicjuj kolejny screen
-            InitLikeCommenterPanel();
-
-            if (listBox1.Items.Count > 0)
+            // sprawdzenie czy liczba postow nie przekracza limitu likow
+            if(total_posts_to_like > data_holder.likes_limit)
             {
-                support_group_index = 0;
-
-                // odblokowanie listBoxa
-                this.listBox1.Enabled = true;
-
-                // wybierz pierwszy wpis na liście
-                listBox1.SelectedIndex = 0;
+                DialogResult box = MessageBox.Show("Ustawiłeś limit lajków na " + data_holder.likes_limit.ToString() + ", a do polajkowania jest " + total_posts_to_like.ToString() + " wiadomości\n\nCzy chcesz pominąć limit?\nJeśli klikniesz TAK, wszystkie posty ("+ total_posts_to_like.ToString() +") zostaną polajkowane, bez limitu.\nJeśli klikniesz NIE, tylko "+ data_holder.likes_limit.ToString() +" postów zostanie polajkowanych, zgodnie z limitem.", "Zbyt dużo wiadomości do polajkowania... Co robić?", MessageBoxButtons.YesNo);
+                if(box == DialogResult.Yes)
+                {
+                    data_holder.likes_limit = total_posts_to_like;
+                }
             }
 
-            this.Refresh();
+            // lajkuje
+            foreach (var group in all_support_groups)
+            {
+                // pogrubia grupe na panelu, zeby zwrocic uwage
+                ActivateSupportGroupLabel(group);
 
-            // ukrywa wyszukiwanie po dacie
-            label37.Hide();
-            dateTimePicker1.Hide();
+                // jesli grupa jest do polajkowania
+                if (group.Settings.OnlyLike && !group.Settings.SkipThisTime)
+                {
+                    // licznik lajkow
+                    int likes_count = 0;
 
-            // pokaz kolejny screen
-            panel_liker_commenter.Show();
+                    // pokazuje ile lajkow zrobiono
+                    UpdateSupportGroupLabel(group, -1, likes_count);
+                    likes_count++;
+
+                    // lajkuje w petli
+                    while (await OnlyLikePost(group))
+                    {
+                        // pokazuje ile lajkow zrobiono
+                        UpdateSupportGroupLabel(group, -1, likes_count);
+                        ReportLikingProgress();
+
+                        if (total_posts_liked > data_holder.likes_limit)
+                        {
+                            MessageBox.Show("Osiągnięto limit lajków (1000) - przerywam lajkowanie");
+                            break;
+                        }
+
+                        if (!last_like_skipped)
+                        {
+                            Random random = new Random();
+                            int wait_t = random.Next(data_holder.min_time_betw_likes, data_holder.max_time_betw_likes);
+                            while (wait_t > 0)
+                            {
+                                toolStripStatusLabel1.Text = $"Czekam {wait_t} sekund...";
+                                await Wait1Second();
+                                wait_t--;
+                            } 
+                        }
+
+                        likes_count++;
+                        last_like_skipped = false;
+                    }
+
+                    // po skonczonym lajkowaniu male oszustwo ;)
+                    UpdateSupportGroupLabel(group, -1, group.MessagesWithInstaPosts.Count);
+                }
+                
+                // usuwa pogrubienie grupy na panelu
+                DeactivateSupportGroupLabel(group);
+            }
+
+            // pokazuje przycisk przejscia do ekranu komentowania
+            panel_liker_button_go_on.Show();
+
+            // pokazuje przycisk przejdz dalej do komentowania
+            panel_liker_button_go_on.Show();
+        }
+
+        private async Task Wait1Second()
+        {
+            await Task.Delay(1000);
         }
 
         /* --- |SCREEN WYBORU DATY| --- */
@@ -1356,8 +1513,11 @@ namespace IGTomesheqAutoLiker
             // pokaz ile zdjec wymaga skomentowania
             label24.Text = media_to_comment_counter.ToString();
 
+            // odsianie tylko grup wsparcia do skomentowania
+            comment_support_groups = all_support_groups.Where(x => !x.Settings.OnlyLike && !x.Settings.SkipThisTime).ToList();
+
             // wypelnij danymi liste grup wsparcia typu "tylko like"
-            foreach(var group in support_groups)
+            foreach(var group in comment_support_groups)
             {
                 listBox1.Items.Add(group.Name);
             }
@@ -1374,26 +1534,12 @@ namespace IGTomesheqAutoLiker
                     comboBox1.Items.Add(reader["comment"].ToString());
                     //MessageBox.Show(reader["comment"].ToString());
                 }
-                m_dbConnection.Close(); 
+                m_dbConnection.Close();
             }
 
             // pokaz najczesciej uzywane emotki oraz przycisk wiecej
             // pokazuje emojis w labelach
             UpdateMostPopularEmojis();
-
-            // pokazuje przycisk wiecej...
-            Label more_label = new Label();
-            more_label.Font = new System.Drawing.Font("Microsoft Sans Serif", 16F);
-            more_label.Location = new System.Drawing.Point(800 + (9 * 25), 330);
-            more_label.Name = "more_label";
-            more_label.Size = new System.Drawing.Size(35, 25);
-            more_label.TabIndex = 0;
-            more_label.Text = "...";
-            more_label.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            more_label.Click += More_label_Click;
-
-            emoji_labels.Add(more_label);
-            this.panel_liker_commenter.Controls.Add(emoji_labels.Last());
         }
 
         // uaktualnia najbardziej popularne emojis na panelu liker komenter
@@ -1413,6 +1559,19 @@ namespace IGTomesheqAutoLiker
                         CreateEmojiLabel(j, reader.GetString(reader.GetOrdinal("emoji")));
                         j++;
                     }
+                    // pokazuje przycisk wiecej...
+                    Label more_label = new Label();
+                    more_label.Font = new System.Drawing.Font("Microsoft Sans Serif", 16F);
+                    more_label.Location = new System.Drawing.Point(800 + (9 * 25), 330);
+                    more_label.Name = "more_label";
+                    more_label.Size = new System.Drawing.Size(35, 25);
+                    more_label.TabIndex = 0;
+                    more_label.Text = "...";
+                    more_label.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+                    more_label.Click += More_label_Click;
+
+                    emoji_labels.Add(more_label);
+                    this.panel_commenter.Controls.Add(emoji_labels.Last());
                 }
             }
         }
@@ -1434,9 +1593,9 @@ namespace IGTomesheqAutoLiker
         private void CreateEmojiLabel(int label_nr, string emoji)
         {
             // jesli labele z najczęściej używanymi emojis zostały już utworzone, podmienia tylko tekst
-            if (this.panel_liker_commenter.Controls.Find("label_emoji_" + label_nr.ToString(), true).Count() > 0)
+            if (this.panel_commenter.Controls.Find("label_emoji_" + label_nr.ToString(), true).Count() > 0)
             {
-                this.panel_liker_commenter.Controls.Find("label_emoji_" + label_nr.ToString(), true).FirstOrDefault().Text = emoji;
+                this.panel_commenter.Controls.Find("label_emoji_" + label_nr.ToString(), true).FirstOrDefault().Text = emoji;
             }
             else // jesli labele z najczęściej używanymi emojis nie zostały jeszcze utworzone, tworzy je
             {
@@ -1455,7 +1614,7 @@ namespace IGTomesheqAutoLiker
                 complete_emojis.Add(new SingleEmoji(emoji, label_nr));
 
                 emoji_labels.Add(tmp_label);
-                this.panel_liker_commenter.Controls.Add(emoji_labels.Last());
+                this.panel_commenter.Controls.Add(emoji_labels.Last());
             }
             this.Refresh();
         }
@@ -1581,7 +1740,7 @@ namespace IGTomesheqAutoLiker
             FreezeUI();
 
             // pobiera dla danej grupy wsparcia index wiadomosci do pokazania
-            int current_message_index = support_groups[this.support_group_index].MessageIndex;
+            int current_message_index = all_support_groups[this.support_group_index].MessageIndex;
 
             // jesli w tej grupie istnieją posty do pokazania
             if (current_message_index > -1)
@@ -1590,34 +1749,34 @@ namespace IGTomesheqAutoLiker
                 label43.Hide();
 
                 // jesli jeszcze nie utworzono postu Instagrama dla tej wiadomosci, to go tworzy
-                if (support_groups[this.support_group_index].MessagesWithInstaPosts[current_message_index].InstagramPost == null)
+                if (all_support_groups[this.support_group_index].MessagesWithInstaPosts[current_message_index].InstagramPost == null)
                 {
                     // pobranie zdjecia oraz opisu z TelegramMessage
                     try
                     {
-                        string media_id = await IGProc.GetMediaIdFromUrl(support_groups[this.support_group_index].MessagesWithInstaPosts[current_message_index].Url);
+                        string media_id = await IGProc.GetMediaIdFromUrl(all_support_groups[this.support_group_index].MessagesWithInstaPosts[current_message_index].Url);
                         IResult<InstaMedia> tmp_post = await IGProc.GetInstaPost(media_id);
-                        support_groups[this.support_group_index].MessagesWithInstaPosts[current_message_index].CreateInstagramPost(tmp_post.Value);
+                        all_support_groups[this.support_group_index].MessagesWithInstaPosts[current_message_index].CreateInstagramPost(tmp_post.Value);
                         // jesli foto juz skomentowane lub to twoje zdjecie pomin
-                        bool already_commented = await IGProc.FindMyComment(support_groups[this.support_group_index].MessagesWithInstaPosts[current_message_index].InstagramPost.InstaPost.InstaIdentifier, IGProc.login);
-                        if (already_commented || support_groups[this.support_group_index].MessagesWithInstaPosts[current_message_index].InstagramPost.InstaPost.PhotoOfYou)
+                        bool already_commented = await IGProc.FindMyComment(all_support_groups[this.support_group_index].MessagesWithInstaPosts[current_message_index].InstagramPost.InstaPost.InstaIdentifier, IGProc.login);
+                        if (already_commented || all_support_groups[this.support_group_index].MessagesWithInstaPosts[current_message_index].InstagramPost.InstaPost.PhotoOfYou)
                         {
                             // zwiększ indeks wiadomości
-                            support_groups[this.support_group_index].IncrementMessageIndex();
+                            all_support_groups[this.support_group_index].IncrementMessageIndex();
                             // rozmroź UI
                             DefrostUI();
                             // zwróć false, żeby z miejsca wywołania mogło kolejny raz wywołać tę funkcję
                             return false;
                         }
                         // polajkuj post
-                        await IGProc.Like(support_groups[this.support_group_index].MessagesWithInstaPosts[current_message_index].InstagramPost.InstaPost.InstaIdentifier);
-                        total_likes_count++;
+                        await IGProc.Like(all_support_groups[this.support_group_index].MessagesWithInstaPosts[current_message_index].InstagramPost.InstaPost.InstaIdentifier);
+                        total_posts_liked++;
                     }
                     catch (Exception ex)
                     {
                         MessageBox.Show("TO WAŻNE! Wystąpił błąd! Zrób screena tego okienka i wyślij do Bubu 8)\n" + ex.Message);
                         // zwiększ indeks wiadomości
-                        support_groups[this.support_group_index].IncrementMessageIndex();
+                        all_support_groups[this.support_group_index].IncrementMessageIndex();
                         // rozmroź UI
                         DefrostUI();
                         // zwróć false, żeby z miejsca wywołania mogło kolejny raz wywołać tę funkcję
@@ -1626,25 +1785,25 @@ namespace IGTomesheqAutoLiker
                 }
 
                 // opis postu na insta
-                label40.Text = support_groups[this.support_group_index].MessagesWithInstaPosts[current_message_index].InstagramPost.InstaPost.Caption.Text;
+                label40.Text = all_support_groups[this.support_group_index].MessagesWithInstaPosts[current_message_index].InstagramPost.InstaPost.Caption.Text;
                 // wiadomosc telegrama
-                label22.Text = support_groups[this.support_group_index].MessagesWithInstaPosts[current_message_index].TelegramMessage.Message;
+                label22.Text = all_support_groups[this.support_group_index].MessagesWithInstaPosts[current_message_index].TelegramMessage.Message;
                 // autor postu
-                label38.Text = "@" + support_groups[this.support_group_index].MessagesWithInstaPosts[current_message_index].InstagramPost.InstaPost.User.UserName;
+                label38.Text = "@" + all_support_groups[this.support_group_index].MessagesWithInstaPosts[current_message_index].InstagramPost.InstaPost.User.UserName;
                 // liczba postow w grupie
-                label39.Text = support_groups[this.support_group_index].GetPostsToDoCounter();
+                label39.Text = all_support_groups[this.support_group_index].GetPostsToDoCounter();
                 // pokazuje zdjecie w pictureboxie
                 Image img;
                 try
                 {
                     // jesli post typu carousel
-                    if (support_groups[this.support_group_index].MessagesWithInstaPosts[current_message_index].InstagramPost.InstaPost.Carousel != null)
+                    if (all_support_groups[this.support_group_index].MessagesWithInstaPosts[current_message_index].InstagramPost.InstaPost.Carousel != null)
                     {
-                        img = DownloadPhotoFromUrl(support_groups[this.support_group_index].MessagesWithInstaPosts[current_message_index].InstagramPost.InstaPost.Carousel[0].Images[0].URI);
+                        img = await DownloadPhotoFromUrl(all_support_groups[this.support_group_index].MessagesWithInstaPosts[current_message_index].InstagramPost.InstaPost.Carousel[0].Images[0].URI);
                     }
                     else
                     {
-                        img = DownloadPhotoFromUrl(support_groups[this.support_group_index].MessagesWithInstaPosts[current_message_index].InstagramPost.InstaPost.Images[0].URI);
+                        img = await DownloadPhotoFromUrl(all_support_groups[this.support_group_index].MessagesWithInstaPosts[current_message_index].InstagramPost.InstaPost.Images[0].URI);
                     }
                 }
                 catch (Exception ex)
@@ -1716,105 +1875,112 @@ namespace IGTomesheqAutoLiker
             return true;
         }
 
-        private async Task<bool> OnlyLikePost()
+        private bool IsPostAlreadyLiked(string insta_media_id)
         {
-            // zamraża interfejs użytkownika
-            FreezeUI();
+            bool ret_val = false;
+            using (SQLiteConnection m_dbConnection = new SQLiteConnection(data_holder.connectionString))
+            {
+                m_dbConnection.Open();
+                string sql = $"SELECT * FROM instagram_posts WHERE insta_media_id = '{insta_media_id}' AND liked = 1";
+                SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+                SQLiteDataReader reader = command.ExecuteReader();
+                if (reader.HasRows)
+                {
+                    // wszystko OK - nic nie rob
+                    ret_val = true;
+                }
+                else
+                {
+                    ret_val = false;
+                }
+                m_dbConnection.Close();
+            }
 
+            return ret_val;
+        }
+
+        private async Task<bool> OnlyLikePost(SupportGroup group)
+        {
             // pobiera dla danej grupy wsparcia index wiadomosci do pokazania
-            int current_message_index = support_groups[this.support_group_index].MessageIndex;
+            int current_message_index = group.MessageIndex;
 
             // jesli w tej grupie istnieją posty do pokazania
             if (current_message_index > -1)
             {
-                // ukrywa label o braku postow w grupie
-                label43.Hide();
                 // pobranie zdjecia oraz opisu z TelegramMessage
                 try
                 {
                     // znajdz media ID
-                    string media_id = await IGProc.GetMediaIdFromUrl(support_groups[this.support_group_index].MessagesWithInstaPosts[current_message_index].Url);
+                    string media_id = await IGProc.GetMediaIdFromUrl(group.MessagesWithInstaPosts[current_message_index].Url);
+
+                    // sprawdz czy post nie zostal juz czasem polajkowany - jesli tak, pomin tym razem
+                    if (IsPostAlreadyLiked(media_id))
+                    {
+                        group.IncrementMessageIndex();
+                        total_posts_liked++;
+                        last_like_skipped = true;
+                        return true;
+                    }
+
+                    // pobierz post
                     IResult<InstaMedia> tmp_post = await IGProc.GetInstaPost(media_id);
+                    
                     // polajkuj post
                     await IGProc.Like(tmp_post.Value.InstaIdentifier);
+                    
                     // zwieksz indeks wiadomosci
-                    support_groups[this.support_group_index].IncrementMessageIndex();
-                    total_likes_count++;
+                    group.IncrementMessageIndex();
+                    total_posts_liked++;
+
+                    // dodaj do bazy danych info o polajkowaniu postu
+                    using (SQLiteConnection m_dbConnection = new SQLiteConnection(data_holder.connectionString))
+                    {
+                        m_dbConnection.Open();
+                        string sql = $"INSERT INTO instagram_posts (id_post, author, insta_media_id, insta_media_shortcode, date_published, commented, comment_text, date_commented, liked, date_liked) VALUES (NULL, '{tmp_post.Value.User.UserName}', '{tmp_post.Value.InstaIdentifier}', '{tmp_post.Value.Code}', {ToUnixTimestamp(tmp_post.Value.TakenAt)}, 0, '', NULL, 1, {ToUnixTimestamp(DateTime.Now)})";
+                        SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+                        command.ExecuteNonQuery(); // nic nie zwraca
+                        m_dbConnection.Close();
+                    }
+                    
                     // zapisz w bazie danych, kiedy ostatnio polajkowano posta w tej grupie
-                    support_groups[this.support_group_index].UpdateLastDoneMessage(ToUnixTimestamp(DateTime.Now));
-                    // rozmroź UI
-                    DefrostUI();
-                    // liczba postow w grupie
-                    label39.Text = support_groups[this.support_group_index].GetPostsToDoCounter();
+                    group.UpdateLastDoneMessage(ToUnixTimestamp(tmp_post.Value.TakenAt));
                 }
                 catch(Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine($"Błąd podczas likownaia: {ex.Message}");
-                    support_groups[this.support_group_index].IncrementMessageIndex();
-                    // rozmroź UI
-                    DefrostUI();
-                    // liczba postow w grupie
-                    label39.Text = support_groups[this.support_group_index].GetPostsToDoCounter();
+                    group.IncrementMessageIndex();
+                    last_like_skipped = true;
+
                     return true;
                 }
             }
             // gdy w tej grupie wsparcia nie ma wgl postów (i nie było)
             else if (current_message_index == -1)
             {
-                // wyswietla label z informacja o braku postow w tej grupie
-                label43.Text = "Brak postów do skomentowania w tej grupie!";
-                label43.Show();
-                // opis postu na insta
-                label40.Text = "Brak";
-                // wiadomosc telegrama
-                label22.Text = "Brak";
-                // autor postu
-                label38.Text = "@noname";
-                // liczba postow w grupie
-                label39.Text = "Brak postów w tej grupie";
-                // pokazuje zdjecie w pictureboxie
-                if (pictureBox2.Image != null)
-                {
-                    pictureBox2.Image.Dispose();
-                    pictureBox2.Image = null;
-                }
-                // rozmroź UI
-                DefrostUI();
                 return false;
             }
             // gdy w tej grupie wsparcia nie ma wgl postów (i nie było)
             else
             {
-                // wyswietla label z informacja o braku postow w tej grupie
-                label43.Text = "Wszystkie posty w tej grupie zostały skomentowane!";
-                label43.Show();
-                // opis postu na insta
-                label40.Text = "Brak";
-                // wiadomosc telegrama
-                label22.Text = "Brak";
-                // autor postu
-                label38.Text = "@noname";
-                // liczba postow w grupie
-                label39.Text = "Wszystkie posty w tej grupie zostały skomentowane!";
-                // pokazuje zdjecie w pictureboxie
-                if (pictureBox2.Image != null)
-                {
-                    pictureBox2.Image.Dispose();
-                    pictureBox2.Image = null;
-                }
-                // rozmroź UI
-                DefrostUI();
                 return false;
             }
 
             return true;
         }
 
+        private void ReportLikingProgress()
+        {
+            panel_liker_label_progress_count.Text = total_posts_liked.ToString() + " / " + total_posts_to_like.ToString();
+            double tmp = ((double)total_posts_liked / (double)total_posts_to_like) * 100.0;
+            int perc = Convert.ToInt32(tmp);
+            panel_liker_label_progress_percent.Text = perc.ToString() + "%";
+        }
+
         // zamraża interfejs użytkownika, żeby nie mógł nic kliknąć
         private void FreezeUI()
         {
             // zamraża wszystkie kontrolki
-            this.panel_liker_commenter.Enabled = false;
+            this.panel_commenter.Enabled = false;
             // pokazuje animowane kółeczko "loading"
             this.pictureBox3.Show();
             // odświeża interfejs
@@ -1825,7 +1991,7 @@ namespace IGTomesheqAutoLiker
         private void DefrostUI()
         {
             // rozmraża wszystkie kontrolki
-            this.panel_liker_commenter.Enabled = true;
+            this.panel_commenter.Enabled = true;
             // chowa animowane kółeczko "loading"
             this.pictureBox3.Hide();
             // odświeża interfejs
@@ -1835,35 +2001,18 @@ namespace IGTomesheqAutoLiker
         // button dodaj komentarz insta
         private async void button12_Click(object sender, EventArgs e)
         {
-            FreezeUI();
-            // pobierz index postu
-            int current_message_index = support_groups[this.support_group_index].MessageIndex;
-            // dodaj komentarz
-            await IGProc.Comment(support_groups[this.support_group_index].MessagesWithInstaPosts[current_message_index].InstagramPost.InstaPost.InstaIdentifier, richTextBox2.Text);
-            // zmniejsz licznik liczby postow do zrobienia
-            //media_to_comment_counter--;
-            // zwiększ index grupy wsparcia
-            if(support_groups[this.support_group_index].IncrementMessageIndex())
-            {
-                while (!(await ShowPost())) ;
-            }
-            else
-            {
-                // skomentowano już ostatni post - pokaż tylko raz
-                await ShowPost();
-            }
-            DefrostUI();
+            
         }
 
         // button pomin zdjęcie
         private async void button16_Click(object sender, EventArgs e)
         {
             // pobierz index postu
-            int current_message_index = support_groups[this.support_group_index].MessageIndex;
+            int current_message_index = all_support_groups[this.support_group_index].MessageIndex;
             // zmniejsz licznik liczby postow do zrobienia
             media_to_comment_counter--;
             // zwiększ index grupy wsparcia
-            if (support_groups[this.support_group_index].IncrementMessageIndex())
+            if (all_support_groups[this.support_group_index].IncrementMessageIndex())
             {
                 while (!(await ShowPost())) ;
             }
@@ -1874,35 +2023,33 @@ namespace IGTomesheqAutoLiker
         {
             if(listBox1.SelectedIndex != -1)
             {
-                // wyswietla odpowiedni post
                 this.support_group_index = listBox1.SelectedIndex;
-                if (support_groups[support_group_index].Settings.OnlyLike)
+                if (!comment_support_groups[this.support_group_index].Settings.SkipThisTime)
                 {
-                    //PleaseWaitLikeInLoop(support_groups[support_group_index]);
-
-                    // lajkuje w petli wszystkie posty
-                    while(await OnlyLikePost())
+                    // wyswietla odpowiedni post
+                    if (!all_support_groups[support_group_index].Settings.OnlyLike)
                     {
-                        if(total_likes_count > data_holder.likes_limit)
+                        while (!(await ShowPost()));
+
+
+                        // po skonczonym likowaniu przechodzi do kolejnej grupy
+                        if ((listBox1.SelectedIndex + 1) < listBox1.Items.Count)
                         {
-                            MessageBox.Show("Osiągnięto limit lajków (1000) - przerywam lajkowanie");
-                            break;
+                            listBox1.SelectedIndex++;
                         }
-                        Random random = new Random();
-                        int wait_t = random.Next(data_holder.min_time_betw_likes, data_holder.max_time_betw_likes);
-                        toolStripStatusLabel1.Text = $"Czekam {wait_t} sekund...";
-                        Thread.Sleep(wait_t * 1000);
                     }
-
-                    // po skonczonym likowaniu przechodzi do kolejnej grupy
-                    if((listBox1.SelectedIndex + 1) < listBox1.Items.Count)
+                    else
                     {
-                        listBox1.SelectedIndex++;
-                    }
+                        
+                    } 
                 }
                 else
                 {
-                    while (!(await ShowPost())) ;
+                    // gdy zaznaczono omijanie tej grupy, przechodzi do nastepnej
+                    if ((listBox1.SelectedIndex + 1) < listBox1.Items.Count)
+                    {
+                        listBox1.SelectedIndex++;
+                    }
                 }
             }
         }
@@ -1930,8 +2077,8 @@ namespace IGTomesheqAutoLiker
         // po kliknieciu na label z opisem postu na insta
         private void Label40_Click(object sender, System.EventArgs e)
         {
-            int index = support_groups.Where(x => (x.Name == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().MessageIndex;
-            PhotoInfo info_window = new PhotoInfo(false, support_groups.Where(x => (x.Name == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().MessagesWithInstaPosts[index].InstagramPost.Description);
+            int index = all_support_groups.Where(x => (x.Name == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().MessageIndex;
+            PhotoInfo info_window = new PhotoInfo(false, all_support_groups.Where(x => (x.Name == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().MessagesWithInstaPosts[index].InstagramPost.Description);
             info_window.Show();
         }
 
@@ -1942,52 +2089,12 @@ namespace IGTomesheqAutoLiker
             {
                 // wyswietl okienko z wiadomoscia ne telegramie
                 // i podpisem zdjecia na insta
-                int index = support_groups.Where(x => (x.Name == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().MessageIndex;
-                PhotoInfo info_window = new PhotoInfo(true, support_groups.Where(x => (x.Name == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().MessagesWithInstaPosts[index].TelegramMessage.Message);
+                int index = all_support_groups.Where(x => (x.Name == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().MessageIndex;
+                PhotoInfo info_window = new PhotoInfo(true, all_support_groups.Where(x => (x.Name == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().MessagesWithInstaPosts[index].TelegramMessage.Message);
                 //string message = support_groups.Where(x => (x.GroupName == listBox1.Items[listBox1.SelectedIndex].ToString())).SingleOrDefault().GroupMessages.GetFilteredMessages().Where(x => x.)
                 info_window.Show();
             }
         }
-
-        // zaznaczono, ze grupa typu tylko like
-        private void checkBox3_CheckedChanged(object sender, EventArgs e)
-        {
-            // wyswietla okno "czy jestes pewien?"
-            DialogResult result = MessageBox.Show("Jeśli oznaczysz tę grupę jako tylko like, nie będziesz miał możliwości skomentowania postów z tej grupy. Dopiero po ponownym uruchomieniu aplikacji, przed pobraniem postów, będziesz mógł zmienić te ustawienia.", "Jesteś pewien?", MessageBoxButtons.YesNo);
-            switch (result)
-            {
-                case DialogResult.No:
-                    // odznacz checkboxa
-                    checkBox3.Checked = false;
-                    break;
-
-                case DialogResult.Yes:
-                    // zablokuj checkboxa
-                    checkBox3.Enabled = false;
-                    break;
-            }
-        }
-
-        // zmieniono zaznaczenie, że ta grupa wsparcia jest typu "Tylko like"
-        private void checkBox1_CheckedChanged(object sender, EventArgs e)
-        {
-            int index = support_groups.FindIndex(x => x.Name == listView_2.SelectedItems[0].Text);
-            support_groups[index].Settings.OnlyLike = checkBox1.Checked;
-            // zmiana koloru grupy na liscie
-            //var tmp = listView_2.Items.Find(support_groups[index].Name, false);
-            if(checkBox1.Checked)
-            {
-                //listView_2.Items[listView_2.Items.IndexOf(tmp[0])].BackColor = Color.Aqua;
-                listView2.SelectedItems[0].BackColor = Color.Aqua;
-            }
-            else
-            {
-                //listView_2.Items[listView_2.Items.IndexOf(tmp[0])].BackColor = Color.Transparent;
-                listView2.SelectedItems[0].BackColor = Color.Transparent;
-            }
-            button21.Show();
-        }
-
 
         /* --- |SCREEN LAJKOWANIA ZDJEC| --- */
 
@@ -2008,11 +2115,28 @@ namespace IGTomesheqAutoLiker
         }
 
         // dodaje komentarz do Instagrama po wcisnieciu entera na richtextboxie do wpisania komentarza
-        private void richTextBox2_KeyDown(object sender, KeyEventArgs e)
+        private async void richTextBox2_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Enter)
             {
-                button12.PerformClick();
+                FreezeUI();
+                // pobierz index postu
+                int current_message_index = all_support_groups[this.support_group_index].MessageIndex;
+                // dodaj komentarz
+                await IGProc.Comment(all_support_groups[this.support_group_index].MessagesWithInstaPosts[current_message_index].InstagramPost.InstaPost.InstaIdentifier, richTextBox2.Text);
+                // zmniejsz licznik liczby postow do zrobienia
+                //media_to_comment_counter--;
+                // zwiększ index grupy wsparcia
+                if (all_support_groups[this.support_group_index].IncrementMessageIndex())
+                {
+                    while (!(await ShowPost())) ;
+                }
+                else
+                {
+                    // skomentowano już ostatni post - pokaż tylko raz
+                    await ShowPost();
+                }
+                DefrostUI();
             }
         }
 
@@ -2119,6 +2243,7 @@ namespace IGTomesheqAutoLiker
             HideAllSettingsPanels();
             panel_choose_starting_date.Show();
             label_settings_menu_choose_date.BackColor = System.Drawing.Color.DarkSalmon;
+            label_settings_menu_choose_date.Font = new Font(label_settings_menu_choose_date.Font, FontStyle.Italic);
         }
 
         private void label_settings_menu_choose_support_groups_Click(object sender, EventArgs e)
@@ -2126,6 +2251,7 @@ namespace IGTomesheqAutoLiker
             HideAllSettingsPanels();
             panel_settings_choose_support_groups.Show();
             label_settings_menu_choose_support_groups.BackColor = System.Drawing.Color.DarkSalmon;
+            label_settings_menu_choose_support_groups.Font = new Font(label_settings_menu_choose_support_groups.Font, FontStyle.Italic);
         }
 
         private void label_settings_menu_support_groups_Click(object sender, EventArgs e)
@@ -2133,6 +2259,7 @@ namespace IGTomesheqAutoLiker
             HideAllSettingsPanels();
             panel_settings_support_groups.Show();
             label_settings_menu_support_groups.BackColor = System.Drawing.Color.DarkSalmon;
+            label_settings_menu_support_groups.Font = new Font(label_settings_menu_support_groups.Font, FontStyle.Italic);
             // odswieza widok
             label64.Text = GetDateFromCalendar(); 
         }
@@ -2142,6 +2269,7 @@ namespace IGTomesheqAutoLiker
             HideAllSettingsPanels();
             panel_settings_instagram.Show();
             label_settings_menu_instagram.BackColor = System.Drawing.Color.DarkSalmon;
+            label_settings_menu_instagram.Font = new Font(label_settings_menu_instagram.Font, FontStyle.Italic);
         }
 
         private void label_settings_menu_telegram_Click(object sender, EventArgs e)
@@ -2149,6 +2277,7 @@ namespace IGTomesheqAutoLiker
             HideAllSettingsPanels();
             panel_settings_telegram.Show();
             label_settings_menu_telegram.BackColor = System.Drawing.Color.DarkSalmon;
+            label_settings_menu_telegram.Font = new Font(label_settings_menu_telegram.Font, FontStyle.Italic);
         }
 
         private void label_settings_menu_default_comments_Click(object sender, EventArgs e)
@@ -2156,6 +2285,7 @@ namespace IGTomesheqAutoLiker
             HideAllSettingsPanels();
             panel_settings_default_comments.Show();
             label_settings_menu_default_comments.BackColor = System.Drawing.Color.DarkSalmon;
+            label_settings_menu_default_comments.Font = new Font(label_settings_menu_default_comments.Font, FontStyle.Italic);
         }
 
         private void label_settings_menu_settings_Click(object sender, EventArgs e)
@@ -2163,9 +2293,10 @@ namespace IGTomesheqAutoLiker
             HideAllSettingsPanels();
             panel_settings_settings.Show();
             label_settings_menu_settings.BackColor = System.Drawing.Color.DarkSalmon;
+            label_settings_menu_settings.Font = new Font(label_settings_menu_settings.Font, FontStyle.Italic);
         }
 
-        private void HideAllSettingsPanels()
+        private void HideAllSettingsPanels(bool init = false)
         {
             // ukryj wszystkie panele
             panel_settings_choose_support_groups.Hide();
@@ -2177,13 +2308,63 @@ namespace IGTomesheqAutoLiker
             panel_settings_settings.Hide();
 
             // pokoloruj tło wszystkich labeli w menu na szaro
+            if (data_holder.instagram_ok)
+            {
+                label_settings_menu_instagram.BackColor = System.Drawing.Color.Green;
+
+                label_settings_menu_followers_manager.BackColor = System.Drawing.SystemColors.AppWorkspace;
+                label_settings_menu_followers_manager.Font = new Font(label_settings_menu_settings.Font, FontStyle.Bold);
+                label_settings_menu_followers_manager.ForeColor = System.Drawing.Color.DarkBlue;
+            }
+            else
+            {
+                label_settings_menu_instagram.BackColor = System.Drawing.Color.Red;
+
+                label_settings_menu_followers_manager.BackColor = System.Drawing.SystemColors.GrayText;
+                label_settings_menu_followers_manager.Font = new Font(label_settings_menu_settings.Font, FontStyle.Regular);
+                label_settings_menu_followers_manager.ForeColor = System.Drawing.SystemColors.AppWorkspace;
+            }
+            label_settings_menu_instagram.Font = new Font(label_settings_menu_instagram.Font, FontStyle.Regular);
+
+            if (data_holder.telegram_ok)
+            {
+                label_settings_menu_telegram.BackColor = System.Drawing.Color.Green;
+            }
+            else
+            {
+                label_settings_menu_telegram.BackColor = System.Drawing.Color.Red;
+            }
+            label_settings_menu_telegram.Font = new Font(label_settings_menu_telegram.Font, FontStyle.Regular);
+
             label_settings_menu_choose_date.BackColor = System.Drawing.SystemColors.AppWorkspace;
-            label_settings_menu_choose_support_groups.BackColor = System.Drawing.SystemColors.AppWorkspace;
+            label_settings_menu_choose_date.Font = new Font(label_settings_menu_choose_date.Font, FontStyle.Regular);
+
+            if (all_support_groups.Count > 0)
+            {
+                label_settings_menu_choose_support_groups.BackColor = System.Drawing.SystemColors.AppWorkspace;
+                label_settings_menu_choose_support_groups.Font = new Font(label_settings_menu_choose_support_groups.Font, FontStyle.Regular);
+            }
+            else
+            {
+                label_settings_menu_choose_support_groups.BackColor = System.Drawing.Color.Red;
+                label_settings_menu_choose_support_groups.Font = new Font(label_settings_menu_choose_support_groups.Font, FontStyle.Regular);
+            }
+
             label_settings_menu_default_comments.BackColor = System.Drawing.SystemColors.AppWorkspace;
-            label_settings_menu_instagram.BackColor = System.Drawing.SystemColors.AppWorkspace;
+            label_settings_menu_default_comments.Font = new Font(label_settings_menu_default_comments.Font, FontStyle.Regular);
+
             label_settings_menu_support_groups.BackColor = System.Drawing.SystemColors.AppWorkspace;
-            label_settings_menu_telegram.BackColor = System.Drawing.SystemColors.AppWorkspace;
+            label_settings_menu_support_groups.Font = new Font(label_settings_menu_support_groups.Font, FontStyle.Regular);
+
             label_settings_menu_settings.BackColor = System.Drawing.SystemColors.AppWorkspace;
+            label_settings_menu_settings.Font = new Font(label_settings_menu_settings.Font, FontStyle.Regular);
+
+            if (init)
+            {
+                panel_settings_support_groups.Show();
+                label_settings_menu_support_groups.BackColor = System.Drawing.Color.DarkSalmon;
+                label_settings_menu_support_groups.Font = new Font(label_settings_menu_support_groups.Font, FontStyle.Italic);
+            }
         }
 
         // button wyloguj z konta insta
@@ -2211,6 +2392,7 @@ namespace IGTomesheqAutoLiker
                         m_dbConnection.Close();
                     }
                     SetUpInstagramPanel(InitDataHolder.ShowInstagramPanelWith.InsertLoginData);
+                    data_holder.instagram_ok = false;
                     return;
                 }
                 else
@@ -2223,70 +2405,177 @@ namespace IGTomesheqAutoLiker
         }
 
         // button logowanie do insta
-        private async void button18_Click(object sender, EventArgs e)
+        private async void button_insta_zaloguj_Click(object sender, EventArgs e)
         {
-            if (!IGProc.IsUserAuthenticated())
+            if ((textBox_insta_login.Text.Length > 0) && (textBox_insta_password.Text.Length > 0))
             {
-                if ((textBox5.Text.Length > 0) && (textBox6.Text.Length > 0))
-                {
-                    // informacja o logowaniu do instagrama
-                    this.toolStripStatusLabel1.Text = $"Witaj {textBox5.Text}! Trwa logowanie do Instagrama...";
+                // informacja o logowaniu do instagrama
+                this.toolStripStatusLabel1.Text = $"Witaj {textBox_insta_login.Text}! Trwa logowanie do Instagrama...";
 
-                    //MessageBox.Show($"login: {textBox2.Text}\npassword: {textBox3.Text}");
-                    await IGProc.Login(textBox5.Text, textBox6.Text);
-                    if (IGProc.IsUserAuthenticated())
+                //MessageBox.Show($"login: {textBox2.Text}\npassword: {textBox3.Text}");
+                IResult<InstaSharper.Classes.InstaLoginResult> result;
+                try
+                {
+                    result = await IGProc.Login(textBox_insta_login.Text, textBox_insta_password.Text);
+                    //MessageBox.Show("Odpowiedz serwera: \n" + result.Info.ResponseRaw);
+
+                    if (result.Value == InstaSharper.Classes.InstaLoginResult.BadPassword || result.Value == InstaSharper.Classes.InstaLoginResult.InvalidUser || result.Value == InstaSharper.Classes.InstaLoginResult.Exception)
                     {
-                        using (SQLiteConnection m_dbConnection = new SQLiteConnection(data_holder.connectionString))
+                        if (result.Value == InstaSharper.Classes.InstaLoginResult.BadPassword)
                         {
-                            m_dbConnection.Open();
-                            string sql = $"SELECT * FROM instagram_data WHERE login = '{textBox5.Text}' AND password = '{textBox6.Text}'";
-                            SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
-                            SQLiteDataReader reader = command.ExecuteReader();
-                            if (reader.HasRows)
-                            {
-                                // wszystko OK - nic nie rob
-                            }
-                            else
-                            {
-                                // nie ma takiego loginu w bazie - zapisz go
-                                IGProc.login = textBox5.Text;
-                                IGProc.password = textBox6.Text;
-                                sql = $"INSERT INTO instagram_data (login, password) VALUES ('{textBox5.Text}', '{textBox6.Text}')";
-                                command = new SQLiteCommand(sql, m_dbConnection);
-                                command.ExecuteNonQuery();
-                            }
-                            m_dbConnection.Close();
+                            MessageBox.Show("Złe hasło!");
                         }
-                        // informacja o logowaniu do instagrama
-                        this.toolStripStatusLabel1.Text = $"Gotowe! Kliknij dalej...";
-                        data_holder.InstaLoginStatus = InitDataHolder.ShowInstagramPanelWith.LoginSuccess;
+                        else if (result.Value == InstaSharper.Classes.InstaLoginResult.InvalidUser)
+                        {
+                            MessageBox.Show("Zły user!");
+                        }
+                        else if (result.Value == InstaSharper.Classes.InstaLoginResult.Exception)
+                        {
+                            MessageBox.Show("Exception...!");
+                        }
+                        data_holder.InstaLoginStatus = InitDataHolder.ShowInstagramPanelWith.LoginFailed;
+                        data_holder.instagram_ok = false;
+                    }
+                    else if (result.Value == InstaSharper.Classes.InstaLoginResult.ChallengeRequired)
+                    {
+                        // zapamietaj dane logowania
+                        IGProc.login = textBox_insta_login.Text;
+                        IGProc.password = textBox_insta_password.Text;
+
+                        // zapisz status
+                        data_holder.InstaLoginStatus = InitDataHolder.ShowInstagramPanelWith.InsertSecurityCode;
+                        data_holder.instagram_ok = false;
+                    }
+                    else if (result.Value == InstaSharper.Classes.InstaLoginResult.TwoFactorRequired)
+                    {
+                        // zapamietaj dane logowania
+                        IGProc.login = textBox_insta_login.Text;
+                        IGProc.password = textBox_insta_password.Text;
+
+                        // zapisz status
+                        data_holder.InstaLoginStatus = InitDataHolder.ShowInstagramPanelWith.LoginFailed;
+                        data_holder.instagram_ok = false;
                     }
                     else
                     {
+                        //MessageBox.Show("Logowanie zakończone pomyślnie");
                         data_holder.InstaLoginStatus = InitDataHolder.ShowInstagramPanelWith.LoginSuccess;
+                        data_holder.instagram_ok = true;
+
+                        // zapamietaj dane logowania
+                        IGProc.login = textBox_insta_login.Text;
+                        IGProc.password = textBox_insta_password.Text;
+
+                        // dodaj do bazy danych
+                        using (SQLiteConnection m_dbConnection = new SQLiteConnection(data_holder.connectionString))
+                        {
+                            m_dbConnection.Open();
+                            string sql = $"INSERT INTO instagram_data (login, password) VALUES ('{IGProc.login}', '{IGProc.password}')";
+                            SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+                            command.ExecuteNonQuery(); // nic nie zwraca
+                            m_dbConnection.Close();
+                        }
+
+                        // uaktualnij wyglad menu
+                        HideAllSettingsPanels();
+                        panel_choose_starting_date.Show();
+                        label_settings_menu_choose_date.BackColor = System.Drawing.Color.DarkSalmon;
+                        label_settings_menu_choose_date.Font = new Font(label_settings_menu_choose_date.Font, FontStyle.Italic);
                     }
-
                     SetUpInstagramPanel(data_holder.InstaLoginStatus);
+                    return;
                 }
-            }
-        }
+                catch (Exception ex)
+                {
+                    data_holder.InstaLoginStatus = InitDataHolder.ShowInstagramPanelWith.LoginFailed;
+                    data_holder.instagram_ok = false;
+                    MessageBox.Show("Błąd!\n" + ex.Message.ToString());
+                }
 
-        // button wyslij kod bezpieczenstwa
-        private async void button19_Click(object sender, EventArgs e)
-        {
-            if (textBox7.Text.Length > 4)
+                SetUpInstagramPanel(data_holder.InstaLoginStatus);
+            }
+            else
             {
-                var res3 = await IGProc.SendVerifyCode(textBox7.Text); 
+                MessageBox.Show("Pola LOGIN i HASŁO nie mogą pozostać puste...\n\nWpisz swoje login i hasło i spróbuj ponownie");
             }
         }
 
         // po wcisnieciu entera
-        private void textBox7_KeyUp(object sender, KeyEventArgs e)
+        private async void textBox7_KeyUp(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Enter)
             {
-                button19.PerformClick();
+                if (textBox_challenge_code.Text.Length > 4)
+                {
+                    MessageBox.Show("Wysyłam kod!");
+                    try
+                    {
+                        MessageBox.Show(textBox_challenge_code.Text);
+                        InstaResetChallenge res3 = await IGProc.SendVerifyCode(textBox_challenge_code.Text);
+
+                        MessageBox.Show(res3.LoggedInUser + "\n" + res3.Status + "\n" + res3.Action + "\n" + res3.StepName);
+                        if (res3.UserId > 0)
+                        {
+                            SetUpInstagramPanel(InitDataHolder.ShowInstagramPanelWith.LoginSuccess);
+                        }
+                        else
+                        {
+                            SetUpInstagramPanel(InitDataHolder.ShowInstagramPanelWith.LoginFailed);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(ex.Message.ToString());
+                    }
+                }
             }
+        }
+
+        // wyszarza pola pod radiobuttonem "Po ostatnio zrobionym poscie"
+        private void HideFields1()
+        {
+            radioButton1.Checked = false;
+            label42.Enabled = false;
+            label61.Enabled = false;
+        }
+
+        // wyszarza pola pod radiobuttonem "Po dacie z kalendarza"
+        private void HideFields2()
+        {
+            radioButton2.Checked = false;
+            label64.Enabled = false;
+            label65.Enabled = false;
+            label66.Enabled = false;
+        }
+
+        // wyszarza pola pod radiobuttonem "Od x godzin"
+        private void HideFields3()
+        {
+            radioButton3.Checked = false;
+            textBox1.Enabled = false;
+            label67.Enabled = false;
+        }
+
+        // odblokowuje pola pod radiobuttonem "Po ostatnio zrobionym poscie"
+        private void ShowFields1()
+        {
+            label42.Enabled = true;
+            label61.Enabled = true;
+        }
+
+        // odblokowuje pola pod radiobuttonem "Po dacie z kalendarza"
+        private void ShowFields2()
+        {
+            label64.Enabled = true;
+            label65.Enabled = true;
+            label66.Enabled = true;
+        }
+
+        // odblokowuje pola pod radiobuttonem "Od x godzin"
+        private void ShowFields3()
+        {
+            textBox1.Enabled = true;
+            label67.Enabled = true;
         }
 
         // zaznaczono "po ostatnio skomentowanym poście"
@@ -2295,18 +2584,15 @@ namespace IGTomesheqAutoLiker
             // odznacz pozostałe radiobutton
             if (radioButton1.Checked)
             {
-                radioButton2.Checked = false;
-                radioButton3.Checked = false;
+                ShowFields1();
+                HideFields2();
+                HideFields3();
             }
 
             // zmien metode pobierania daty w ustawieniach grupy
-            int selected_group_index = support_groups.FindIndex(x => x.Name == listView_2.SelectedItems[0].Text);
-            support_groups[selected_group_index].Settings.StartingDateMethod = StartingDateMethod.LastPost;
-
-            // wyswietl przycisk zapisu zmian
-            button21.Show();
-            // zablokuj liste grup wsparcia do momentu zapisania zmian
-            listView_2.Enabled = false;
+            int selected_group_index = all_support_groups.FindIndex(x => x.Name == listBox2.SelectedItem.ToString());
+            all_support_groups[selected_group_index].Settings.StartingDateMethod = StartingDateMethod.LastPost;
+            all_support_groups[selected_group_index].Settings.SaveGroupSettingsToDB();
         }
 
         // zaznaczono "po dacie wpisanej w kalendarzyku"
@@ -2315,18 +2601,15 @@ namespace IGTomesheqAutoLiker
             // odznacz pozostałe radiobutton
             if (radioButton2.Checked)
             {
-                radioButton1.Checked = false;
-                radioButton3.Checked = false;
+                HideFields1();
+                ShowFields2();
+                HideFields3();
             }
 
             // zmien metode pobierania daty w ustawieniach grupy
-            int selected_group_index = support_groups.FindIndex(x => x.Name == listView_2.SelectedItems[0].Text);
-            support_groups[selected_group_index].Settings.StartingDateMethod = StartingDateMethod.ChosenFromCalendar;
-
-            // wyswietl przycisk zapisu zmian
-            button21.Show();
-            // zablokuj liste grup wsparcia do momentu zapisania zmian
-            listView_2.Enabled = false;
+            int selected_group_index = all_support_groups.FindIndex(x => x.Name == listBox2.SelectedItem.ToString());
+            all_support_groups[selected_group_index].Settings.StartingDateMethod = StartingDateMethod.ChosenFromCalendar;
+            all_support_groups[selected_group_index].Settings.SaveGroupSettingsToDB();
         }
 
         // zaznaczono "dodane w ciągu ostatnich x godzin"
@@ -2335,46 +2618,15 @@ namespace IGTomesheqAutoLiker
             // odznacz pozostałe radiobutton
             if (radioButton3.Checked)
             {
-                radioButton1.Checked = false;
-                radioButton2.Checked = false;
+                HideFields1();
+                HideFields2();
+                ShowFields3();
             }
 
             // zmien metode pobierania daty w ustawieniach grupy
-            int selected_group_index = support_groups.FindIndex(x => x.Name == listView_2.SelectedItems[0].Text);
-            support_groups[selected_group_index].Settings.StartingDateMethod = StartingDateMethod.LastXHours;
-
-            // wyswietl przycisk zapisu zmian
-            button21.Show();
-            // zablokuj liste grup wsparcia do momentu zapisania zmian
-            listView_2.Enabled = false;
-        }
-        
-        private void radioButton1_CheckedChanged(object sender, EventArgs e)
-        {
-            // !!!
-        }
-
-        
-        private void radioButton2_CheckedChanged(object sender, EventArgs e)
-        {
-            // !!!
-        }
-
-        
-        private void radioButton3_CheckedChanged(object sender, EventArgs e)
-        {
-            // !!!
-        }
-
-        // zaznacza radioButton3
-        private void numericUpDown1_Click(object sender, EventArgs e)
-        {
-            int selected_group_index = support_groups.FindIndex(x => x.Name == listView_2.SelectedItems[0].Text);
-            support_groups[selected_group_index].Settings.LastHours = Decimal.ToInt32(numericUpDown1.Value);
-            // wyswietl przycisk zapisu zmian
-            button21.Show();
-            // zablokuj liste grup wsparcia do momentu zapisania zmian
-            listView_2.Enabled = false;
+            int selected_group_index = all_support_groups.FindIndex(x => x.Name == listBox2.SelectedItem.ToString());
+            all_support_groups[selected_group_index].Settings.StartingDateMethod = StartingDateMethod.LastXHours;
+            all_support_groups[selected_group_index].Settings.SaveGroupSettingsToDB();
         }
 
         // wybrano grupe wsparcia na liscie w panelu z ustawieniami grup
@@ -2382,10 +2634,22 @@ namespace IGTomesheqAutoLiker
         {
             int index = 0;
             
-            if (listView_2.SelectedIndices[0] > -1)
+            if (listBox2.SelectedIndex > -1)
             {
-                index = support_groups.FindIndex(x => x.Name == listView_2.SelectedItems[0].Text);
-                SetUpSupportGroupsSettingsPanel(index);  
+                index = all_support_groups.FindIndex(x => x.Name == listBox2.SelectedItem.ToString());
+                SetUpSupportGroupsSettingsPanel(index);
+
+                if(index >= 0)
+                {
+                    if(all_support_groups[index].Settings.OnlyLike)
+                    {
+                        radioButton1.Text = "Dodane po ostatnio polajkowanym poście";
+                    }
+                    else
+                    {
+                        radioButton1.Text = "Dodane po ostatnio skomentowanym poście";
+                    }
+                }
             }
             else
             {
@@ -2406,32 +2670,42 @@ namespace IGTomesheqAutoLiker
                 label65.Enabled = true;
                 label66.Enabled = true;
                 label67.Enabled = true;
-                numericUpDown1.Enabled = true;
+                textBox1.Enabled = true;
                 radioButton1.Enabled = true;
                 radioButton2.Enabled = true;
                 radioButton3.Enabled = true;
+                checkBox_skip_this_group_once.Enabled = true;
 
                 // zaznaczenie checkboxa czy grupa typu tylko like
-                checkBox1.Checked = support_groups[support_group_index].Settings.OnlyLike;
+                checkBox1.Checked = all_support_groups[support_group_index].Settings.OnlyLike;
                 // ustawienie radioButtonow
-                switch(support_groups[support_group_index].Settings.StartingDateMethod)
+                switch(all_support_groups[support_group_index].Settings.StartingDateMethod)
                 {
                     case StartingDateMethod.LastPost:
                         radioButton1.Checked = true;
                         radioButton2.Checked = false;
                         radioButton3.Checked = false;
+                        ShowFields1();
+                        HideFields2();
+                        HideFields3();
                         break;
 
                     case StartingDateMethod.ChosenFromCalendar:
                         radioButton1.Checked = false;
                         radioButton2.Checked = true;
                         radioButton3.Checked = false;
+                        HideFields1();
+                        ShowFields2();
+                        HideFields3();
                         break;
 
                     case StartingDateMethod.LastXHours:
                         radioButton1.Checked = false;
                         radioButton2.Checked = false;
                         radioButton3.Checked = true;
+                        HideFields1();
+                        HideFields2();
+                        ShowFields3();
                         break;
 
                     default:
@@ -2439,10 +2713,13 @@ namespace IGTomesheqAutoLiker
                         radioButton1.Checked = false;
                         radioButton2.Checked = true;
                         radioButton3.Checked = false;
+                        HideFields1();
+                        ShowFields2();
+                        HideFields3();
                         break;
                 }
                 // jesli wybrano ilosc godzin wstecz - pokazuje ile godzin wybrano
-                numericUpDown1.Value = support_groups[support_group_index].Settings.LastHours;
+                textBox1.Text = all_support_groups[support_group_index].Settings.LastHours.ToString();
 
                 // wpisanie dat do labeli
                 // label61 - data -> ostatnio skomentowany post
@@ -2451,6 +2728,9 @@ namespace IGTomesheqAutoLiker
                 // wpisanie daty z kalendarzyka do labela
                 // label64 - data -> data wybrana w kalendarzyku
                 label64.Text = GetDateFromCalendar();
+
+                // za/odznaczenie checkboxa - pomin tym razem
+                checkBox_skip_this_group_once.Checked = all_support_groups[support_group_index].Settings.SkipThisTime;
             }
             else
             {
@@ -2463,18 +2743,18 @@ namespace IGTomesheqAutoLiker
                 label65.Enabled = false;
                 label66.Enabled = false;
                 label67.Enabled = false;
-                numericUpDown1.Enabled = false;
+                textBox1.Enabled = false;
                 radioButton1.Enabled = false;
                 radioButton2.Enabled = false;
                 radioButton3.Enabled = false;
-
+                checkBox_skip_this_group_once.Enabled = false;
             }
         }
 
         private string GetDateLastCommentedPost()
         {
-            int selected_group_index = support_groups.FindIndex(x => x.Name == listView_2.SelectedItems[0].Text);
-            long timestamp = support_groups[selected_group_index].Settings.LastCommentedPostTimestamp;
+            int selected_group_index = all_support_groups.FindIndex(x => x.Name == listBox2.SelectedItem.ToString());
+            long timestamp = all_support_groups[selected_group_index].Settings.LastCommentedPostTimestamp;
             string my_format = "";
 
             // jesli istnieje wartosc
@@ -2526,7 +2806,7 @@ namespace IGTomesheqAutoLiker
                         break;
                 }
 
-                my_format = String.Concat(dt.Hour.ToString(), ":", dt.Minute.ToString(), ", ", dt.Day.ToString(), " ", month, " ", dt.Year.ToString());
+                my_format = String.Concat(dt.Hour.ToString(), ":", dt.Minute.ToString("00.##"), ", ", dt.Day.ToString(), " ", month, " ", dt.Year.ToString());
             }
             else // jesli nie istnieje
             {
@@ -2538,7 +2818,7 @@ namespace IGTomesheqAutoLiker
                 {
                     radioButton1.Checked = false;
                     radioButton2.Checked = true;
-                    support_groups[selected_group_index].Settings.StartingDateMethod = StartingDateMethod.ChosenFromCalendar;
+                    all_support_groups[selected_group_index].Settings.StartingDateMethod = StartingDateMethod.ChosenFromCalendar;
                 }
             }
             
@@ -2596,7 +2876,7 @@ namespace IGTomesheqAutoLiker
                         break;
                 }
 
-                my_format = String.Concat(dt.Hour.ToString(), ":", dt.Minute.ToString(), ", ", dt.Day.ToString(), " ", month, " ", dt.Year.ToString());
+                my_format = String.Concat(dt.Hour.ToString(), ":", dt.Minute.ToString("00.##"), ", ", dt.Day.ToString(), " ", month, " ", dt.Year.ToString());
             }
             else // jesli nie istnieje
             {
@@ -2607,27 +2887,29 @@ namespace IGTomesheqAutoLiker
         }
 
         // zmieniono liczbę godzin do przeszukania wiadomości (o ile godzin od teraz się cofnąć)
-        private void numericUpDown1_ValueChanged(object sender, EventArgs e)
+        private void textBox1_ValueChanged(object sender, EventArgs e)
         {
-            int selected_group_index = support_groups.FindIndex(x => x.Name == listView_2.SelectedItems[0].Text);
-            Double hours_value = Decimal.ToDouble(numericUpDown1.Value);
-            support_groups[selected_group_index].Settings.LastHours = (int)hours_value;
-            support_groups[selected_group_index].Settings.LastHoursTimestamp = ToUnixTimestamp(DateTime.Now.AddHours(hours_value)); // to raczej niepotrzebne
+            if(textBox1.Focused)
+            {
+                int selected_group_index = all_support_groups.FindIndex(x => x.Name == listBox2.SelectedItem.ToString());
+
+                int tmp = 0;
+                if (Int32.TryParse(textBox1.Text, out tmp) || textBox1.Text.Length == 0)
+                {
+                    all_support_groups[selected_group_index].Settings.LastHours = tmp;
+                }
+                else
+                {
+                    MessageBox.Show("W to pole należy wpisać liczbę");
+                    return;
+                }
+
+                Double hours_value = Decimal.ToDouble(tmp);
+                all_support_groups[selected_group_index].Settings.LastHours = (int)hours_value;
+                all_support_groups[selected_group_index].Settings.LastHoursTimestamp = ToUnixTimestamp(DateTime.Now.AddHours(hours_value)); // to raczej niepotrzebne
+                all_support_groups[selected_group_index].Settings.SaveGroupSettingsToDB();
+            }
             //MessageBox.Show("Teraz: " + ToUnixTimestamp(DateTime.Now) + "\nUstawiona: " + ToUnixTimestamp(DateTime.Now.AddHours(hours_value)));
-
-            // pokaz przycisk zapisu do bazy danych
-            button21.Show();
-        }
-
-        // zapisz ustawienia grupy wsparcia do bazy danych
-        private void button21_Click(object sender, EventArgs e)
-        {
-            int selected_group_index = support_groups.FindIndex(x => x.Name == listView_2.SelectedItems[0].Text);
-            support_groups[selected_group_index].Settings.LastHours = Decimal.ToInt32(numericUpDown1.Value);
-            support_groups[selected_group_index].Settings.SaveGroupSettingsToDB();
-            button21.Hide();
-            // zablokuj liste grup wsparcia do momentu zapisania zmian
-            listView_2.Enabled = true;
         }
 
         // zapisuje datę z kalendarzyka tylko do grup wsparcia, ktore maja wybrana te opcje
@@ -2635,7 +2917,7 @@ namespace IGTomesheqAutoLiker
         {
             try
             {
-                foreach (SupportGroup group in support_groups)
+                foreach (SupportGroup group in all_support_groups)
                 {
                     if (group.Settings.StartingDateMethod == StartingDateMethod.ChosenFromCalendar)
                     {
@@ -2646,6 +2928,7 @@ namespace IGTomesheqAutoLiker
             }
             catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine("\n" + ex.Message);
                 return false;
             }
             return true;
@@ -2654,32 +2937,717 @@ namespace IGTomesheqAutoLiker
         // zmienila sie data w kalendarzyku
         private void dateTimePicker1_ValueChanged_1(object sender, EventArgs e)
         {
-            foreach(SupportGroup group in support_groups)
+            foreach(SupportGroup group in all_support_groups)
             {
                 group.Settings.CalendarDateTimestamp = ToUnixTimestamp(dateTimePicker1.Value);
             }
         }
 
-        private void numericUpDown1_MouseClick(object sender, MouseEventArgs e)
-        {
-            radioButton1.Checked = false;
-            radioButton2.Checked = false;
-            radioButton3.Checked = true;
-        }
-
+        // kliknieto zapisz zmiany
         private void button_settings_save_Click(object sender, EventArgs e)
         {
             Int32.TryParse(textBox_likes_limit.Text, out data_holder.likes_limit);
             Int32.TryParse(textBox_min_time_betw_likes.Text, out data_holder.min_time_betw_likes);
             Int32.TryParse(textBox_max_time_betw_likes.Text, out data_holder.max_time_betw_likes);
+            Int32.TryParse(textBox_keep_old_entries.Text, out data_holder.keep_old_entries);
 
             using (SQLiteConnection m_dbConnection = new SQLiteConnection(data_holder.connectionString))
             {
                 m_dbConnection.Open();
-                string sql = $"UPDATE settings SET min_time_betw_likes = '{data_holder.min_time_betw_likes}', max_time_betw_likes = '{data_holder.max_time_betw_likes}', likes_limit = '{data_holder.likes_limit}'";
+                string sql = $"UPDATE settings SET min_time_betw_likes = '{data_holder.min_time_betw_likes}', max_time_betw_likes = '{data_holder.max_time_betw_likes}', likes_limit = '{data_holder.likes_limit}', keep_old_entries = {data_holder.keep_old_entries}";
                 SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
                 command.ExecuteNonQuery(); // nic nie zwraca
                 m_dbConnection.Close();
+            }
+        }
+
+        // zaznaczono, zeby te grupe pominac
+        private void checkBox_skip_this_group_once_Click(object sender, EventArgs e)
+        {
+            // zmien ustawienie w grupie wsparcia
+            if (listBox2.SelectedIndex != -1)
+            {
+                int selected_group_index = all_support_groups.FindIndex(x => x.Name == listBox2.SelectedItem.ToString());
+                all_support_groups[selected_group_index].Settings.SkipThisTime = checkBox_skip_this_group_once.Checked;
+            }
+        }
+
+        // zaznaczono, ze grupa typu tylko like
+        private void checkBox1_Click(object sender, EventArgs e)
+        {
+            if (listBox2.SelectedIndex != -1)
+            {
+                int index = all_support_groups.FindIndex(x => x.Name == listBox2.SelectedItem.ToString());
+                all_support_groups[index].Settings.OnlyLike = checkBox1.Checked;
+                all_support_groups[index].Settings.SaveGroupSettingsToDB();
+                this.listBox2.Refresh();
+            }
+        }
+
+        // zapisz domyslny komentarz
+        private void button3_Click(object sender, EventArgs e)
+        {
+            // sprawdzenie czy pole nie jest puste
+            if (richTextBox1.Text.Length != 0)
+            {
+                // dodaj do bazy danych
+                using (SQLiteConnection m_dbConnection = new SQLiteConnection(data_holder.connectionString))
+                {
+                    m_dbConnection.Open();
+                    string sql = $"INSERT INTO default_comments (id_comment, comment, used_automatically) VALUES (NULL, '{richTextBox1.Text}', 0)";
+                    SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+                    command.ExecuteNonQuery(); // nic nie zwraca
+                    m_dbConnection.Close();
+                }
+                // dodaj do listy
+                listView1.Items.Add(richTextBox1.Text);
+                // usun tekst z richtextboxa
+                richTextBox1.Text = "";
+            }
+            else
+            {
+                MessageBox.Show("Nie można dodać pustego komentarza! Wpisz treść komentarza w polu powyżej.");
+            }
+        }
+
+        // usun z domyslnych komentarzy
+        private void button4_Click(object sender, EventArgs e)
+        {
+            // pobierz tresc komentarza
+            string comment = listView1.SelectedItems[0].Text;
+            // usun z bazy danych
+            using (SQLiteConnection m_dbConnection = new SQLiteConnection(data_holder.connectionString))
+            {
+                m_dbConnection.Open();
+                string sql = $"DELETE FROM default_comments WHERE comment = '{comment}'";
+                SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+                command.ExecuteNonQuery(); // nic nie zwraca
+                m_dbConnection.Close();
+            }
+            // usun z listy domyslnych komentarzy
+            listView1.Items.Remove(listView1.FindItemWithText(comment));
+        }
+
+        private void AddSupportGroupLabel(SupportGroup support_group)
+        {
+            int group_nr = (panel_liker_panel_main.Controls.OfType<Label>().Count() / 3); // rozp od 0
+            string support_group_name = support_group.Name;
+
+            Label support_group_label = new Label();
+            //support_group_label.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            support_group_label.Font = new System.Drawing.Font("Segoe UI", 12F);
+            support_group_label.Location = new System.Drawing.Point(5, 5 + (group_nr * 40));
+            support_group_label.Name = "label_support_group_name_" + group_nr.ToString();
+            support_group_label.Size = new System.Drawing.Size(300, 40);
+            support_group_label.TabIndex = 0;
+            support_group_label.Text = support_group_name;
+            support_group_label.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            if (support_group.Settings.OnlyLike && !support_group.Settings.SkipThisTime)
+            {
+                support_group_label.ForeColor = Color.Black; 
+            }
+            else
+            {
+                support_group_label.ForeColor = Color.Gray;
+            }
+
+            Label support_group_messages_count = new Label();
+            //support_group_messages_count.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            support_group_messages_count.Font = new System.Drawing.Font("Segoe UI", 12F);
+            support_group_messages_count.Location = new System.Drawing.Point(304, 5 + (group_nr * 40));
+            support_group_messages_count.Name = "label_support_group_messages_count_" + group_nr.ToString();
+            support_group_messages_count.Size = new System.Drawing.Size(136, 40);
+            support_group_messages_count.TabIndex = 1;
+            support_group_messages_count.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            if (support_group.Settings.OnlyLike && !support_group.Settings.SkipThisTime)
+            {
+                support_group_messages_count.ForeColor = Color.Black;
+                support_group_messages_count.Text = "Liczę...";
+            }
+            else
+            {
+                support_group_messages_count.ForeColor = Color.Gray;
+                support_group_messages_count.Text = "N/D";
+            }
+
+            Label support_group_likes_count = new Label();
+            //support_group_likes_count.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            support_group_likes_count.Font = new System.Drawing.Font("Segoe UI", 12F);
+            support_group_likes_count.Location = new System.Drawing.Point(439, 5 + (group_nr * 40));
+            support_group_likes_count.Name = "label_support_group_likes_count_" + group_nr.ToString();
+            support_group_likes_count.Size = new System.Drawing.Size(150, 40);
+            support_group_likes_count.TabIndex = 2;
+            support_group_likes_count.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            if (support_group.Settings.OnlyLike && !support_group.Settings.SkipThisTime)
+            {
+                support_group_likes_count.ForeColor = Color.Black;
+                support_group_likes_count.Text = "Czekam...";
+            }
+            else
+            {
+                support_group_likes_count.ForeColor = Color.Gray;
+                support_group_likes_count.Text = "N/D";
+            }
+
+            panel_liker_panel_main.Controls.Add(support_group_label);
+            panel_liker_panel_main.Controls.Add(support_group_messages_count);
+            panel_liker_panel_main.Controls.Add(support_group_likes_count);
+
+            this.Refresh();
+        }
+
+        private void UpdateSupportGroupLabel(SupportGroup support_group, int messages_count = -1, int done_likes = -1)
+        {
+            // sprawdza numer labela, dot grupy
+            int label_nr = ExtractIntFromString(panel_liker_panel_main.Controls.OfType<Label>().Where(x => x.Text == support_group.Name).SingleOrDefault().Name);
+
+            // jesli podano liczbe wiadomosci, aktualizuje ja
+            if (messages_count > -1)
+            {
+                panel_liker_panel_main.Controls.OfType<Label>().Where(x => x.Name == "label_support_group_messages_count_" + label_nr.ToString()).FirstOrDefault().Text = messages_count.ToString();
+            }
+
+            // jesli podano liczbe likow, aktualizuje ja
+            if(done_likes > -1)
+            {
+                panel_liker_panel_main.Controls.OfType<Label>().Where(x => x.Name == "label_support_group_likes_count_" + label_nr.ToString()).FirstOrDefault().Text = done_likes.ToString();
+            }
+
+            // jesli oba parametry nie zostaly ustawione, wpisuje N/D do labela
+            if(((messages_count == -1) && (done_likes == -1)) || !support_group.Settings.OnlyLike)
+            {
+                panel_liker_panel_main.Controls.OfType<Label>().Where(x => x.Name == "label_support_group_messages_count_" + label_nr.ToString()).FirstOrDefault().Text = "N/D";
+                panel_liker_panel_main.Controls.OfType<Label>().Where(x => x.Name == "label_support_group_likes_count_" + label_nr.ToString()).FirstOrDefault().Text = "N/D";
+            }
+        }
+
+        private void ActivateSupportGroupLabel(SupportGroup support_group)
+        {
+            int label_nr = ExtractIntFromString(panel_liker_panel_main.Controls.OfType<Label>().Where(x => x.Text == support_group.Name).FirstOrDefault().Name);
+            panel_liker_panel_main.Controls.OfType<Label>().Where(x => x.Name == "label_support_group_name_" + label_nr.ToString()).FirstOrDefault().Font = new Font("Segoe UI", 14F, FontStyle.Bold);
+            panel_liker_panel_main.Controls.OfType<Label>().Where(x => x.Name == "label_support_group_messages_count_" + label_nr.ToString()).FirstOrDefault().Font = new Font("Segoe UI", 14F, FontStyle.Bold);
+            panel_liker_panel_main.Controls.OfType<Label>().Where(x => x.Name == "label_support_group_likes_count_" + label_nr.ToString()).FirstOrDefault().Font = new Font("Segoe UI", 14F, FontStyle.Bold);
+            panel_liker_panel_main.Refresh();
+        }
+
+        private void DeactivateSupportGroupLabel(SupportGroup support_group)
+        {
+            int label_nr = ExtractIntFromString(panel_liker_panel_main.Controls.OfType<Label>().Where(x => x.Text == support_group.Name).SingleOrDefault().Name);
+            panel_liker_panel_main.Controls.OfType<Label>().Where(x => x.Name == "label_support_group_name_" + label_nr.ToString()).FirstOrDefault().Font = new Font("Segoe UI", 12F, FontStyle.Regular);
+            panel_liker_panel_main.Controls.OfType<Label>().Where(x => x.Name == "label_support_group_messages_count_" + label_nr.ToString()).FirstOrDefault().Font = new Font("Segoe UI", 12F, FontStyle.Regular);
+            panel_liker_panel_main.Controls.OfType<Label>().Where(x => x.Name == "label_support_group_likes_count_" + label_nr.ToString()).FirstOrDefault().Font = new Font("Segoe UI", 12F, FontStyle.Regular);
+            panel_liker_panel_main.Refresh();
+        }
+
+        private void listBox2_DrawItem(object sender, DrawItemEventArgs e)
+        {
+            /*
+            private SolidBrush backgroundBrushSelected = new SolidBrush(Color.FromKnownColor(KnownColor.Highlight));
+            private SolidBrush backgroundBrushOnlyLike = new SolidBrush(Color.Aqua);
+            private SolidBrush backgroundBrush = new SolidBrush(Color.White);
+             */
+            e.DrawBackground();
+            bool selected = ((e.State & DrawItemState.Selected) == DrawItemState.Selected);
+
+            int index = e.Index;
+            if (index >= 0 && index < listBox2.Items.Count)
+            {
+                string text = listBox2.Items[index].ToString();
+                Graphics g = e.Graphics;
+
+                //background:
+                SolidBrush _backgroundBrush;
+                if (selected)
+                    _backgroundBrush = backgroundBrushSelected;
+                else if (all_support_groups.Where(x => x.Name == listBox2.Items[index].ToString()).FirstOrDefault().Settings.OnlyLike)
+                    _backgroundBrush = backgroundBrushOnlyLike;
+                else
+                    _backgroundBrush = backgroundBrush;
+                e.Bounds.Inflate(new Size(0, 5));
+                g.FillRectangle(_backgroundBrush, e.Bounds);
+
+                //text:
+                Color color = (selected) ? Color.White : Color.Black;
+                SizeF size = e.Graphics.MeasureString(listBox2.Items[index].ToString(), e.Font);
+                TextRenderer.DrawText(g, text, e.Font, new Point((int)(e.Bounds.Left + (e.Bounds.Width / 2 - size.Width / 2)), (int)(e.Bounds.Top + (e.Bounds.Height / 2 - size.Height / 2))), Color.Black);
+            }
+
+            e.DrawFocusRectangle();
+        }
+
+        private void listBox2_MeasureItem(object sender, MeasureItemEventArgs e)
+        {
+            e.ItemHeight = 26;
+        }
+
+        // wyciaga int ze stringa (np label_10 -> 10)
+        private int ExtractIntFromString(string str)
+        {
+            int i = 0; // return value
+            string new_str = "";
+            foreach (Char ch in str)
+            {
+                if ((ch >= '0') && (ch <= '9'))
+                {
+                    new_str += ch;
+                }
+            }
+            Int32.TryParse(new_str, out i);
+            return i;
+        }
+
+        // Ustawienia Telegrama - button wyslij kod na nr telefonu (po wpisaniu numeru)
+        private async void button11_Click(object sender, EventArgs e)
+        {
+            // zapisz nr telefonu w bazie danych
+            if (textBox8.Text.Length == 9)
+            {
+                data_holder.phone_number = "48";
+                data_holder.phone_number = data_holder.phone_number.Insert(2, textBox8.Text);
+            }
+            else if (textBox8.Text.Length == 11)
+            {
+                data_holder.phone_number = textBox8.Text;
+            }
+            else
+            {
+                MessageBox.Show("Nr telefonu powinien miec długość 11 znaków i zaczynać się od 48");
+                return;
+            }
+
+            // jesli nr telefonu jest poprawny to go pokaz
+            //MessageBox.Show("Nr telefonu: " + this.phone_number);
+
+            // wyslij kod telegrama
+            data_holder.hash = await data_holder.client.SendCodeRequestAsync(data_holder.phone_number);
+
+            // informacja o oczekiwaniu na kod z Telegrama
+            this.toolStripStatusLabel1.Text = $"Na konto Telegram przypisane do numeru {data_holder.phone_number} został wysłany kod potwierdzający - wpisz go w polu powyżej";
+
+            // zmien panel Telegram - pokaz pole do wpisania kodu
+            SetUpTelegramPanel(InitDataHolder.ShowTelegramPanelWith.InsertSecurityCode);
+        }
+
+        // Ustawienia Telegrama - button zaloguj (po wpisaniu otrzymanego kodu bezpieczenstwa)
+        private async void button17_Click_1(object sender, EventArgs e)
+        {
+            //textbox9 - stad wziac kod
+            // informuje uzytkownika co sie dzieje
+            this.toolStripStatusLabel1.Text = "Trwa potwierdzanie otrzymanego kodu...";
+            // jesli nie wpisano kodu, nic nie rob
+            if (textBox9.Text.Length == 0)
+                return;
+
+            // jesli kod poprawny (?) to zapisz go
+            data_holder.code = textBox9.Text;
+
+            // dodaj do bazy danych
+            using (SQLiteConnection m_dbConnection = new SQLiteConnection(data_holder.connectionString))
+            {
+                m_dbConnection.Open();
+                string sql = $"UPDATE telegram_data SET phone_number = '{data_holder.phone_number}' WHERE phone_number = ''";
+                SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+                command.ExecuteNonQuery(); // nic nie zwraca
+                m_dbConnection.Close();
+            }
+
+            try
+            {
+                data_holder.user = await data_holder.client.MakeAuthAsync(data_holder.phone_number, data_holder.hash, data_holder.code);
+            }
+            catch (Exception ex)
+            {
+                SetUpTelegramPanel(InitDataHolder.ShowTelegramPanelWith.LoginFailed);
+                MessageBox.Show("Wystąpił bład!\n" + ex.Message.ToString());
+                return;
+            }
+            
+            // wyswietl komunikat, gdy logowanie przebieglo pomyslnie
+            if (data_holder.user.Id > 0)
+            {
+                // informacja o pomyslnym zalogowaniu do telegrama
+                this.toolStripStatusLabel1.Text = "Pomyslnie zalogowano do telegrama!";
+                SetUpTelegramPanel(InitDataHolder.ShowTelegramPanelWith.LoginSuccess);
+                data_holder.telegram_ok = true;
+
+                // pobierz chaty i channele
+                await data_holder.GetAllTelegramChannelsAndChats();
+
+                // pokazuje grupy wsparcia
+                InitSupportGroupsPanel(data_holder.channels, data_holder.chats, data_holder.initial_support_groups);
+                // sprawdza czy nadal do wszystkich nalzey
+                CheckIfSupportGroupsExist();
+            }
+            else
+            {
+                SetUpTelegramPanel(InitDataHolder.ShowTelegramPanelWith.LoginFailed);
+            }
+        }
+
+        private void radioButton2_CheckedChanged(object sender, EventArgs e)
+        {
+            if(radioButton2.Checked)
+            {
+                label64.Enabled = true;
+                label65.Enabled = true;
+                label66.Enabled = true;
+            }
+        }
+
+        /// <summary>
+        /// Przechodzi z likera do commentera
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void panel_liker_button_go_on_Click(object sender, EventArgs e)
+        {
+            // Inicjalizacja panela komentowania zdjęć
+            InitLikeCommenterPanel();
+
+            // ukrycie panela Liker
+            panel_liker.Hide();
+
+            // pokazanie panela commenter
+            panel_commenter.Show();
+        }
+
+        private void listBox1_DrawItem(object sender, DrawItemEventArgs e)
+        {
+            /*
+            private SolidBrush backgroundBrushSelected = new SolidBrush(Color.FromKnownColor(KnownColor.Highlight));
+            private SolidBrush backgroundBrushOnlyLike = new SolidBrush(Color.Aqua);
+            private SolidBrush backgroundBrush = new SolidBrush(Color.White);
+             */
+            e.DrawBackground();
+            bool selected = ((e.State & DrawItemState.Selected) == DrawItemState.Selected);
+
+            int index = e.Index;
+            if (index >= 0 && index < listBox2.Items.Count)
+            {
+                string text = listBox2.Items[index].ToString();
+                Graphics g = e.Graphics;
+
+                //background:
+                SolidBrush _backgroundBrush;
+                if (selected)
+                    _backgroundBrush = backgroundBrushSelected;
+                else if (all_support_groups.Where(x => x.Name == listBox2.Items[index].ToString()).FirstOrDefault().Settings.OnlyLike)
+                    _backgroundBrush = backgroundBrushOnlyLike;
+                else
+                    _backgroundBrush = backgroundBrush;
+                e.Bounds.Inflate(new Size(0, 5));
+                g.FillRectangle(_backgroundBrush, e.Bounds);
+
+                //text:
+                Color color = (selected) ? Color.White : Color.Black;
+                SizeF size = e.Graphics.MeasureString(listBox2.Items[index].ToString(), e.Font);
+                TextRenderer.DrawText(g, text, e.Font, new Point((int)(e.Bounds.Left + (e.Bounds.Width / 2 - size.Width / 2)), (int)(e.Bounds.Top + (e.Bounds.Height / 2 - size.Height / 2))), Color.Black);
+            }
+
+            e.DrawFocusRectangle();
+        }
+
+        private void listBox1_MeasureItem(object sender, MeasureItemEventArgs e)
+        {
+            e.ItemHeight = 26;
+        }
+
+        private void follower_panel_Click(object sender, EventArgs e)
+        {
+            Panel panel = (Panel)sender;
+            Label lbl = panel.Controls.OfType<Label>().FirstOrDefault();
+
+            if (lbl != null)
+            {
+                if (insta_bad_followers.Where(x => x.user_name == lbl.Text).FirstOrDefault() != null)
+                {
+                    switch (insta_bad_followers.Where(x => x.user_name == lbl.Text).FirstOrDefault().follower_state)
+                    {
+                        case FollowerState.KeepFollowing:
+                            insta_bad_followers.Where(x => x.user_name == lbl.Text).FirstOrDefault().follower_state = FollowerState.Unfollow;
+                            break;
+
+                        case FollowerState.Unfollow:
+                            insta_bad_followers.Where(x => x.user_name == lbl.Text).FirstOrDefault().follower_state = FollowerState.Admin;
+                            break;
+
+                        case FollowerState.Admin:
+                            insta_bad_followers.Where(x => x.user_name == lbl.Text).FirstOrDefault().follower_state = FollowerState.KeepFollowing;
+                            break;
+                    }
+
+                    panel.Refresh();
+                }
+            }
+        }
+
+        private void follower_panel_Paint(object sender, PaintEventArgs e)
+        {
+            Panel pan = (Panel)sender;
+            Label lbl = pan.Controls.OfType<Label>().FirstOrDefault();
+            Color color = Color.Black;
+
+            if(insta_bad_followers.Where(x => x.user_name == lbl.Text).FirstOrDefault() != null)
+            {
+                switch(insta_bad_followers.Where(x => x.user_name == lbl.Text).FirstOrDefault().follower_state)
+                {
+                    case FollowerState.KeepFollowing:
+                        color = Color.Black;
+                        break;
+
+                    case FollowerState.Unfollow:
+                        color = Color.Red;
+                        break;
+
+                    case FollowerState.Admin:
+                        color = Color.Yellow;
+                        break;
+
+                    default:
+                        color = Color.White;
+                        break;
+                }
+            }
+
+            if (pan.BorderStyle == BorderStyle.FixedSingle)
+            {
+                int thickness = 4; //it's up to you
+                int halfThickness = thickness / 2;
+                using (Pen p = new Pen(color, thickness))
+                {
+                    e.Graphics.DrawRectangle(p, new Rectangle(halfThickness,
+                                                              halfThickness,
+                                                              pan.ClientSize.Width - thickness,
+                                                              pan.ClientSize.Height - thickness));
+                }
+
+                typeof(Control).GetProperty("ResizeRedraw", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+               .SetValue(pan, true, null);
+
+                typeof(Panel).GetProperty("DoubleBuffered",
+                              System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                 .SetValue(pan, true, null);
+            }
+
+            sender = (object)pan;
+        }
+
+        private void panel_left_arrow_Click(object sender, EventArgs e)
+        {
+            // przewin do poprzedniej strony
+            HideAllTiles();
+            SetBadFollowersPanelNumbers(--this.followers_page, insta_bad_followers.Where(x => x.follower_state == FollowerState.KeepFollowing).ToList()); // page = 1
+            CreateBadFollowerPanel(this.followers_page, insta_bad_followers.Where(x => x.follower_state == FollowerState.KeepFollowing).ToList());
+
+            if (this.followers_page == 1)
+            {
+                panel_left_arrow.Hide();
+                panel_right_arrow.Show();
+            }
+        }
+
+        private void panel_right_arrow_Click(object sender, EventArgs e)
+        {
+            // przewin do nastepnej strony
+            HideAllTiles();
+            SetBadFollowersPanelNumbers(++this.followers_page, insta_bad_followers.Where(x => x.follower_state == FollowerState.KeepFollowing).ToList()); // page = 1
+            CreateBadFollowerPanel(this.followers_page, insta_bad_followers.Where(x => x.follower_state == FollowerState.KeepFollowing).ToList());
+
+            panel_left_arrow.Show();
+        }
+
+        private async void panel_swords_Click(object sender, EventArgs e)
+        {
+            // pokaz jak samuraj wycina bad-followersow
+            pictureBox_swords_cutter.Show();
+
+            foreach(var follower in insta_bad_followers)
+            {
+                // zmien w bazie danych
+                using (SQLiteConnection m_dbConnection = new SQLiteConnection(data_holder.connectionString))
+                {
+                    m_dbConnection.Open();
+                    string sql = $"UPDATE instagram_followers SET status = '{(Int32)follower.follower_state}' WHERE user_name = '{follower.user_name}'";
+                    SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+                    command.ExecuteNonQuery(); // nic nie zwraca
+                    m_dbConnection.Close();
+                }
+
+                // unfollow
+                if (follower.follower_state == FollowerState.Unfollow)
+                {
+                    await IGProc.Unfollow(follower.user_id);
+                }
+            }
+
+            // wyswietl liste ponownie
+            HideAllTiles();
+            ResetAllBadFollowersPanels(insta_bad_followers);
+            SetBadFollowersPanelNumbers(this.followers_page, insta_bad_followers.Where(x => x.follower_state == FollowerState.KeepFollowing).ToList()); // page = 1
+            CreateBadFollowerPanel(this.followers_page, insta_bad_followers.Where(x => x.follower_state == FollowerState.KeepFollowing).ToList());
+
+            // schowaj samuraja
+            pictureBox_swords_cutter.Hide();
+        }
+
+        private async void label_followers_manager_Click(object sender, EventArgs e)
+        {
+            if (data_holder.instagram_ok)
+            {
+                // pokazuje panel zarzadzania followersami
+                panel_followers_manager.Show();
+                panel_settings.Hide();
+
+                if (!followers_manager_initialized)
+                {
+                    // pokazuje ile osob cie obserwuje
+                    pictureBox_followers_wait.Show();
+                    int followers = await IGProc.GetFollowersCount();
+                    pictureBox_followers_wait.Hide();
+                    label_followers_count.Text = followers.ToString();
+
+                    // pokazuje ile osob obserwyjesz
+                    pictureBox_following_wait.Show();
+                    int following = await IGProc.GetFollowingCount();
+                    pictureBox_following_wait.Hide();
+                    label_following_count.Text = following.ToString();
+
+                    // wyswietla panel z obserwowanymi osobami
+                    pictureBox_bad_following_wait.Show();
+                    InstaUserShortList bad_following = await IGProc.GetWhoDoesntFollowYou();
+                    await GenerateBadFollowersList(bad_following);
+                    SetBadFollowersPanelNumbers(1, insta_bad_followers.Where(x => x.follower_state == FollowerState.KeepFollowing).ToList()); // page = 1
+                    CreateEmptyFollowersPanels();
+                    CreateBadFollowerPanel(1, insta_bad_followers.Where(x => x.follower_state == FollowerState.KeepFollowing).ToList());
+                    panel_left_arrow.Hide();
+                    pictureBox_bad_following_wait.Hide();
+
+                    label_bad_following_count.Text = bad_following.Count.ToString();
+
+                    followers_manager_initialized = true;
+                    panel_swords.Show();
+                }
+            }
+            else
+            {
+                MessageBox.Show("Aby korzystać z Menedżera Followersów najpierw musisz się poprawnie zalogować do Instagrama");
+            }
+        }
+
+        private void button_followers_back_to_menu_Click(object sender, EventArgs e)
+        {
+            panel_settings.Show();
+            panel_followers_manager.Hide();
+        }
+
+        private async void button_2FactAuth_confirm_Click(object sender, EventArgs e)
+        {
+            int code = 0;
+            if(textBox_2StepAuth_code.Text.Length == 6 && Int32.TryParse(textBox_2StepAuth_code.Text, out code))
+            {
+                IResult<InstaLoginTwoFactorResult> res;
+                res = await IGProc.TwoFactorLogin(textBox_2StepAuth_code.Text);
+
+                if(res.Succeeded)
+                {
+                    MessageBox.Show(res.Info.ResponseRaw);
+
+                    if(res.Value == InstaLoginTwoFactorResult.Success && IGProc.IsUserAuthenticated())
+                    {
+                        MessageBox.Show("Pomyślnie zalogowano do instagrama!");
+                    }
+                    else
+                    {
+                        MessageBox.Show("Logowanie do instagrama nie powiodło się...");
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("Logowanie do instagrama niestety nie powiodło się...");
+                }
+            }
+            else
+            {
+                MessageBox.Show("Kod autoryzacyjny musi mieć 6 znaków i składać się z samych cyfr. Wpisz go ponownie.");
+            }
+        }
+
+        private async void textBox_2StepAuth_code_KeyDown(object sender, KeyEventArgs e)
+        {
+            if(e.KeyCode == Keys.Enter)
+            {
+                int code = 0;
+                if (textBox_2StepAuth_code.Text.Length == 6 && Int32.TryParse(textBox_2StepAuth_code.Text, out code))
+                {
+                    IResult<InstaLoginTwoFactorResult> res;
+                    res = await IGProc.TwoFactorLogin(textBox_2StepAuth_code.Text);
+
+                    if (res.Succeeded)
+                    {
+                        MessageBox.Show(res.Info.ResponseRaw);
+
+                        if (res.Value == InstaLoginTwoFactorResult.Success && IGProc.IsUserAuthenticated())
+                        {
+                            MessageBox.Show("Pomyślnie zalogowano do instagrama!");
+                        }
+                        else
+                        {
+                            MessageBox.Show("Logowanie do instagrama nie powiodło się...");
+                        }
+                    }
+                    else
+                    {
+                        MessageBox.Show("Logowanie do instagrama niestety nie powiodło się...");
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("Kod autoryzacyjny musi mieć 6 znaków i składać się z samych cyfr. Wpisz go ponownie.");
+                }
+            }
+        }
+
+        private async void button_insta_challenge_confirm_Click(object sender, EventArgs e)
+        {
+            if (textBox_challenge_code.Text.Length > 4)
+            {
+                //MessageBox.Show("Wysyłam kod!");
+                try
+                {
+                    //MessageBox.Show(textBox_challenge_code.Text);
+                    InstaResetChallenge res3 = await IGProc.SendVerifyCode(textBox_challenge_code.Text);
+
+                    //MessageBox.Show(res3.LoggedInUser + "\n" + res3.Status + "\n" + res3.Action + "\n" + res3.StepName);
+                    if (res3.Status == "ok")
+                    {
+                        // dodaj do bazy danych
+                        using (SQLiteConnection m_dbConnection = new SQLiteConnection(data_holder.connectionString))
+                        {
+                            m_dbConnection.Open();
+                            string sql = $"DELETE FROM instagram_data";
+                            SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+                            command.ExecuteNonQuery(); // nic nie zwraca
+
+                            sql = $"INSERT INTO instagram_data (login, password) VALUES ('{IGProc.login}', '{IGProc.password}')";
+                            command = new SQLiteCommand(sql, m_dbConnection);
+                            command.ExecuteNonQuery(); // nic nie zwraca
+                            m_dbConnection.Close();
+                        }
+
+                        // zapisz statusy
+                        SetUpInstagramPanel(InitDataHolder.ShowInstagramPanelWith.LoginSuccess);
+                        data_holder.instagram_ok = true;
+                    }
+                    else
+                    {
+                        SetUpInstagramPanel(InitDataHolder.ShowInstagramPanelWith.LoginFailed);
+                        data_holder.instagram_ok = true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("BŁĄD!\n" + ex.Message.ToString());
+                }
             }
         }
     }

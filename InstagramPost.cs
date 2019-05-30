@@ -1,16 +1,9 @@
 ﻿using InstaSharper.Classes.Models;
 using System;
-using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Drawing;
-using System.IO;
 using System.Linq;
-using System.Net;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using System.Web.Script.Serialization;
-using System.Windows.Forms;
 
 namespace IGTomesheqAutoLiker
 {
@@ -186,7 +179,7 @@ namespace IGTomesheqAutoLiker
             using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
             {
                 m_dbConnection.Open();
-                string sql = $"INSERT INTO instagram_posts (id_post, insta_media_shortcode, insta_media_id, commented, comment_text, date_commented, liked, date_liked) VALUES (NULL, '{this.InstaMediaShortcode}', '', 0, '', 0, 0, 0)";
+                string sql = $"INSERT INTO instagram_posts (id_post, author, insta_media_shortcode, insta_media_id, commented, comment_text, date_commented, liked, date_liked) VALUES (NULL, '{this.InstaMediaShortcode}', '', 0, '', 0, 0, 0)";
                 SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
                 command.ExecuteNonQuery();
                 m_dbConnection.Close(); 

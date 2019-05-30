@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using TeleSharp.TL;
 using TeleSharp.TL.Messages;
@@ -33,19 +32,20 @@ namespace IGTomesheqAutoLiker
         public string connectionString;
 
         public enum ShowTelegramPanelWith { InsertPhoneNumber, InsertSecurityCode, LoginSuccess, LoginFailed };
-        public enum ShowInstagramPanelWith { InsertLoginData, InsertSecurityCode, LoginSuccess, LoginFailed };
+        public enum ShowInstagramPanelWith { InsertLoginData, InsertSecurityCode, Insert2FactCode, LoginSuccess, LoginFailed };
 
         public ShowInstagramPanelWith InstaLoginStatus;
 
         public bool telegram_ok;
         public bool instagram_ok;
         public bool default_comments_ok;
-        public bool support_groups_ok;
+        public bool telegram_channels_and_chats_ok;
         public bool db_support_groups_ok;
 
         public int likes_limit;
         public int min_time_betw_likes;
         public int max_time_betw_likes;
+        public int keep_old_entries;
 
         public InitDataHolder()
         {
@@ -56,7 +56,7 @@ namespace IGTomesheqAutoLiker
             telegram_ok = false;
             instagram_ok = false;
             default_comments_ok = false;
-            support_groups_ok = false;
+            telegram_channels_and_chats_ok = false;
             db_support_groups_ok = false;
 
             default_comments = new List<DefaultComment>();
@@ -78,8 +78,6 @@ namespace IGTomesheqAutoLiker
                 } 
             }
 
-            InitSettings();
-
             InstaLoginStatus = ShowInstagramPanelWith.InsertLoginData;
         }
 
@@ -98,6 +96,7 @@ namespace IGTomesheqAutoLiker
                     min_time_betw_likes = reader.GetInt32(0);
                     max_time_betw_likes = reader.GetInt32(1);
                     likes_limit = reader.GetInt32(2);
+                    keep_old_entries = reader.GetInt32(3);
                 }
                 m_dbConnection.Close();
             }
@@ -120,6 +119,7 @@ namespace IGTomesheqAutoLiker
                 }
                 catch (Exception ex)
                 {
+                    System.Diagnostics.Debug.WriteLine("\n" + ex.Message);
                     connection_attemps_counter++;
                     // wyswietlic na statusbarze, ze pierwsze logowanie nieudane
                 }
@@ -141,15 +141,30 @@ namespace IGTomesheqAutoLiker
             {
                 channels = dialogs.Chats
                         .OfType<TLChannel>()
+                        .OrderBy(x => x.Title)
                         .ToList();
                 chats = dialogs.Chats
                         .OfType<TLChat>()
+                        .OrderBy(x => x.Title)
                         .ToList();
+
                 // pobrano pomyslnie - zwraca true, wszystko OK
-                return true;
+                if(channels != null && chats != null)
+                {
+                    this.telegram_channels_and_chats_ok = true;
+                    return true;
+                }
+                else
+                {
+                    this.telegram_channels_and_chats_ok = false;
+                    return false;
+                }
+                
             }
             catch (Exception ex)
             {
+                this.telegram_channels_and_chats_ok = false;
+                System.Diagnostics.Debug.WriteLine("\n" + ex.Message);
                 // bedzie trzeba ponownie zalogowac sie do telegrama
                 return false;
                 //MessageBox.Show("Błąd podczas pobierania danych z Telegrama:\n" + ex.Message.ToString());
@@ -181,6 +196,8 @@ namespace IGTomesheqAutoLiker
             }
             catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine("\n" + ex.Message);
+                instagram_ok = false;
                 return false;
                 // bedzie konieczne reczne wpisanie danych logowania
                 //MessageBox.Show("Bład podczas sprawdzania loginu w bazie danych:\n" + ex.Message.ToString());
@@ -192,43 +209,58 @@ namespace IGTomesheqAutoLiker
                 {
                     IGProc.login = login;
                     IGProc.password = password;
-                    InstaSharper.Classes.InstaLoginResult result = await IGProc.Login(login, password);
-                    if (result == InstaSharper.Classes.InstaLoginResult.BadPassword || result == InstaSharper.Classes.InstaLoginResult.InvalidUser || result == InstaSharper.Classes.InstaLoginResult.Exception)
+                    IResult<InstaSharper.Classes.InstaLoginResult> result = await IGProc.Login(login, password);
+                    //MessageBox.Show(result.Info.ResponseRaw);
+                    if (result.Value == InstaSharper.Classes.InstaLoginResult.BadPassword || result.Value == InstaSharper.Classes.InstaLoginResult.InvalidUser || result.Value == InstaSharper.Classes.InstaLoginResult.Exception)
                     {
                         InstaLoginStatus = ShowInstagramPanelWith.LoginFailed;
+                        instagram_ok = false;
+
+                        // usun te dane logowania z bazy danych, skoro nie dzialaja
+                        try
+                        {
+                            sql = $"DELETE FROM instagram_data";
+                            using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
+                            {
+                                m_dbConnection.Open();
+                                SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+                                command.ExecuteNonQuery();
+                                m_dbConnection.Close();
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine("\n" + ex.Message);
+                            instagram_ok = false;
+                        }
                     }
-                    else if(result == InstaSharper.Classes.InstaLoginResult.ChallengeRequired)
+                    else if(result.Value == InstaSharper.Classes.InstaLoginResult.ChallengeRequired)
                     {
                         InstaLoginStatus = ShowInstagramPanelWith.InsertSecurityCode;
+                        instagram_ok = false;
                     }
-                    else if(result == InstaSharper.Classes.InstaLoginResult.TwoFactorRequired)
+                    else if(result.Value == InstaSharper.Classes.InstaLoginResult.TwoFactorRequired)
                     {
-                        // nieobslugiwane!
-                        InstaLoginStatus = ShowInstagramPanelWith.LoginFailed;
+                        // przetestowac...
+                        InstaLoginStatus = ShowInstagramPanelWith.Insert2FactCode;
+                        instagram_ok = false;
                     }
                     else
                     {
                         InstaLoginStatus = ShowInstagramPanelWith.LoginSuccess;
+                        instagram_ok = true;
                     }
                 }
                 catch (Exception ex)
                 {
+                    System.Diagnostics.Debug.WriteLine("\n" + ex.Message);
+                    instagram_ok = false;
                     return false;
                     // bedzie konieczne reczne wpisanie danych do logowania
                 }
             }
 
-            if (IGProc.IsUserAuthenticated())
-            {
-                instagram_ok = true;
-                return true;
-                // uzytkownik zalogowany - wszystko ok
-            }
-            else
-            {
-                return false;
-                // bedzie trzeba zalogowac sie ponownie
-            }
+            return instagram_ok;
         }
 
         public async Task GetBagdadFollowers()
@@ -261,7 +293,7 @@ namespace IGTomesheqAutoLiker
 
         public bool GetSupportGroups()
         {
-            string sql = $"SELECT * FROM support_groups";
+            string sql = $"SELECT * FROM support_groups ORDER BY only_likes DESC, group_name COLLATE NOCASE ASC";
             try
             {
                 using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
@@ -286,6 +318,7 @@ namespace IGTomesheqAutoLiker
             }
             catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine("\n" + ex.Message);
                 return false;
                 // blad polaczenia z baza danych
             }
@@ -315,9 +348,39 @@ namespace IGTomesheqAutoLiker
             }
             catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine("\n" + ex.Message);
                 return false;
                 // blad polaczenia z baza danych
             }
+        }
+
+        public void DeleteOldDBEntries(int days_off)
+        {
+            try
+            {
+                using (SQLiteConnection m_dbConnection = new SQLiteConnection(connectionString))
+                {
+                    m_dbConnection.Open();
+                    DateTime dt = DateTime.Now.AddDays((double)(-1.0) * days_off);
+                    long timestamp = ToUnixTimestamp(dt);
+                    string sql = $"DELETE FROM instagram_posts WHERE date_commented < {timestamp} OR date_liked < {timestamp}";
+                    SQLiteCommand command = new SQLiteCommand(sql, m_dbConnection);
+                    command.ExecuteNonQuery(); // nic nie zwraca
+                    m_dbConnection.Close();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("BŁĄD!!!\n" + ex.Message.ToString());
+            }
+        }
+
+        public static long ToUnixTimestamp(DateTime target)
+        {
+            var date = new DateTime(1970, 1, 1, 0, 0, 0, target.Kind);
+            var unixTimestamp = System.Convert.ToInt64((target - date).TotalSeconds);
+
+            return unixTimestamp;
         }
     }
 }

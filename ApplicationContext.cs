@@ -35,7 +35,8 @@ namespace IGTomesheqAutoLiker
             //splash_screen.BackgroundWorker.RunWorkerAsync();
 
             bool ok = false;
-            while (!ok)
+            int try_count = 0;
+            while (!ok && try_count < 3)
             {
                 try
                 {
@@ -45,7 +46,9 @@ namespace IGTomesheqAutoLiker
                 catch (Exception ex)
                 {
                     System.Diagnostics.Debug.WriteLine(ex.Message);
-                } 
+                }
+
+                try_count++;
             }
 
             // zamyka splash screena - zostanie pokazany glowny formularz
